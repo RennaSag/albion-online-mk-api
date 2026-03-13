@@ -405,6 +405,8 @@ public class TelaPesquisaPrecos {
                 ? FormatadorUtil.nomeQualidade(pe.getQualidade()) + " *"
                 : FormatadorUtil.nomeQualidade(pe.getQualidade());
 
+
+            //formatacao pra aparecer na tela bonitinho
             linhas.add(new LinhaPreco(
                 pe.getItemId(),
                 tierStr,
@@ -414,7 +416,12 @@ public class TelaPesquisaPrecos {
                 qualLabel,
                 FormatadorUtil.formatarPreco(pe.getSellMin()),
                 FormatadorUtil.formatarPreco(pe.getBuyMax()),
-                FormatadorUtil.formatarData(pe.getSellDate())
+
+                    FormatadorUtil.formatarData(
+                            (pe.getSellDate() != null && !pe.getSellDate().startsWith("0001"))
+                                    ? pe.getSellDate() : pe.getBuyDate()
+                    )
+
             ));
         }
 
