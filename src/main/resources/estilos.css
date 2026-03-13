@@ -96,3 +96,58 @@
 .table-view .placeholder .label {
     -fx-text-fill: #666;
 }
+
+/* ── Login ─────────────────────────────────────────────────────────── */
+.login-raiz {
+    -fx-background-color: #1e1e1e;
+}
+
+.login-titulo {
+    -fx-text-fill: #e0e0e0;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.login-subtitulo {
+    -fx-text-fill: #888888;
+    -fx-font-size: 14px;
+}
+
+.login-label {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 13px;
+}
+
+.login-campo {
+    -fx-background-color: #2a2a2a;
+    -fx-text-fill: #e0e0e0;
+    -fx-prompt-text-fill: #555555;
+    -fx-border-color: #3a3a3a;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8 12;
+    -fx-font-size: 13px;
+}
+
+.login-campo:focused {
+    -fx-border-color: #2980b9;
+}
+
+.login-botao {
+    -fx-background-color: #2980b9;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 0;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.login-botao:hover {
+    -fx-background-color: #3498db;
+}
+
+.login-erro {
+    -fx-text-fill: #e05555;
+    -fx-font-size: 12px;
+}

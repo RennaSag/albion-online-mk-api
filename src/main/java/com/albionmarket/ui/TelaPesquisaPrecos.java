@@ -5,7 +5,6 @@ import com.albionmarket.service.ApiService;
 import com.albionmarket.service.BancoDeDados;
 import com.albionmarket.service.BuscaService;
 import com.albionmarket.util.FormatadorUtil;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -24,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * tela principal da aplicação
  */
-public class TelaPrincipal {
+public class TelaPesquisaPrecos {
 
     // serviços
     private final ApiService    apiService    = new ApiService();
@@ -124,20 +123,20 @@ public class TelaPrincipal {
 
         cbCategoria = new ComboBox<>();
         cbCategoria.setItems(FXCollections.observableArrayList(categorias));
-        cbCategoria.setPromptText("-- Categoria --");
+        cbCategoria.setPromptText("Categoria");
         cbCategoria.setMaxWidth(Double.MAX_VALUE);
         cbCategoria.setOnAction(e -> onCategoriaSelecionada());
         estilizarComboBox(cbCategoria);
 
         cbSubcategoria = new ComboBox<>();
-        cbSubcategoria.setPromptText("-- Subcategoria --");
+        cbSubcategoria.setPromptText("Subcategoria");
         cbSubcategoria.setMaxWidth(Double.MAX_VALUE);
         cbSubcategoria.setDisable(true);
         cbSubcategoria.setOnAction(e -> onSubcategoriaSelecionada());
         estilizarComboBox(cbSubcategoria);
 
         cbItem = new ComboBox<>();
-        cbItem.setPromptText("-- Item --");
+        cbItem.setPromptText("Item");
         cbItem.setMaxWidth(Double.MAX_VALUE);
         cbItem.setDisable(true);
         cbItem.setOnAction(e -> onItemSelecionado());
@@ -232,10 +231,11 @@ public class TelaPrincipal {
         tabelaResultados.setPlaceholder(new Label("Nenhum resultado."));
 
         // colunas
+        //parte com as colunas doq vai ser mostrado
         // o id do item não me interessa, eu n quero ver ele, vide linha 246, adicionar "colItem" antes de "colTier" pra ver
         // TableColumn<LinhaPreco, String> colItem   = coluna("Item ID",     180, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().itemId));
         TableColumn<LinhaPreco, String> colTier   = coluna("Tier",         55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tier));
-        TableColumn<LinhaPreco, String> colEnch   = coluna("Encantamento.",        55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().enchant));
+        TableColumn<LinhaPreco, String> colEnch   = coluna("Encantamento",        55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().enchant));
         TableColumn<LinhaPreco, String> colCidade = criarColunaCidade();
         TableColumn<LinhaPreco, String> colQual   = coluna("Qualidade",   100, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().qualidade));
         TableColumn<LinhaPreco, String> colSell   = criarColunaPreco("Venda", 120, true);
@@ -252,7 +252,6 @@ public class TelaPrincipal {
     }
 
     // logica dos filtros
-
     private void onBuscaTexto(String texto) {
         itemSelecionado = null;
         List<ItemDefinition> sugestoes = buscaService.buscar(texto, 1);
@@ -392,7 +391,7 @@ public class TelaPrincipal {
             String[] partes  = pe.getItemId().split("_", 2); // ["T5", "MAIN_SWORD@2"]
             String   tierStr = partes.length > 0 ? partes[0] : "?";
             String   enchStr = pe.getItemId().contains("@")
-                               ? "@" + pe.getItemId().split("@")[1]
+                               ? "." + pe.getItemId().split("@")[1] //parte do q vai aparecer nas colunas, ex: encantamento .x (.1, .2, .3)
                                : "0";
 
             // cores das cidades
