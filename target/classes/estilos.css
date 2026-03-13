@@ -1,0 +1,98 @@
+/* ── Tema escuro global ── */
+.root {
+    -fx-base: #1e1e1e;
+    -fx-background: #1e1e1e;
+    -fx-control-inner-background: #2e2e2e;
+    -fx-text-fill: #e0e0e0;
+    -fx-font-family: "Segoe UI", "Inter", "Helvetica Neue", sans-serif;
+    -fx-font-size: 13px;
+}
+
+/* Cabeçalhos da tabela */
+.table-view .column-header {
+    -fx-background-color: #2a2a2a;
+    -fx-text-fill: #aaa;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* Linhas da tabela */
+.table-row-cell {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: transparent;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #222;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #2a4a7f;
+}
+
+/* Células */
+.table-cell {
+    -fx-text-fill: #ddd;
+    -fx-padding: 5 8 5 8;
+}
+
+/* ScrollBar */
+.scroll-bar {
+    -fx-background-color: #2a2a2a;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #444;
+    -fx-background-radius: 4;
+}
+
+/* Combo Box */
+.combo-box {
+    -fx-background-color: #2e2e2e;
+    -fx-border-color: #444;
+    -fx-border-radius: 4;
+}
+
+.combo-box .list-view {
+    -fx-background-color: #2e2e2e;
+    -fx-border-color: #555;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ddd;
+}
+
+.combo-box .list-cell:hover {
+    -fx-background-color: #3a3a3a;
+}
+
+/* TextField */
+.text-field {
+    -fx-background-color: #2e2e2e;
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: #444;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-prompt-text-fill: #666;
+}
+
+/* CheckBox */
+.check-box {
+    -fx-text-fill: #ccc;
+}
+
+.check-box .box {
+    -fx-background-color: #2e2e2e;
+    -fx-border-color: #555;
+}
+
+/* ProgressIndicator */
+.progress-indicator .percentage {
+    -fx-fill: #5a8dee;
+}
+
+/* Placeholder da tabela */
+.table-view .placeholder .label {
+    -fx-text-fill: #666;
+}
