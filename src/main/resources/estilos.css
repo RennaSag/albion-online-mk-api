@@ -87,17 +87,17 @@
     -fx-border-color: #555;
 }
 
-/* progressIndicator */
+/* ProgressIndicator */
 .progress-indicator .percentage {
     -fx-fill: #5a8dee;
 }
 
-/* placeholder da tabela */
+/* Placeholder da tabela */
 .table-view .placeholder .label {
     -fx-text-fill: #666;
 }
 
-/* Login */
+/* Login  */
 .login-raiz {
     -fx-background-color: #1e1e1e;
 }
@@ -152,7 +152,7 @@
     -fx-font-size: 12px;
 }
 
-/* Home */
+/* Home  */
 .home-raiz {
     -fx-background-color: #1e1e1e;
 }
@@ -182,4 +182,27 @@
 .home-botao:disabled {
     -fx-opacity: 0.35;
     -fx-cursor: default;
+}
+
+/*  Switch (toggle) */
+.check-box.switch .box {
+    -fx-background-color: #555;
+    -fx-background-radius: 10;
+    -fx-padding: 2;
+    -fx-min-width: 36px;
+    -fx-min-height: 18px;
+    -fx-max-width: 36px;
+    -fx-max-height: 18px;
+}
+.check-box.switch:selected .box {
+    -fx-background-color: #5a8dee;
+}
+.check-box.switch .mark {
+    -fx-background-color: white;
+    -fx-background-radius: 50%;
+    -fx-padding: 6;
+    -fx-translate-x: 0;
+}
+.check-box.switch:selected .mark {
+    -fx-translate-x: 16;
 }

@@ -18,6 +18,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.util.List;
+import java.util.prefs.Preferences;
 
 /**
  * Tela de seleção de item para craft.
@@ -26,6 +27,14 @@ import java.util.List;
  */
 public class TelaCraftSelecao {
 
+    private static final String PREF_TIER = "craft_tier";
+    private static final String PREF_ENCHANT = "craft_enchant";
+    private static final String PREF_ITEM_ID = "craft_item_id";
+    private static final String PREF_ITEM_NOME = "craft_item_nome";
+    private static final String PREF_BUSCA = "craft_busca";
+    private static final Preferences PREFS =
+            Preferences.userNodeForPackage(TelaCraftSelecao.class);
+
     private final Stage palco;
     private final BuscaService buscaService = new BuscaService();
     private final List<Categoria> categorias = BancoDeDados.getCategorias();
@@ -33,13 +42,13 @@ public class TelaCraftSelecao {
     private ItemDefinition itemSelecionado = null;
 
     private TextField campoBusca;
-    private ComboBox<Categoria>      cbCategoria;
-    private ComboBox<Subcategoria>   cbSubcategoria;
+    private ComboBox<Categoria> cbCategoria;
+    private ComboBox<Subcategoria> cbSubcategoria;
     private ComboBox<ItemDefinition> cbItem;
-    private ComboBox<String>         cbTier;
-    private ComboBox<String>         cbEncantamento;
-    private Label                    labelItemAtual;
-    private ImageView               iconItem;
+    private ComboBox<String> cbTier;
+    private ComboBox<String> cbEncantamento;
+    private Label labelItemAtual;
+    private ImageView iconItem;
 
     // estado anterior (pode ser null se for abertura limpa)
     private final EstadoCraftSelecao estadoAnterior;
@@ -73,9 +82,11 @@ public class TelaCraftSelecao {
         palco.setMinHeight(600);
         palco.centerOnScreen();
 
-        // restaura filtros anteriores se existirem
+        // restaura filtros: estado anterior (voltou da TelaCraft) ou preferências salvas
         if (estadoAnterior != null) {
             restaurarEstado();
+        } else {
+            carregarPreferencias();
         }
     }
 
@@ -86,9 +97,9 @@ public class TelaCraftSelecao {
 
         // restaura encantamento
         String enchStr;
-        if (estadoAnterior.enchant == -1)      enchStr = "Todos";
-        else if (estadoAnterior.enchant == 0)  enchStr = "Sem encantamento";
-        else                                   enchStr = "." + estadoAnterior.enchant;
+        if (estadoAnterior.enchant == -1) enchStr = "Todos";
+        else if (estadoAnterior.enchant == 0) enchStr = "Sem encantamento";
+        else enchStr = "." + estadoAnterior.enchant;
         cbEncantamento.setValue(enchStr);
 
         // restaura item selecionado
@@ -184,7 +195,9 @@ public class TelaCraftSelecao {
         cbTier.setValue("Todos");
         cbTier.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbTier);
-        cbTier.setOnAction(ev -> { if (itemSelecionado != null) atualizarIconeItem(montarIdIcone()); });
+        cbTier.setOnAction(ev -> {
+            if (itemSelecionado != null) atualizarIconeItem(montarIdIcone());
+        });
         bloco.getChildren().add(cbTier);
 
         // encantamento
@@ -195,7 +208,9 @@ public class TelaCraftSelecao {
         cbEncantamento.setValue("Todos");
         cbEncantamento.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbEncantamento);
-        cbEncantamento.setOnAction(ev -> { if (itemSelecionado != null) atualizarIconeItem(montarIdIcone()); });
+        cbEncantamento.setOnAction(ev -> {
+            if (itemSelecionado != null) atualizarIconeItem(montarIdIcone());
+        });
         bloco.getChildren().add(cbEncantamento);
 
         // centraliza o bloco
@@ -223,7 +238,7 @@ public class TelaCraftSelecao {
         return vb;
     }
 
-    // botão selecionar
+    // botoes
     private VBox criarBotoesAcao() {
         Button btnSelecionar = new Button("Selecionar");
         btnSelecionar.setPrefWidth(160);
@@ -234,7 +249,7 @@ public class TelaCraftSelecao {
         btnSelecionar.setOnAction(e -> onSelecionar());
 
         Button btnLimpar = new Button("Limpar");
-        btnLimpar.setPrefWidth(120);
+        btnLimpar.setPrefWidth(160);
         btnLimpar.setPrefHeight(42);
         btnLimpar.setStyle(
                 "-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
@@ -354,14 +369,55 @@ public class TelaCraftSelecao {
             return;
         }
 
-        int tier    = parseTier(cbTier.getValue());
+        int tier = parseTier(cbTier.getValue());
         int enchant = parseEnchant(cbEncantamento.getValue());
 
         EstadoCraftSelecao estado = new EstadoCraftSelecao(
                 item, tier, enchant, campoBusca.getText());
+
+        // persiste filtros para restaurar mesmo após fechar o programa
+        salvarPreferencias(item, tier, enchant, campoBusca.getText());
+
         new TelaCraft(palco, item, tier, enchant, estado).mostrar();
     }
 
+    // persistência de filtros
+    private void salvarPreferencias(ItemDefinition it, int tier, int enchant, String busca) {
+        PREFS.put(PREF_TIER, tier == -1 ? "Todos" : "T" + tier);
+        PREFS.put(PREF_ENCHANT, enchant == -1 ? "Todos"
+                : enchant == 0 ? "Sem encantamento"
+                : "." + enchant);
+        PREFS.put(PREF_ITEM_ID, it.getId());
+        PREFS.put(PREF_ITEM_NOME, it.getNome());
+        PREFS.put(PREF_BUSCA, busca != null ? busca : it.getNome());
+    }
+
+    private void carregarPreferencias() {
+        String tierStr = PREFS.get(PREF_TIER, "");
+        String enchStr = PREFS.get(PREF_ENCHANT, "");
+        String itemId = PREFS.get(PREF_ITEM_ID, "");
+        String itemNome = PREFS.get(PREF_ITEM_NOME, "");
+        String busca = PREFS.get(PREF_BUSCA, "");
+
+        if (itemId.isBlank()) return; // nada salvo ainda
+
+        if (!tierStr.isBlank()) cbTier.setValue(tierStr);
+        if (!enchStr.isBlank()) cbEncantamento.setValue(enchStr);
+
+        if (!itemId.isBlank()) {
+            // tenta encontrar o item no BancoDeDados
+            ItemDefinition found = BancoDeDados.getTodosItens().stream()
+                    .filter(i -> i.getId().equals(itemId))
+                    .findFirst().orElse(null);
+            if (found != null) {
+                itemSelecionado = found;
+                campoBusca.setText(busca.isBlank() ? itemNome : busca);
+                labelItemAtual.setText("Selecionado: " + found.getNome());
+                labelItemAtual.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 13px;");
+                atualizarIconeItem(montarIdIcone());
+            }
+        }
+    }
 
     private String montarIdIcone() {
         if (itemSelecionado == null) return null;

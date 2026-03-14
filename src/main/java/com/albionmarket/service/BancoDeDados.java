@@ -330,7 +330,6 @@ public class BancoDeDados {
         )));
 
 
-
         // botas e sapatos
         lista.add(new Categoria("", "Armadura de Calçado", Arrays.asList(
 
@@ -453,4 +452,25 @@ public class BancoDeDados {
         }
         return todos;
     }
+
+    // retorna nome do recurso refinado pelo sufixo e tier
+    // indices: 2=T2, 3=T3 ... 8=T8
+    public static String getNomeRecurso(String sufixo, int tier) {
+        String[] nomes = switch (sufixo) {
+            case "METALBAR" ->
+                    new String[]{"", "", "Barra de Ferro", "Barra de Aço", "Barra de Aço Nobrium", "Barra de Titânio", "Barra de Runite", "Barra de Mithril", "Barra de Adamantium"};
+            case "LEATHER" ->
+                    new String[]{"", "", "Couro", "Couro Grosso", "Couro Endurecido", "Couro Rígido", "Couro de Elite", "Couro de Sombra", "Couro de Sangue"};
+            case "CLOTH" ->
+                    new String[]{"", "", "Tecido", "Tecido Grosso", "Seda Encantada", "Seda de Elite", "Seda da Sombra", "Seda do Vazio", "Seda Astral"};
+            case "PLANKS" ->
+                    new String[]{"", "", "Tábuas", "Tábuas Grossas", "Tábuas de Carvalho", "Tábuas de Teixo", "Tábuas de Álamo Negro", "Tábuas de Freixo", "Tábuas de Cerejeira"};
+            case "STONEBLOCK" ->
+                    new String[]{"", "", "Bloco de Calcário", "Bloco de Arenito", "Bloco de Travertino", "Bloco de Granito", "Bloco de Basalto", "Bloco de Mármore", "Bloco de Rocha Negra"};
+            default -> null;
+        };
+        if (nomes == null || tier < 0 || tier >= nomes.length) return null;
+        return nomes[tier];
+    }
+
 }

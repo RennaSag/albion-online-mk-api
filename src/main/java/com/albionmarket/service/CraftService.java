@@ -15,14 +15,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * busca receitas de craft na Albion Online Gameinfo API
- * Endpoint: gameinfo.albiononline.com/api/gameinfo/items/{itemId}/data
- */
 public class CraftService {
 
     private static final String BASE = "https://gameinfo.albiononline.com/api/gameinfo/items/";
-
     private final HttpClient cliente;
 
     public CraftService() {
@@ -31,93 +26,62 @@ public class CraftService {
                 .build();
     }
 
-    /**
-     * busca a receita de craft de um item especifico
-     *
-     * @param itemId ID completo do item, como: "T4_MAIN_SWORD" ou "T5_MAIN_SWORD@2"
-     * @return ReceitaCraft com a lista de materiais, ou null se não tiver receita
-     */
-
-    public ReceitaCraft buscarReceita(String itemId)
-            throws IOException, InterruptedException {
-
-        // tenta com o ID completo primeiro, se falhar usa o ID base sem encantamento
-        String url = BASE + itemId + "/data";
-        ReceitaCraft resultado = tentarBuscar(url, itemId);
-        if (resultado == null && itemId.contains("@")) {
-            String idBase = itemId.split("@")[0];
-            url = BASE + idBase + "/data";
-            resultado = tentarBuscar(url, idBase);
+    public ReceitaCraft buscarReceita(String itemId) throws IOException, InterruptedException {
+        ReceitaCraft r = tentarBuscar(BASE + itemId + "/data", itemId);
+        if (r == null && itemId.contains("@")) {
+            String base = itemId.split("@")[0];
+            r = tentarBuscar(BASE + base + "/data", base);
         }
-        return resultado;
+        return r;
     }
 
-    private ReceitaCraft tentarBuscar(String url, String itemId)
-            throws IOException, InterruptedException {
+    public long buscarItemValue(String itemId) throws IOException, InterruptedException {
+        String id = itemId.contains("@") ? itemId.split("@")[0] : itemId;
+        HttpResponse<String> resp = executarGet(BASE + id + "/data");
+        if (resp == null || resp.statusCode() != 200) return 0;
+        try {
+            return getLong(JsonParser.parseString(resp.body()).getAsJsonObject(), "itemValue");
+        } catch (Exception e) { return 0; }
+    }
 
+    private ReceitaCraft tentarBuscar(String url, String itemId) throws IOException, InterruptedException {
+        HttpResponse<String> resp = executarGet(url);
+        if (resp == null || resp.statusCode() != 200) return null;
+        return parsearReceita(itemId, resp.body());
+    }
+
+    private HttpResponse<String> executarGet(String url) throws IOException, InterruptedException {
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(15))
                 .header("Accept", "application/json")
-                .GET()
-                .build();
-
-        HttpResponse<String> resp = cliente.send(req,
-                HttpResponse.BodyHandlers.ofString());
-
-        if (resp.statusCode() != 200) return null;
-        return parsearReceita(itemId, resp.body());
+                .GET().build();
+        return cliente.send(req, HttpResponse.BodyHandlers.ofString());
     }
 
     private ReceitaCraft parsearReceita(String itemId, String json) {
         try {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-
             JsonElement craftingEl = root.get("craftingRequirements");
             if (craftingEl == null || craftingEl.isJsonNull()) return null;
-
             JsonObject crafting = craftingEl.getAsJsonObject();
-
             double tempo = getDouble(crafting, "time");
             int focus = getInt(crafting, "craftingFocus");
-
             JsonElement listaEl = crafting.get("craftResourceList");
             if (listaEl == null || listaEl.isJsonNull()) return null;
-
-            JsonArray lista = listaEl.getAsJsonArray();
             List<ReceitaCraft.MaterialCraft> materiais = new ArrayList<>();
-
-            for (JsonElement el : lista) {
+            for (JsonElement el : listaEl.getAsJsonArray()) {
                 JsonObject mat = el.getAsJsonObject();
                 String nome = getStr(mat, "uniqueName");
                 int qtd = getInt(mat, "count");
-                if (nome != null && qtd > 0) {
-                    materiais.add(new ReceitaCraft.MaterialCraft(nome, qtd));
-                }
+                if (nome != null && qtd > 0) materiais.add(new ReceitaCraft.MaterialCraft(nome, qtd));
             }
-
-            if (materiais.isEmpty()) return null;
-
-            return new ReceitaCraft(itemId, tempo, focus, materiais);
-
-        } catch (Exception e) {
-            return null;
-        }
+            return materiais.isEmpty() ? null : new ReceitaCraft(itemId, tempo, focus, materiais);
+        } catch (Exception e) { return null; }
     }
 
-    // utilitarios
-    private String getStr(JsonObject obj, String campo) {
-        JsonElement el = obj.get(campo);
-        return (el != null && !el.isJsonNull()) ? el.getAsString() : null;
-    }
-
-    private int getInt(JsonObject obj, String campo) {
-        JsonElement el = obj.get(campo);
-        return (el != null && !el.isJsonNull()) ? el.getAsInt() : 0;
-    }
-
-    private double getDouble(JsonObject obj, String campo) {
-        JsonElement el = obj.get(campo);
-        return (el != null && !el.isJsonNull()) ? el.getAsDouble() : 0.0;
-    }
+    private String getStr(JsonObject o, String c) { JsonElement e = o.get(c); return (e!=null&&!e.isJsonNull())?e.getAsString():null; }
+    private int getInt(JsonObject o, String c) { JsonElement e = o.get(c); return (e!=null&&!e.isJsonNull())?e.getAsInt():0; }
+    private long getLong(JsonObject o, String c) { JsonElement e = o.get(c); return (e!=null&&!e.isJsonNull())?e.getAsLong():0L; }
+    private double getDouble(JsonObject o, String c) { JsonElement e = o.get(c); return (e!=null&&!e.isJsonNull())?e.getAsDouble():0.0; }
 }
