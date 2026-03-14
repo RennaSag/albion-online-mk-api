@@ -11,6 +11,7 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -27,31 +28,32 @@ import java.util.stream.Collectors;
 public class TelaPesquisaPrecos {
 
     // serviços
-    private final ApiService    apiService    = new ApiService();
-    private final BuscaService  buscaService  = new BuscaService();
-    private final List<Categoria> categorias  = BancoDeDados.getCategorias();
+    private final ApiService apiService = new ApiService();
+    private final BuscaService buscaService = new BuscaService();
+    private final List<Categoria> categorias = BancoDeDados.getCategorias();
+    private ImageView iconItem;
 
     // estado de seleção
     private ItemDefinition itemSelecionado = null;
 
     // controles do painel de filtros
-    private TextField      campoBusca;
-    private ComboBox<Categoria>     cbCategoria;
-    private ComboBox<Subcategoria>  cbSubcategoria;
-    private ComboBox<ItemDefinition>cbItem;
-    private ComboBox<String>        cbTier;
-    private ComboBox<String>        cbEncantamento;
-    private ComboBox<String>        cbQualidade;
-    private final List<CheckBox>    checksCidades = new ArrayList<>();
+    private TextField campoBusca;
+    private ComboBox<Categoria> cbCategoria;
+    private ComboBox<Subcategoria> cbSubcategoria;
+    private ComboBox<ItemDefinition> cbItem;
+    private ComboBox<String> cbTier;
+    private ComboBox<String> cbEncantamento;
+    private ComboBox<String> cbQualidade;
+    private final List<CheckBox> checksCidades = new ArrayList<>();
 
     // controles da área de resultados
-    private TableView<LinhaPreco>   tabelaResultados;
-    private Label                   labelStatus;
-    private ProgressIndicator       progresso;
-    private Button                  btnBuscar;
+    private TableView<LinhaPreco> tabelaResultados;
+    private Label labelStatus;
+    private ProgressIndicator progresso;
+    private Button btnBuscar;
 
     // modelo da tabela
-        public static class LinhaPreco {
+    public static class LinhaPreco {
         public final String itemId;
         public final String tier;
         public final String enchant;
@@ -65,16 +67,26 @@ public class TelaPesquisaPrecos {
         public LinhaPreco(String itemId, String tier, String enchant, String cidade,
                           String corCidade, String qualidade,
                           String sellMin, String buyMax, String atualizado) {
-            this.itemId     = itemId;
-            this.tier       = tier;
-            this.enchant    = enchant;
-            this.cidade     = cidade;
-            this.corCidade  = corCidade;
-            this.qualidade  = qualidade;
-            this.sellMin    = sellMin;
-            this.buyMax     = buyMax;
+            this.itemId = itemId;
+            this.tier = tier;
+            this.enchant = enchant;
+            this.cidade = cidade;
+            this.corCidade = corCidade;
+            this.qualidade = qualidade;
+            this.sellMin = sellMin;
+            this.buyMax = buyMax;
             this.atualizado = atualizado;
         }
+    }
+
+    //metodo auxiliar dos icones
+    private void atualizarIconeItem(String itemId) {
+        if (itemId == null || itemId.isBlank()) {
+            iconItem.setImage(null);
+            return;
+        }
+        String url = "https://render.albiononline.com/v1/item/" + itemId + ".png";
+        iconItem.setImage(new javafx.scene.image.Image(url, true)); // true = carrega em background
     }
 
 
@@ -110,12 +122,28 @@ public class TelaPesquisaPrecos {
         painel.setPrefWidth(300);
         painel.setStyle("-fx-background-color: #252525;");
 
+
+        //icone do item, controle de tamanho etc
+        iconItem = new ImageView();
+        iconItem.setFitWidth(120);
+        iconItem.setFitHeight(120);
+        iconItem.setPreserveRatio(true);
+        iconItem.setSmooth(true);
+
+        Label labelIcone = new Label("Item selecionado:");
+        labelIcone.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11px; -fx-font-weight: bold;");
+
+        VBox painelIcone = new VBox(6, labelIcone, iconItem);
+        painelIcone.setAlignment(Pos.CENTER);
+        painelIcone.setMaxWidth(Double.MAX_VALUE);
+
+
         // barra de busca por texto
         painel.getChildren().add(criarSecao("Busca por Nome"));
         campoBusca = new TextField();
         campoBusca.setPromptText("Ex: espada larga, cajado sagrado...");
         campoBusca.setStyle("-fx-background-color: #2e2e2e; -fx-text-fill: #e0e0e0; "
-                           + "-fx-border-color: #444; -fx-border-radius: 4; -fx-background-radius: 4;");
+                + "-fx-border-color: #444; -fx-border-radius: 4; -fx-background-radius: 4;");
         campoBusca.textProperty().addListener((obs, ant, novo) -> onBuscaTexto(novo));
         painel.getChildren().add(campoBusca);
 
@@ -149,7 +177,7 @@ public class TelaPesquisaPrecos {
         painel.getChildren().add(criarSecao("Tier"));
         cbTier = new ComboBox<>();
         cbTier.setItems(FXCollections.observableArrayList(
-            "Todos", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"));
+                "Todos", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"));
         cbTier.setValue("Todos");
         cbTier.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbTier);
@@ -159,7 +187,7 @@ public class TelaPesquisaPrecos {
         painel.getChildren().add(criarSecao("Encantamento"));
         cbEncantamento = new ComboBox<>();
         cbEncantamento.setItems(FXCollections.observableArrayList(
-            "Todos", "Sem encantamento", ".1", ".2", ".3", ".4"));
+                "Todos", "Sem encantamento", ".1", ".2", ".3", ".4"));
         cbEncantamento.setValue("Todos");
         cbEncantamento.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbEncantamento);
@@ -191,15 +219,15 @@ public class TelaPesquisaPrecos {
         btnBuscar = new Button("Buscar Preços");
         btnBuscar.setMaxWidth(Double.MAX_VALUE);
         btnBuscar.setStyle(
-            "-fx-background-color: #5a8dee; -fx-text-fill: white; "
-            + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 0;");
+                "-fx-background-color: #5a8dee; -fx-text-fill: white; "
+                        + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 0;");
         btnBuscar.setOnAction(e -> executarBusca());
 
         Button btnLimpar = new Button("Limpar");
         btnLimpar.setMaxWidth(Double.MAX_VALUE);
         btnLimpar.setStyle(
-            "-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
-            + "-fx-background-radius: 6; -fx-padding: 8 0;");
+                "-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
+                        + "-fx-background-radius: 6; -fx-padding: 8 0;");
         btnLimpar.setOnAction(e -> limpar());
 
 
@@ -215,7 +243,7 @@ public class TelaPesquisaPrecos {
 
         //espaço pro boltão "voltar" ficar mais afastado dos outros
         Region espaco = new Region();
-        espaco.setMinHeight(150);
+        //espaco.setMinHeight(10);
         VBox.setVgrow(espaco, Priority.ALWAYS);
 
 
@@ -232,7 +260,7 @@ public class TelaPesquisaPrecos {
         });
 
 
-        painel.getChildren().addAll(btnBuscar, btnLimpar, btnAtualizar, espaco, btnVoltar);
+        painel.getChildren().addAll(btnBuscar, btnLimpar, btnAtualizar, painelIcone, espaco, btnVoltar);
 
         ScrollPane scroll = new ScrollPane(painel);
         scroll.setFitToWidth(true);
@@ -265,16 +293,16 @@ public class TelaPesquisaPrecos {
         //parte com as colunas doq vai ser mostrado
         // o id do item não me interessa, eu n quero ver ele, vide linha 246, adicionar "colItem" antes de "colTier" pra ver
         // TableColumn<LinhaPreco, String> colItem   = coluna("Item ID",     180, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().itemId));
-        TableColumn<LinhaPreco, String> colTier   = coluna("Tier",         55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tier));
-        TableColumn<LinhaPreco, String> colEnch   = coluna("Encantamento",        55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().enchant));
+        TableColumn<LinhaPreco, String> colTier = coluna("Tier", 55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tier));
+        TableColumn<LinhaPreco, String> colEnch = coluna("Encantamento", 55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().enchant));
         TableColumn<LinhaPreco, String> colCidade = criarColunaCidade();
-        TableColumn<LinhaPreco, String> colQual   = coluna("Qualidade",   100, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().qualidade));
-        TableColumn<LinhaPreco, String> colSell   = criarColunaPreco("Preço dos Pedidos de Venda", 120, true);
-        TableColumn<LinhaPreco, String> colBuy    = criarColunaPreco("Preço dos Pedidos de Compra", 120, false);
-        TableColumn<LinhaPreco, String> colData   = coluna("Última atualização",   85, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado));
+        TableColumn<LinhaPreco, String> colQual = coluna("Qualidade", 100, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().qualidade));
+        TableColumn<LinhaPreco, String> colSell = criarColunaPreco("Preço dos Pedidos de Venda", 120, true);
+        TableColumn<LinhaPreco, String> colBuy = criarColunaPreco("Preço dos Pedidos de Compra", 120, false);
+        TableColumn<LinhaPreco, String> colData = coluna("Última atualização", 85, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado));
 
         tabelaResultados.getColumns().addAll(
-            colTier, colEnch, colCidade, colQual, colSell, colBuy, colData);
+                colTier, colEnch, colCidade, colQual, colSell, colBuy, colData);
 
         VBox area = new VBox(barraStatus, tabelaResultados);
         VBox.setVgrow(tabelaResultados, Priority.ALWAYS);
@@ -321,6 +349,7 @@ public class TelaPesquisaPrecos {
         itemSelecionado = cbItem.getValue();
         if (itemSelecionado != null) {
             campoBusca.setText(itemSelecionado.getNome());
+            atualizarIconeItem("T4_" + itemSelecionado.getId()); // T4 como preview padrão
         }
     }
 
@@ -339,16 +368,16 @@ public class TelaPesquisaPrecos {
         }
 
         List<String> cidades = checksCidades.stream()
-            .filter(CheckBox::isSelected)
-            .map(cb -> (String) cb.getUserData())
-            .collect(Collectors.toList());
+                .filter(CheckBox::isSelected)
+                .map(cb -> (String) cb.getUserData())
+                .collect(Collectors.toList());
 
         if (cidades.isEmpty()) {
             labelStatus.setText("Selecione ao menos uma cidade.");
             return;
         }
 
-        int tier    = parseTier(cbTier.getValue());
+        int tier = parseTier(cbTier.getValue());
         int enchant = parseEnchant(cbEncantamento.getValue());
         int quality = parseQuality(cbQualidade.getValue());
 
@@ -377,8 +406,12 @@ public class TelaPesquisaPrecos {
             ObservableList<LinhaPreco> linhas = processarResultados(entradas, quality, cidades);
             tabelaResultados.setItems(linhas);
             labelStatus.setText(linhas.isEmpty()
-                ? "Nenhum dado disponível para os filtros selecionados."
-                : linhas.size() + " resultados encontrados.");
+                    ? "Nenhum dado disponível para os filtros selecionados."
+                    : linhas.size() + " resultados encontrados.");
+
+            if (!linhas.isEmpty()) {
+                atualizarIconeItem(linhas.get(0).itemId);
+            }
         });
 
         tarefa.setOnFailed(e -> {
@@ -405,7 +438,7 @@ public class TelaPesquisaPrecos {
             PriceEntry atual = melhor.get(chave);
 
             if (atual == null
-                || (pe.getSellMin() > 0
+                    || (pe.getSellMin() > 0
                     && (atual.getSellMin() == 0 || pe.getSellMin() < atual.getSellMin()))) {
                 melhor.put(chave, pe);
             }
@@ -419,34 +452,34 @@ public class TelaPesquisaPrecos {
             if (pe.getSellMin() == 0 && pe.getBuyMax() == 0) continue;
 
             // extrai tier e encantamento do item ID
-            String[] partes  = pe.getItemId().split("_", 2); // ["T5", "MAIN_SWORD@2"]
-            String   tierStr = partes.length > 0 ? partes[0] : "?";
-            String   enchStr = pe.getItemId().contains("@")
-                               ? "." + pe.getItemId().split("@")[1]  //parte do q vai aparecer nas colunas, ex: encantamento .x (.1, .2, .3)
-                               : "0";
+            String[] partes = pe.getItemId().split("_", 2); // ["T5", "MAIN_SWORD@2"]
+            String tierStr = partes.length > 0 ? partes[0] : "?";
+            String enchStr = pe.getItemId().contains("@")
+                    ? "." + pe.getItemId().split("@")[1]  //parte do q vai aparecer nas colunas, ex: encantamento .x (.1, .2, .3)
+                    : "0";
 
             // cores das cidades
             String corCidade = BancoDeDados.CIDADES.stream()
-                .filter(c -> c.getApiId().equals(pe.getCidade()))
-                .map(CidadeInfo::getCor)
-                .findFirst()
-                .orElse("#888");
+                    .filter(c -> c.getApiId().equals(pe.getCidade()))
+                    .map(CidadeInfo::getCor)
+                    .findFirst()
+                    .orElse("#888");
 
             String qualLabel = quality == -1
-                ? FormatadorUtil.nomeQualidade(pe.getQualidade()) + " *"
-                : FormatadorUtil.nomeQualidade(pe.getQualidade());
+                    ? FormatadorUtil.nomeQualidade(pe.getQualidade()) + " *"
+                    : FormatadorUtil.nomeQualidade(pe.getQualidade());
 
 
             //formatacao pra aparecer na tela bonitinho
             linhas.add(new LinhaPreco(
-                pe.getItemId(),
-                tierStr,
-                enchStr,
-                pe.getCidade(),
-                corCidade,
-                qualLabel,
-                FormatadorUtil.formatarPreco(pe.getSellMin()),
-                FormatadorUtil.formatarPreco(pe.getBuyMax()),
+                    pe.getItemId(),
+                    tierStr,
+                    enchStr,
+                    pe.getCidade(),
+                    corCidade,
+                    qualLabel,
+                    FormatadorUtil.formatarPreco(pe.getSellMin()),
+                    FormatadorUtil.formatarPreco(pe.getBuyMax()),
 
                     FormatadorUtil.formatarData(
                             (pe.getSellDate() != null && !pe.getSellDate().startsWith("0001"))
@@ -458,9 +491,9 @@ public class TelaPesquisaPrecos {
 
         // ordena por tier > encantamento > cidade
         linhas.sort(Comparator
-            .comparing((LinhaPreco l) -> l.tier)
-            .thenComparing(l -> l.enchant)
-            .thenComparing(l -> l.cidade));
+                .comparing((LinhaPreco l) -> l.tier)
+                .thenComparing(l -> l.enchant)
+                .thenComparing(l -> l.cidade));
 
         return FXCollections.observableArrayList(linhas);
     }
@@ -500,33 +533,39 @@ public class TelaPesquisaPrecos {
     private int parseQuality(String val) {
         if (val == null) return -1;
         return switch (val) {
-            case "Normal"      -> 1;
-            case "Boa"         -> 2;
-            case "Notável"     -> 3;
-            case "Excelente"   -> 4;
-            case "Obra-prima"  -> 5;
-            default            -> -1;
+            case "Normal" -> 1;
+            case "Boa" -> 2;
+            case "Notável" -> 3;
+            case "Excelente" -> 4;
+            case "Obra-prima" -> 5;
+            default -> -1;
         };
     }
 
-    /** cria um label de secao estilizado. */
+    /**
+     * cria um label de secao estilizado.
+     */
     private Label criarSecao(String texto) {
         Label lbl = new Label(texto);
         lbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11px; -fx-font-weight: bold;");
         return lbl;
     }
 
-    /** aplica estilo escuro padrao a um ComboBox. */
+    /**
+     * aplica estilo escuro padrao a um ComboBox.
+     */
     private void estilizarComboBox(ComboBox<?> cb) {
         cb.setStyle("-fx-background-color: #2e2e2e; -fx-text-fill: #e0e0e0; "
-                   + "-fx-border-color: #444; -fx-border-radius: 4; -fx-background-radius: 4;");
+                + "-fx-border-color: #444; -fx-border-radius: 4; -fx-background-radius: 4;");
     }
 
-    /** cria uma coluna de tabela String. */
+    /**
+     * cria uma coluna de tabela String.
+     */
     private TableColumn<LinhaPreco, String> coluna(
             String titulo, double largura,
             javafx.util.Callback<TableColumn.CellDataFeatures<LinhaPreco, String>,
-                                 javafx.beans.value.ObservableValue<String>> callback) {
+                    javafx.beans.value.ObservableValue<String>> callback) {
 
         TableColumn<LinhaPreco, String> col = new TableColumn<>(titulo);
         col.setPrefWidth(largura);
@@ -534,12 +573,14 @@ public class TelaPesquisaPrecos {
         return col;
     }
 
-    /** coluna de cidade com marcador colorido. */
+    /**
+     * coluna de cidade com marcador colorido.
+     */
     private TableColumn<LinhaPreco, String> criarColunaCidade() {
         TableColumn<LinhaPreco, String> col = new TableColumn<>("Cidade");
         col.setPrefWidth(130);
         col.setCellValueFactory(r ->
-            new javafx.beans.property.SimpleStringProperty(r.getValue().cidade));
+                new javafx.beans.property.SimpleStringProperty(r.getValue().cidade));
 
         col.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -555,10 +596,10 @@ public class TelaPesquisaPrecos {
 
                 // Nome amigável da cidade
                 String nomeCidade = BancoDeDados.CIDADES.stream()
-                    .filter(c -> c.getApiId().equals(item))
-                    .map(CidadeInfo::getNome)
-                    .findFirst()
-                    .orElse(item);
+                        .filter(c -> c.getApiId().equals(item))
+                        .map(CidadeInfo::getNome)
+                        .findFirst()
+                        .orElse(item);
 
                 HBox hb = new HBox(6, ponto, new Label(nomeCidade));
                 hb.setAlignment(Pos.CENTER_LEFT);
@@ -569,7 +610,9 @@ public class TelaPesquisaPrecos {
         return col;
     }
 
-    /** coluna de preço com cor vermelha (sell) ou verde (buy). */
+    /**
+     * coluna de preço com cor vermelha (sell) ou verde (buy).
+     */
     @SuppressWarnings("unchecked")
     private TableColumn<LinhaPreco, String> criarColunaPreco(
             String titulo, double largura, boolean ehVenda) {
@@ -577,7 +620,7 @@ public class TelaPesquisaPrecos {
         TableColumn<LinhaPreco, String> col = new TableColumn<>(titulo);
         col.setPrefWidth(largura);
         col.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-            ehVenda ? r.getValue().sellMin : r.getValue().buyMax));
+                ehVenda ? r.getValue().sellMin : r.getValue().buyMax));
 
         col.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -589,8 +632,8 @@ public class TelaPesquisaPrecos {
                 } else {
                     setText(item);
                     setStyle(ehVenda
-                        ? "-fx-text-fill: #e05555; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;"
-                        : "-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
+                            ? "-fx-text-fill: #e05555; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;"
+                            : "-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
                 }
             }
         });

@@ -45,7 +45,6 @@ public class BancoDeDados {
 
         // armas melee
         lista.add(new Categoria("", "Armas Corpo a Corpo", Arrays.asList(
-
                 new Subcategoria("Espadas", Arrays.asList(
                         item("MAIN_SWORD", "Espada Larga", "espada larga sword"),
                         item("MAIN_SCIMITAR_MORGANA", "Lâmina Aclarada", "lamina aclarada scimitar"),
@@ -65,7 +64,7 @@ public class BancoDeDados {
                         item("2H_SCYTHE_HELL", "Chama-Corpos", "chama corpos scythe"),
                         item("2H_BEARCLAW_AVALON", "Patas de Urso", "patas urso bearclaw"),
                         item("2H_REALMBREAKER_AVALON", "Quebra-Reinos", "quebra reinos realmbreaker"),
-                        item("2H_SCYTHE_CRYSTAL", "Foice de cristal", "foice de cristal")
+                        item("2H_SCYTHE_CRYSTAL", "Foice de Cristal", "foice de cristal")
                 )),
 
                 new Subcategoria("Maça", Arrays.asList(

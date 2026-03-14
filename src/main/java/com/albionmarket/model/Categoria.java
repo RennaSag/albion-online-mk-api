@@ -2,7 +2,7 @@ package com.albionmarket.model;
 
 import java.util.List;
 
-/** Aba de seleção das categoria principais, como "Armas Corpo a Corpo", "Cajados", "Armaduras" etc */
+/** aba de seleção das categoria principais, como "Armas Corpo a Corpo", "Cajados", "Armaduras" etc */
 public class Categoria {
 
     private final String icone;
