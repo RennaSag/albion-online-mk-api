@@ -19,7 +19,9 @@ import javafx.stage.Stage;
 import java.util.List;
 
 /**
- * tela de seleção de item para craft
+ * Tela de seleção de item para craft.
+ * Possui filtro de busca idêntico ao de TelaPesquisaPrecos,
+ * sem o seletor de qualidade.
  */
 public class TelaCraftSelecao {
 
@@ -30,13 +32,13 @@ public class TelaCraftSelecao {
     private ItemDefinition itemSelecionado = null;
 
     private TextField campoBusca;
-    private ComboBox<Categoria> cbCategoria;
-    private ComboBox<Subcategoria> cbSubcategoria;
+    private ComboBox<Categoria>      cbCategoria;
+    private ComboBox<Subcategoria>   cbSubcategoria;
     private ComboBox<ItemDefinition> cbItem;
-    private ComboBox<String> cbTier;
-    private ComboBox<String> cbEncantamento;
-    private Label labelItemAtual;
-    private ImageView iconItem;
+    private ComboBox<String>         cbTier;
+    private ComboBox<String>         cbEncantamento;
+    private Label                    labelItemAtual;
+    private ImageView               iconItem;
 
     public TelaCraftSelecao(Stage palco) {
         this.palco = palco;
@@ -60,7 +62,6 @@ public class TelaCraftSelecao {
         palco.setMinWidth(800);
         palco.setMinHeight(600);
         palco.centerOnScreen();
-        palco.setMaximized(true);
     }
 
     // header igual ao de TelaPesquisaPrecos
@@ -145,9 +146,7 @@ public class TelaCraftSelecao {
         cbTier.setValue("Todos");
         cbTier.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbTier);
-        cbTier.setOnAction(e -> {
-            if (itemSelecionado != null) atualizarIconeItem(montarIdIcone());
-        });
+        cbTier.setOnAction(ev -> { if (itemSelecionado != null) atualizarIconeItem(montarIdIcone()); });
         bloco.getChildren().add(cbTier);
 
         // encantamento
@@ -158,9 +157,7 @@ public class TelaCraftSelecao {
         cbEncantamento.setValue("Todos");
         cbEncantamento.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbEncantamento);
-        cbEncantamento.setOnAction(e -> {
-            if (itemSelecionado != null) atualizarIconeItem(montarIdIcone());
-        });
+        cbEncantamento.setOnAction(ev -> { if (itemSelecionado != null) atualizarIconeItem(montarIdIcone()); });
         bloco.getChildren().add(cbEncantamento);
 
         // centraliza o bloco
@@ -175,8 +172,8 @@ public class TelaCraftSelecao {
     // label e icone que mostram o item selecionado
     private VBox criarLabelItemAtual() {
         iconItem = new ImageView();
-        iconItem.setFitWidth(120);
-        iconItem.setFitHeight(120);
+        iconItem.setFitWidth(80);
+        iconItem.setFitHeight(80);
         iconItem.setPreserveRatio(true);
         iconItem.setSmooth(true);
 
@@ -236,7 +233,7 @@ public class TelaCraftSelecao {
             itemSelecionado = sugestoes.get(0);
             labelItemAtual.setText("Selecionado: " + itemSelecionado.getNome());
             labelItemAtual.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 13px;");
-            atualizarIconeItem(montarIdIcone());
+            atualizarIconeItem(montarIdIcone()); //monta o id do icone
         }
     }
 
@@ -298,12 +295,20 @@ public class TelaCraftSelecao {
             return;
         }
 
-        int tier = parseTier(cbTier.getValue());
+        int tier    = parseTier(cbTier.getValue());
         int enchant = parseEnchant(cbEncantamento.getValue());
 
-        // por enquanto só printa no console — a próxima tela virá aqui
-        System.out.println("Item selecionado para craft: " + item.getId()
-                + " | tier=" + tier + " | enchant=" + enchant);
+        new TelaCraft(palco, item, tier, enchant).mostrar();
+    }
+
+    private String montarIdIcone() {
+        if (itemSelecionado == null) return null;
+        int t = parseTier(cbTier.getValue());
+        int e = parseEnchant(cbEncantamento.getValue());
+        t = (t == -1) ? 4 : t;
+        e = (e == -1) ? 0 : e;
+        String base = "T" + t + "_" + itemSelecionado.getId();
+        return e > 0 ? base + "@" + e : base;
     }
 
     // utilitarios
@@ -327,19 +332,5 @@ public class TelaCraftSelecao {
     private void estilizarComboBox(ComboBox<?> cb) {
         cb.setStyle("-fx-background-color: #2e2e2e; -fx-text-fill: #e0e0e0; "
                 + "-fx-border-color: #444; -fx-border-radius: 4; -fx-background-radius: 4;");
-    }
-
-    private String montarIdIcone() {
-        if (itemSelecionado == null) return null;
-
-        int tier = parseTier(cbTier.getValue());
-        int enchant = parseEnchant(cbEncantamento.getValue());
-
-        // se "todos", usa T4 como predefinicao
-        int t = (tier == -1) ? 4 : tier;
-        int e = (enchant == -1) ? 0 : enchant;
-
-        String base = "T" + t + "_" + itemSelecionado.getId();
-        return e > 0 ? base + "@" + e : base;
     }
 }
