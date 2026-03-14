@@ -127,7 +127,6 @@ public class TelaLogin {
         palco.setTitle("Albion Market — Login");
         palco.setScene(cena);
         palco.setResizable(false);
-
         palco.setWidth(480);
         palco.setHeight(400);
         palco.centerOnScreen();

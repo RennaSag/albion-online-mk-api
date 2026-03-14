@@ -30,14 +30,21 @@ public class TelaHome {
         Button btnCraftar = criarBotao("  Craftar", "home-botao");
         Button btnRefinar = criarBotao("  Refinar", "home-botao");
 
-        btnPesquisar.setOnAction(e -> abrirTela(new TelaPesquisaPrecos().getCriarLayout(),
-                1280, 800, "Albion Market — Consulta de Preços")
-                );
+        btnPesquisar.setOnAction(e -> {
+            Scene cena = new Scene(new TelaPesquisaPrecos().getCriarLayout(), 1280, 800);
+            cena.getStylesheets().add(getClass().getResource("/estilos.css").toExternalForm());
+            palco.setTitle("Albion Market — Consulta de Preços");
+            palco.setScene(cena);
+            palco.setResizable(true);
+            palco.setMinWidth(900);
+            palco.setMinHeight(600);
+            palco.setMaximized(true);
+        });
 
 
 
         // craftar e refinar ainda sem tela, só deixa o botão desabilitado por enquanto
-        btnCraftar.setDisable(true);
+        btnCraftar.setOnAction(e -> new TelaCraftSelecao(palco).mostrar());
         btnRefinar.setDisable(true);
 
         HBox botoes = new HBox(20, btnPesquisar, btnCraftar, btnRefinar);
@@ -52,6 +59,7 @@ public class TelaHome {
 
 
         btnVoltar.setOnAction(e -> {
+            palco.setMaximized(false);
             new TelaLogin(palco).mostrar();
         });
 
@@ -75,6 +83,7 @@ public class TelaHome {
         palco.setWidth(700);
         palco.setHeight(400);
         palco.centerOnScreen();
+
 
         palco.show();
     }

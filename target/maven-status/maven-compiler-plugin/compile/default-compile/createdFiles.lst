@@ -12,6 +12,7 @@ com\albionmarket\ui\TelaLogin.class
 com\albionmarket\service\BancoDeDados.class
 com\albionmarket\model\ItemDefinition.class
 com\albionmarket\service\BuscaService$ResultadoInterno.class
+com\albionmarket\ui\TelaCraftSelecao.class
 com\albionmarket\ui\TelaPesquisaPrecos$LinhaPreco.class
 com\albionmarket\model\PriceEntry.class
 com\albionmarket\ui\TelaPesquisaPrecos$3.class
