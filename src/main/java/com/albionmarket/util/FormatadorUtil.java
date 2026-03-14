@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 /**
- * Formatacao e normalizacao para exibicao na interface.
+ * formatacao e normalizacao para exibicao na interface.
  */
 public class FormatadorUtil {
 
@@ -22,8 +22,7 @@ public class FormatadorUtil {
     /**
      * converte uma data ISO 8601 em texto relativo legível,
      * como: "agora", "3min", "2h", "5d"
-     * isso aqui na coluna "ultima atualizacao da tabela de pesquisa de precos
-     */
+     * isso aqui na coluna "ultima atualizacao da tabela de pesquisa de precos */
     public static String formatarData(String isoStr) {
         if (isoStr == null || isoStr.isBlank() || isoStr.startsWith("0001")) return "—";
 
@@ -35,7 +34,6 @@ public class FormatadorUtil {
                 data = java.time.LocalDateTime.parse(isoStr)
                         .toInstant(java.time.ZoneOffset.UTC);
             }
-
             long minutos = ChronoUnit.MINUTES.between(data, Instant.now());
             if (minutos <  2)    return "agora";
             if (minutos < 60)    return minutos + "min";

@@ -10,13 +10,15 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+import javafx.scene.control.CheckBox;
+import java.util.prefs.Preferences;
 
 public class TelaLogin {
 
     // credenciais padrão
     private static final String USUARIO_PADRAO = "admin";
     private static final String SENHA_PADRAO   = "admin";
+    private final Preferences prefs = Preferences.userNodeForPackage(TelaLogin.class);
 
     private final Stage palco;
 
@@ -41,7 +43,6 @@ public class TelaLogin {
         campoUsuario.getStyleClass().add("login-campo");
         campoUsuario.setMaxWidth(280);
 
-
         Label labelSenha = new Label("Senha");
         labelSenha.getStyleClass().add("login-label");
 
@@ -49,6 +50,19 @@ public class TelaLogin {
         campoSenha.setPromptText("Digite sua senha");
         campoSenha.getStyleClass().add("login-campo");
         campoSenha.setMaxWidth(280);
+
+        //guardar login, caixa de selecao
+        CheckBox lembrar = new CheckBox("Lembrar de mim");
+        lembrar.setStyle("-fx-text-fill: #ccc;");
+
+        String usuarioSalvo = prefs.get("usuario", "");
+        String senhaSalva   = prefs.get("senha", "");
+
+        if (!usuarioSalvo.isEmpty()) {
+            campoUsuario.setText(usuarioSalvo);
+            campoSenha.setText(senhaSalva);
+            lembrar.setSelected(true);
+        }
 
         // mensagem de erro
         Label msgErro = new Label();
@@ -66,13 +80,18 @@ public class TelaLogin {
             String usuario = campoUsuario.getText().trim();
             String senha   = campoSenha.getText();
 
+            //condicional pra abrir a tela se o login estiver correto
             if (USUARIO_PADRAO.equals(usuario) && SENHA_PADRAO.equals(senha)) {
-                abrirTelaPesquisa();
-            } else {
-                msgErro.setText("Usuário ou senha incorretos.");
-                msgErro.setVisible(true);
-                campoSenha.clear();
-                campoSenha.requestFocus();
+
+                if (lembrar.isSelected()) {
+                    prefs.put("usuario", usuario);
+                    prefs.put("senha", senha);
+                } else {
+                    prefs.remove("usuario");
+                    prefs.remove("senha");
+                }
+
+                abrirTelaHome();
             }
         };
 
@@ -88,6 +107,7 @@ public class TelaLogin {
                 labelUser, campoUsuario,
                 labelSenha, campoSenha,
                 msgErro,
+                lembrar,
                 btnEntrar
         );
         form.setAlignment(Pos.CENTER_LEFT);
@@ -103,33 +123,23 @@ public class TelaLogin {
                 getClass().getResource("/estilos.css").toExternalForm()
         );
 
+
         palco.setTitle("Albion Market — Login");
         palco.setScene(cena);
         palco.setResizable(false);
+
+        palco.setWidth(480);
+        palco.setHeight(400);
+        palco.centerOnScreen();
+
         palco.show();
     }
 
-    private void abrirTelaPesquisa() {
-        TelaPesquisaPrecos tela = new TelaPesquisaPrecos();
+    private void abrirTelaHome() {
+        new TelaHome(palco).mostrar();
 
-        javafx.scene.Scene cena = new javafx.scene.Scene(tela.getCriarLayout(), 1280, 800);
-        cena.getStylesheets().add(
-                getClass().getResource("/estilos.css").toExternalForm()
-        );
-
-
-
-        palco.setTitle("Albion Market — Consulta de Preços");
-        palco.setScene(cena);
-        palco.setResizable(true);
-        palco.setMinWidth(900);
-        palco.setMinHeight(600);
-
-        //ja abre a tela centralizada e em tela cheia
-        palco.centerOnScreen();
-        palco.setMaximized(true);
+        // abre a home sem tela cheia
+        palco.setMaximized(false);
     }
-
-
 
 }

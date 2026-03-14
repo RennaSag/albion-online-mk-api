@@ -1,6 +1,7 @@
 com\albionmarket\MainApp.class
 com\albionmarket\service\BuscaService.class
 com\albionmarket\util\FormatadorUtil.class
+com\albionmarket\ui\TelaHome.class
 com\albionmarket\ui\TelaPesquisaPrecos$2.class
 com\albionmarket\model\CidadeInfo.class
 com\albionmarket\model\Subcategoria.class

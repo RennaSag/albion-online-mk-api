@@ -87,17 +87,17 @@
     -fx-border-color: #555;
 }
 
-/* ProgressIndicator */
+/* progressIndicator */
 .progress-indicator .percentage {
     -fx-fill: #5a8dee;
 }
 
-/* Placeholder da tabela */
+/* placeholder da tabela */
 .table-view .placeholder .label {
     -fx-text-fill: #666;
 }
 
-/* ── Login ─────────────────────────────────────────────────────────── */
+/* Login */
 .login-raiz {
     -fx-background-color: #1e1e1e;
 }
@@ -150,4 +150,36 @@
 .login-erro {
     -fx-text-fill: #e05555;
     -fx-font-size: 12px;
+}
+
+/* Home */
+.home-raiz {
+    -fx-background-color: #1e1e1e;
+}
+
+.home-titulo {
+    -fx-text-fill: #e0e0e0;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.home-botao {
+    -fx-background-color: #2a2a2a;
+    -fx-text-fill: #e0e0e0;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-border-color: #3a3a3a;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.home-botao:hover {
+    -fx-background-color: #2980b9;
+    -fx-border-color: #2980b9;
+}
+
+.home-botao:disabled {
+    -fx-opacity: 0.35;
+    -fx-cursor: default;
 }

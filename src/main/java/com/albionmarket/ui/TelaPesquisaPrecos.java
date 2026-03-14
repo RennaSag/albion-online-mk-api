@@ -16,6 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -201,7 +202,37 @@ public class TelaPesquisaPrecos {
             + "-fx-background-radius: 6; -fx-padding: 8 0;");
         btnLimpar.setOnAction(e -> limpar());
 
-        painel.getChildren().addAll(btnBuscar, btnLimpar);
+
+        Button btnAtualizar = new Button("Atualizar");
+        btnAtualizar.setMaxWidth(Double.MAX_VALUE);
+        btnAtualizar.setStyle(
+                "-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
+                        + "-fx-background-radius: 6; -fx-padding: 8 0;"
+        );
+
+        btnAtualizar.setOnAction(e -> executarBusca());
+
+
+        //espaço pro boltão "voltar" ficar mais afastado dos outros
+        Region espaco = new Region();
+        espaco.setMinHeight(150);
+        VBox.setVgrow(espaco, Priority.ALWAYS);
+
+
+        Button btnVoltar = new Button("Voltar");
+        btnVoltar.setMaxWidth(Double.MAX_VALUE);
+        btnVoltar.getStyleClass().add("home-botao"); //estilo q faz o botão ficar azul qnd passa o mouse
+
+        btnVoltar.setOnAction(e -> {
+            Stage palco = (Stage) btnVoltar.getScene().getWindow();
+            new TelaHome(palco).mostrar();
+
+            palco.centerOnScreen();
+            palco.setMaximized(false);
+        });
+
+
+        painel.getChildren().addAll(btnBuscar, btnLimpar, btnAtualizar, espaco, btnVoltar);
 
         ScrollPane scroll = new ScrollPane(painel);
         scroll.setFitToWidth(true);
@@ -238,8 +269,8 @@ public class TelaPesquisaPrecos {
         TableColumn<LinhaPreco, String> colEnch   = coluna("Encantamento",        55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().enchant));
         TableColumn<LinhaPreco, String> colCidade = criarColunaCidade();
         TableColumn<LinhaPreco, String> colQual   = coluna("Qualidade",   100, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().qualidade));
-        TableColumn<LinhaPreco, String> colSell   = criarColunaPreco("Venda", 120, true);
-        TableColumn<LinhaPreco, String> colBuy    = criarColunaPreco("Compra", 120, false);
+        TableColumn<LinhaPreco, String> colSell   = criarColunaPreco("Preço dos Pedidos de Venda", 120, true);
+        TableColumn<LinhaPreco, String> colBuy    = criarColunaPreco("Preço dos Pedidos de Compra", 120, false);
         TableColumn<LinhaPreco, String> colData   = coluna("Última atualização",   85, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado));
 
         tabelaResultados.getColumns().addAll(
@@ -353,7 +384,7 @@ public class TelaPesquisaPrecos {
         tarefa.setOnFailed(e -> {
             progresso.setVisible(false);
             btnBuscar.setDisable(false);
-            labelStatus.setText("❌  Erro: " + tarefa.getException().getMessage());
+            labelStatus.setText("Erro: " + tarefa.getException().getMessage());
         });
 
         new Thread(tarefa, "thread-api").start();
@@ -391,7 +422,7 @@ public class TelaPesquisaPrecos {
             String[] partes  = pe.getItemId().split("_", 2); // ["T5", "MAIN_SWORD@2"]
             String   tierStr = partes.length > 0 ? partes[0] : "?";
             String   enchStr = pe.getItemId().contains("@")
-                               ? "." + pe.getItemId().split("@")[1] //parte do q vai aparecer nas colunas, ex: encantamento .x (.1, .2, .3)
+                               ? "." + pe.getItemId().split("@")[1]  //parte do q vai aparecer nas colunas, ex: encantamento .x (.1, .2, .3)
                                : "0";
 
             // cores das cidades
@@ -461,9 +492,10 @@ public class TelaPesquisaPrecos {
 
     private int parseEnchant(String val) {
         if (val == null || val.equals("Todos")) return -1;
-        if (val.equals("Sem encantamento"))     return 0;
-        return Integer.parseInt(val.replace("@", ""));
+        if (val.equals("Sem encantamento")) return 0;
+        return Integer.parseInt(val.replace(".", ""));
     }
+
 
     private int parseQuality(String val) {
         if (val == null) return -1;
