@@ -26,6 +26,7 @@ com\albionmarket\ui\TelaHome.class
 com\albionmarket\ui\TelaPesquisaPrecos$1.class
 com\albionmarket\service\ApiService.class
 com\albionmarket\ui\TelaCraft$LinhaPreco.class
+com\albionmarket\model\EstadoCraftSelecao.class
 com\albionmarket\ui\TelaCraft$2.class
 com\albionmarket\model\ItemDefinition.class
 com\albionmarket\ui\TelaCraft$8.class

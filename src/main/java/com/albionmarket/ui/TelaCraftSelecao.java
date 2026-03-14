@@ -1,6 +1,7 @@
 package com.albionmarket.ui;
 
 import com.albionmarket.model.Categoria;
+import com.albionmarket.model.EstadoCraftSelecao;
 import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.model.Subcategoria;
 import com.albionmarket.service.BancoDeDados;
@@ -40,8 +41,17 @@ public class TelaCraftSelecao {
     private Label                    labelItemAtual;
     private ImageView               iconItem;
 
+    // estado anterior (pode ser null se for abertura limpa)
+    private final EstadoCraftSelecao estadoAnterior;
+
     public TelaCraftSelecao(Stage palco) {
         this.palco = palco;
+        this.estadoAnterior = null;
+    }
+
+    public TelaCraftSelecao(Stage palco, EstadoCraftSelecao estado) {
+        this.palco = palco;
+        this.estadoAnterior = estado;
     }
 
     public void mostrar() {
@@ -62,6 +72,34 @@ public class TelaCraftSelecao {
         palco.setMinWidth(800);
         palco.setMinHeight(600);
         palco.centerOnScreen();
+
+        // restaura filtros anteriores se existirem
+        if (estadoAnterior != null) {
+            restaurarEstado();
+        }
+    }
+
+    private void restaurarEstado() {
+        // restaura tier
+        String tierStr = estadoAnterior.tier == -1 ? "Todos" : "T" + estadoAnterior.tier;
+        cbTier.setValue(tierStr);
+
+        // restaura encantamento
+        String enchStr;
+        if (estadoAnterior.enchant == -1)      enchStr = "Todos";
+        else if (estadoAnterior.enchant == 0)  enchStr = "Sem encantamento";
+        else                                   enchStr = "." + estadoAnterior.enchant;
+        cbEncantamento.setValue(enchStr);
+
+        // restaura item selecionado
+        if (estadoAnterior.item != null) {
+            itemSelecionado = estadoAnterior.item;
+            campoBusca.setText(estadoAnterior.textoBusca != null
+                    ? estadoAnterior.textoBusca : estadoAnterior.item.getNome());
+            labelItemAtual.setText("Selecionado: " + estadoAnterior.item.getNome());
+            labelItemAtual.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 13px;");
+            atualizarIconeItem(montarIdIcone());
+        }
     }
 
     // header igual ao de TelaPesquisaPrecos
@@ -186,7 +224,7 @@ public class TelaCraftSelecao {
     }
 
     // botão selecionar
-    private HBox criarBotoesAcao() {
+    private VBox criarBotoesAcao() {
         Button btnSelecionar = new Button("Selecionar");
         btnSelecionar.setPrefWidth(160);
         btnSelecionar.setPrefHeight(42);
@@ -195,9 +233,30 @@ public class TelaCraftSelecao {
                         + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
         btnSelecionar.setOnAction(e -> onSelecionar());
 
-        HBox hb = new HBox(btnSelecionar);
-        hb.setAlignment(Pos.CENTER);
-        return hb;
+        Button btnLimpar = new Button("Limpar");
+        btnLimpar.setPrefWidth(120);
+        btnLimpar.setPrefHeight(42);
+        btnLimpar.setStyle(
+                "-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
+                        + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
+        btnLimpar.setOnAction(e -> limpar());
+
+        VBox vb = new VBox(10, btnSelecionar, btnLimpar);
+        vb.setAlignment(Pos.CENTER);
+        return vb;
+    }
+
+    private void limpar() {
+        campoBusca.clear();
+        cbCategoria.setValue(null);
+        cbSubcategoria.setItems(FXCollections.emptyObservableList());
+        cbSubcategoria.setDisable(true);
+        cbItem.setItems(FXCollections.emptyObservableList());
+        cbItem.setDisable(true);
+        cbTier.setValue("Todos");
+        cbEncantamento.setValue("Todos");
+        itemSelecionado = null;
+        atualizarLabelSemSelecao();
     }
 
     // botão voltar centralizado no rodapé
@@ -233,7 +292,7 @@ public class TelaCraftSelecao {
             itemSelecionado = sugestoes.get(0);
             labelItemAtual.setText("Selecionado: " + itemSelecionado.getNome());
             labelItemAtual.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 13px;");
-            atualizarIconeItem(montarIdIcone()); //monta o id do icone
+            atualizarIconeItem(montarIdIcone());
         }
     }
 
@@ -298,8 +357,11 @@ public class TelaCraftSelecao {
         int tier    = parseTier(cbTier.getValue());
         int enchant = parseEnchant(cbEncantamento.getValue());
 
-        new TelaCraft(palco, item, tier, enchant).mostrar();
+        EstadoCraftSelecao estado = new EstadoCraftSelecao(
+                item, tier, enchant, campoBusca.getText());
+        new TelaCraft(palco, item, tier, enchant, estado).mostrar();
     }
+
 
     private String montarIdIcone() {
         if (itemSelecionado == null) return null;

@@ -1,6 +1,7 @@
 package com.albionmarket.ui;
 
 import com.albionmarket.model.*;
+import com.albionmarket.model.EstadoCraftSelecao;
 import com.albionmarket.service.ApiService;
 import com.albionmarket.service.BancoDeDados;
 import com.albionmarket.service.CraftService;
@@ -23,10 +24,8 @@ import javafx.stage.Stage;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
-
 /**
- * tela de craft com preços do item, receita com preços dos materiais e calculadora.
+ * Tela de craft: preços do item, receita com preços dos materiais e calculadora.
  */
 public class TelaCraft {
 
@@ -58,7 +57,7 @@ public class TelaCraft {
     // dados
     private ReceitaCraft receitaAtual;
 
-    // modelo tabela de preços do item
+    // ── Modelo tabela de preços do item ──────────────────────────────────
     public static class LinhaPreco {
         public final String itemId, qualidade, cidade, corCidade;
         public final String sellMin, atualizado;
@@ -81,7 +80,7 @@ public class TelaCraft {
         }
     }
 
-    // modelo tabela de receita (materiais)
+    // ── Modelo tabela de receita (materiais) ─────────────────────────────
     public static class LinhaMaterial {
         public final String iconeUrl, nome, tipo, cidade, corCidade;
         public final String buyMax, atualizado;
@@ -101,11 +100,20 @@ public class TelaCraft {
         }
     }
 
+    // estado dos filtros da tela anterior (para restaurar ao clicar Voltar)
+    private final EstadoCraftSelecao estadoSelecao;
+
     public TelaCraft(Stage palco, ItemDefinition item, int tier, int enchant) {
-        this.palco   = palco;
-        this.item    = item;
-        this.tier    = tier;
-        this.enchant = enchant;
+        this(palco, item, tier, enchant, null);
+    }
+
+    public TelaCraft(Stage palco, ItemDefinition item, int tier, int enchant,
+                     EstadoCraftSelecao estadoSelecao) {
+        this.palco         = palco;
+        this.item          = item;
+        this.tier          = tier;
+        this.enchant       = enchant;
+        this.estadoSelecao = estadoSelecao;
         int t = (tier    == -1) ? 4 : tier;
         int e = (enchant == -1) ? 0 : enchant;
         String base = "T" + t + "_" + item.getId();
@@ -134,7 +142,7 @@ public class TelaCraft {
         buscarTudo();
     }
 
-    // cabeçalho
+    // ── Cabeçalho ────────────────────────────────────────────────────────
     private HBox criarCabecalho() {
         Label titulo = new Label("Albion Market");
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
@@ -150,7 +158,7 @@ public class TelaCraft {
         return cab;
     }
 
-    // lateral esquerda
+    // ── Lateral esquerda ─────────────────────────────────────────────────
     private ScrollPane criarLateral() {
         VBox painel = new VBox(14);
         painel.setPadding(new Insets(16));
@@ -228,10 +236,18 @@ public class TelaCraft {
         Region espaco = new Region();
         VBox.setVgrow(espaco, Priority.ALWAYS);
 
+
+
         Button btnVoltar = new Button("Voltar");
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
         btnVoltar.getStyleClass().add("home-botao");
-        btnVoltar.setOnAction(ev -> new TelaCraftSelecao(palco).mostrar());
+        btnVoltar.setOnAction(ev -> {
+            if (estadoSelecao != null) {
+                new TelaCraftSelecao(palco, estadoSelecao).mostrar();
+            } else {
+                new TelaCraftSelecao(palco).mostrar();
+            }
+        });
 
         painel.getChildren().addAll(btnAtualizar, espaco, btnVoltar);
 
@@ -241,8 +257,9 @@ public class TelaCraft {
         return scroll;
     }
 
+    // ── Área central ─────────────────────────────────────────────────────
     private VBox criarAreaCentral() {
-        // tabela de preços do item
+        // -- tabela de preços do item --
         Label tituloPrecos = new Label("Preços no Mercado");
         tituloPrecos.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
 
@@ -265,7 +282,7 @@ public class TelaCraft {
         tabelaPrecos.getColumns().addAll(colQual, colCidadePreco, colSell, colDataPreco);
 
 
-        // tabela de receita com os materiais necessarios
+        // -- tabela de receita (materiais) --
         Label tituloReceita = new Label("Receita de Craft");
         tituloReceita.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
         tituloReceita.setPadding(new Insets(12, 0, 6, 0));
@@ -358,7 +375,7 @@ public class TelaCraft {
         return area;
     }
 
-    // logica principal
+    // ── Lógica principal ─────────────────────────────────────────────────
     private void buscarTudo() {
         List<String> cidades = checksCidades.stream()
                 .filter(CheckBox::isSelected)
@@ -382,16 +399,16 @@ public class TelaCraft {
 
             @Override
             protected Void call() throws Exception {
-                // 1 preços do item
+                // 1. preços do item
                 precos = apiService.buscarPrecos(item.getId(),
                         (tier == -1) ? 4 : tier,
                         (enchant == -1) ? 0 : enchant,
                         -1, cidades);
 
-                // 2 receita
+                // 2. receita
                 receita = craftService.buscarReceita(itemIdCompleto);
 
-                // 3 preços dos materiais (se receita encontrada)
+                // 3. preços dos materiais (se receita encontrada)
                 if (receita != null && !receita.getMateriais().isEmpty()) {
                     List<String> idsMat = receita.getMateriais().stream()
                             .map(ReceitaCraft.MaterialCraft::getUniqueName)
@@ -452,8 +469,7 @@ public class TelaCraft {
         for (int i = 0; i < Math.min(recursos.size(), 3); i++) {
             final int qtdBase = recursos.get(i).getCount();
             TableColumn<LinhaPreco, String> col = new TableColumn<>(nomes[i]);
-            col.setMinWidth(130);
-            col.setPrefWidth(USE_COMPUTED_SIZE); //a largura das colunas se adapta
+            col.setPrefWidth(115);
             col.setCellValueFactory(r -> {
                 int q = parseIntSafe(campoQuantidade, 1);
                 return new javafx.beans.property.SimpleStringProperty(
@@ -473,8 +489,7 @@ public class TelaCraft {
             final int qtdArtBase = artefatos.stream()
                     .mapToInt(ReceitaCraft.MaterialCraft::getCount).sum();
             TableColumn<LinhaPreco, String> colArt = new TableColumn<>("Qtd Artefatos");
-            colArt.setMinWidth(120);
-            colArt.setPrefWidth(USE_COMPUTED_SIZE); //colunas tbm adaptam a largura
+            colArt.setPrefWidth(110);
             colArt.setCellValueFactory(r -> {
                 int q = parseIntSafe(campoQuantidade, 1);
                 return new javafx.beans.property.SimpleStringProperty(
