@@ -856,7 +856,7 @@ public class TelaCraft {
 
         double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
         double nutricao = (iv * qtdFinal) * 0.1125;
-        double taxaCraftTotal = (taxaBarraca * nutricao) / 100.0;
+        double taxaCraftTotal = (nutricao / 100.0) * taxaBarraca;
         double custoTotal = (custoMateriais * qtdProduzir) + taxaCraftTotal;
         double receitaTotal = qtdFinal * precoVenda;
         double taxaMercadoValor = receitaTotal * taxaMercado;
