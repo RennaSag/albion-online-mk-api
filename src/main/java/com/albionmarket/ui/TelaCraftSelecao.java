@@ -16,6 +16,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import java.util.ArrayList;
 
 import java.util.List;
 import java.util.prefs.Preferences;
@@ -38,6 +39,8 @@ public class TelaCraftSelecao {
     private final Stage palco;
     private final BuscaService buscaService = new BuscaService();
     private final List<Categoria> categorias = BancoDeDados.getCategorias();
+
+    private final List<CheckBox> checksCidades = new ArrayList<>();
 
     private ItemDefinition itemSelecionado = null;
 
@@ -213,12 +216,27 @@ public class TelaCraftSelecao {
         });
         bloco.getChildren().add(cbEncantamento);
 
+        bloco.getChildren().add(criarSecao("Cidades"));
+        FlowPane gridCidades = new FlowPane(8, 8);
+        for (com.albionmarket.model.CidadeInfo cidade : BancoDeDados.CIDADES) {
+            CheckBox cb = new CheckBox(cidade.getNome());
+            cb.setSelected(true);
+            cb.setStyle("-fx-text-fill: #ccc;");
+            cb.setUserData(cidade.getApiId());
+            checksCidades.add(cb);
+            gridCidades.getChildren().add(cb);
+        }
+        bloco.getChildren().add(gridCidades);
+
         // centraliza o bloco
         HBox wrapper = new HBox(bloco);
         wrapper.setAlignment(Pos.CENTER);
 
         VBox container = new VBox(wrapper);
         container.setAlignment(Pos.CENTER);
+
+
+
         return container;
     }
 
@@ -372,12 +390,13 @@ public class TelaCraftSelecao {
         int tier = parseTier(cbTier.getValue());
         int enchant = parseEnchant(cbEncantamento.getValue());
 
+        List<String> cidadesSelecionadas = checksCidades.stream()
+                .filter(CheckBox::isSelected)
+                .map(cb -> (String) cb.getUserData())
+                .collect(java.util.stream.Collectors.toList());
         EstadoCraftSelecao estado = new EstadoCraftSelecao(
-                item, tier, enchant, campoBusca.getText());
-
-        // persiste filtros para restaurar mesmo após fechar o programa
+                item, tier, enchant, campoBusca.getText(), cidadesSelecionadas);
         salvarPreferencias(item, tier, enchant, campoBusca.getText());
-
         new TelaCraft(palco, item, tier, enchant, estado).mostrar();
     }
 
