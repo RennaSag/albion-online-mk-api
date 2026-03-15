@@ -42,5 +42,6 @@ com\albionmarket\ui\TelaCraft$LinhaMaterial.class
 com\albionmarket\service\BuscaService$ResultadoInterno.class
 com\albionmarket\ui\TelaCraft$LinhaCalculo.class
 com\albionmarket\model\ReceitaCraft.class
+com\albionmarket\ui\TelaOperacoesAtivas.class
 com\albionmarket\ui\TelaCraft$13.class
 com\albionmarket\ui\TelaPesquisaPrecos$3.class

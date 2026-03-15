@@ -29,6 +29,7 @@ public class TelaHome {
         Button btnPesquisar = criarBotao("  Pesquisar", "home-botao");
         Button btnCraftar = criarBotao("  Craftar", "home-botao");
         Button btnRefinar = criarBotao("  Refinar", "home-botao");
+        Button btnOperacoes = criarBotao("  Operações Ativas", "home-botao");
 
         btnPesquisar.setOnAction(e -> {
             Scene cena = new Scene(new TelaPesquisaPrecos().getCriarLayout(), 1280, 800);
@@ -47,7 +48,8 @@ public class TelaHome {
         btnCraftar.setOnAction(e -> new TelaCraftSelecao(palco).mostrar());
         btnRefinar.setDisable(true);
 
-        HBox botoes = new HBox(20, btnPesquisar, btnCraftar, btnRefinar);
+        btnOperacoes.setOnAction(e -> new TelaOperacoesAtivas(palco).mostrar());
+        HBox botoes = new HBox(20, btnPesquisar, btnCraftar, btnRefinar, btnOperacoes);
         botoes.setAlignment(Pos.CENTER);
 
         Region espaco = new Region();

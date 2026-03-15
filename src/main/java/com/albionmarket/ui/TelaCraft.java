@@ -90,6 +90,90 @@ public class TelaCraft {
         }
     }
 
+
+    //criador do json pra salvar as informações da operacao
+    private void salvarOperacao() {
+        try {
+            int t = (tier == -1) ? 4 : tier;
+            int e = (enchant == -1) ? 0 : enchant;
+
+            // monta JSON manualmente (sem dependência externa)
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\n");
+            sb.append("  \"item\": \"").append(item.getNome().replace("\"", "\\\"")).append("\",\n");
+            sb.append("  \"itemId\": \"").append(itemIdCompleto).append("\",\n");
+            sb.append("  \"tier\": ").append(t).append(",\n");
+            sb.append("  \"encantamento\": ").append(e).append(",\n");
+            sb.append("  \"parametros\": {\n");
+            sb.append("    \"quantidade\": \"").append(campoQuantidade.getText()).append("\",\n");
+            sb.append("    \"taxaRetorno\": \"").append(campoRetorno.getText()).append("\",\n");
+            sb.append("    \"taxaMercado\": \"").append(campoTaxaMercado.getText()).append("\",\n");
+            sb.append("    \"taxaBarraca\": \"").append(campoTaxaBarraca.getText()).append("\",\n");
+            sb.append("    \"itemValue\": \"").append(labelItemValue.getText()).append("\"\n");
+            sb.append("  },\n");
+
+
+            double precoVendaSalvar = tabelaPrecos.getItems().stream()
+                    .mapToDouble(l -> parseSilver(l.sellMin)).max().orElse(0.0);
+            double custoMatSalvar = 0;
+            if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
+                for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
+                    custoMatSalvar += parseSilver(lm.buyMax) * lm.qtdNecessaria;
+            } else if (tabelaReceita != null) {
+                for (LinhaMaterial lm : tabelaReceita.getItems())
+                    custoMatSalvar += parseSilver(lm.buyMax) * lm.qtd;
+            }
+            double qtdSalvar     = parseDoubleSafe(campoQuantidade, 1.0);
+            double retornoSalvar = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+            double mercadoSalvar = parseDoubleSafe(campoTaxaMercado, 3.0) / 100.0;
+            double barracaSalvar = parseDoubleSafe(campoTaxaBarraca, 3.0);
+            double qtdFinalSalvar   = qtdSalvar / (1.0 - retornoSalvar);
+            double nutricaoSalvar   = (itemValue * qtdFinalSalvar) * 0.1125;
+            double taxaCraftSalvar  = (barracaSalvar * nutricaoSalvar) / 100.0;
+            double custoTotalSalvar = (custoMatSalvar * qtdSalvar) + taxaCraftSalvar;
+            double receitaSalvar    = qtdFinalSalvar * precoVendaSalvar;
+            double taxaMercSalvar   = receitaSalvar * mercadoSalvar;
+            double lucroSalvar      = receitaSalvar - custoTotalSalvar - taxaMercSalvar;
+
+            String[] melhorCidadeHolder = {"—"};
+            double[] melhorVHolder = {0};
+            for (LinhaPreco lp : tabelaPrecos.getItems()) {
+                double v = parseSilver(lp.sellMin);
+                if (v > melhorVHolder[0]) { melhorVHolder[0] = v; melhorCidadeHolder[0] = lp.cidade; }
+            }
+            String nomeCidadeVendaSalvar = BancoDeDadosCraft.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(melhorCidadeHolder[0]))
+                    .map(CidadeInfo::getNome).findFirst().orElse(melhorCidadeHolder[0]);
+
+            sb.append("  \"calculadora\": {\n");
+            sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdSalvar)).append(" un\",\n");
+            sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalSalvar)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(precoVendaSalvar)).append("\",\n");
+            sb.append("    \"Local\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
+            sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoMatSalvar * qtdSalvar)).append("\",\n");
+            sb.append("    \"Local de compra dos materiais\": \"").append(melhorCidadeMateriais()).append("\",\n");
+            sb.append("    \"Custo total\": \"").append(fmtSilver(custoTotalSalvar)).append("\",\n");
+            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroSalvar >= 0 ? "+" : "").append(fmtSilver(lucroSalvar)).append("\"\n");
+            sb.append("  }\n");
+
+            sb.append("}\n");
+
+            // salva em arquivo com timestamp
+            String nomeArquivo = "operacao_"
+                    + itemIdCompleto + "_"
+                    + java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                    + ".json";
+            java.nio.file.Path caminho = java.nio.file.Paths.get(nomeArquivo);
+            java.nio.file.Files.writeString(caminho, sb.toString());
+
+            labelStatus.setText("Operação salva: " + nomeArquivo);
+
+        } catch (Exception ex) {
+            labelStatus.setText("Erro ao salvar: " + ex.getMessage());
+        }
+    }
+
     // modelo tabela de receita (materiais)
     public static class LinhaMaterial {
         public final String iconeUrl, nome, tipo, cidade, corCidade;
@@ -205,7 +289,7 @@ public class TelaCraft {
 
         // ícone
         ImageView icone = new ImageView();
-        icone.setFitWidth(100);
+        icone.setFitWidth(160);
         icone.setFitHeight(100);
         icone.setPreserveRatio(true);
         icone.setSmooth(true);
@@ -240,9 +324,9 @@ public class TelaCraft {
         painel.getChildren().addAll(
                 label("Quantidade a craftar"), campoQuantidade,
                 label("Taxa de retorno (%)"), campoRetorno,
-                label("Taxa do mercado (%)"), campoTaxaMercado,
-                label("Taxa da barraca (%)"), campoTaxaBarraca,
-                label("Valor do item"), labelItemValue
+                //label("Taxa do mercado (%)"), campoTaxaMercado,
+                label("Taxa da barraca (%)"), campoTaxaBarraca
+                //label("Valor do item"), labelItemValue
         );
         painel.getChildren().add(separador());
 
@@ -314,7 +398,20 @@ public class TelaCraft {
             }
         });
 
-        painel.getChildren().addAll(btnAtualizar, espaco, btnVoltar);
+
+        //botao pra iniciar a operacao e salvar o json
+        Button btnIniciarOperacao = new Button("Iniciar Operação");
+        btnIniciarOperacao.setMaxWidth(Double.MAX_VALUE);
+        btnIniciarOperacao.setStyle(
+                "-fx-background-color: #3dba6e; -fx-text-fill: white; "
+                        + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 0;");
+        btnIniciarOperacao.setOnAction(ev -> {
+            salvarOperacao();
+            btnIniciarOperacao.setDisable(true);
+            btnIniciarOperacao.setText("Operação Iniciada");
+        });
+
+        painel.getChildren().addAll(btnAtualizar, espaco, btnIniciarOperacao, btnVoltar);
 
         ScrollPane scroll = new ScrollPane(painel);
         scroll.setFitToWidth(true);
@@ -359,7 +456,7 @@ public class TelaCraft {
 
         // coluna ícone
         TableColumn<LinhaMaterial, String> colIcone = new TableColumn<>("  ");
-        colIcone.setPrefWidth(50);
+        colIcone.setPrefWidth(70);
         colIcone.setCellValueFactory(r ->
                 new javafx.beans.property.SimpleStringProperty(r.getValue().iconeUrl));
         colIcone.setCellFactory(tc -> new TableCell<>() {
@@ -920,38 +1017,45 @@ public class TelaCraft {
         tabelaPrecos.setEditable(ativo);
 
         // tabela de receita: coluna "Preço de Compra" editável
-        for (TableColumn<LinhaMaterial, ?> col : tabelaReceita.getColumns()) {
-            if (col.getText().equals("Preço de Compra")) {
-                @SuppressWarnings("unchecked")
-                TableColumn<LinhaMaterial, String> colStr = (TableColumn<LinhaMaterial, String>) col;
-                if (ativo) {
-                    colStr.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
-                    colStr.setOnEditCommit(ev -> {
-                        LinhaMaterial antiga = ev.getRowValue();
-                        int idx = tabelaReceita.getItems().indexOf(antiga);
-                        tabelaReceita.getItems().set(idx, new LinhaMaterial(
-                                antiga.iconeUrl, antiga.nome, antiga.tipo, antiga.qtd,
-                                antiga.cidade, antiga.corCidade, ev.getNewValue(), antiga.atualizado
-                        ));
-                        atualizarTabelaCalculo();
-                    });
-                } else {
-                    colStr.setCellFactory(tc -> new TableCell<>() {
-                        @Override
-                        protected void updateItem(String v, boolean empty) {
-                            super.updateItem(v, empty);
-                            if (empty || v == null || v.equals("—")) {
-                                setText("—");
-                                setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
-                            } else {
-                                setText(v);
-                                setStyle("-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
+// tabela de materiais: coluna "Preco de Compra" editável
+        if (tabelaMateriais != null) {
+            for (TableColumn<LinhaMaterialPreco, ?> col : tabelaMateriais.getColumns()) {
+                if (col.getText().equals("Preco de Compra")) {
+                    @SuppressWarnings("unchecked")
+                    TableColumn<LinhaMaterialPreco, String> colStr = (TableColumn<LinhaMaterialPreco, String>) col;
+                    if (ativo) {
+                        colStr.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
+                        colStr.setOnEditCommit(ev -> {
+                            LinhaMaterialPreco antiga = ev.getRowValue();
+                            int idx = tabelaMateriais.getItems().indexOf(antiga);
+                            tabelaMateriais.getItems().set(idx, new LinhaMaterialPreco(
+                                    antiga.nome, antiga.qtdNecessaria,
+                                    antiga.cidade, antiga.corCidade,
+                                    ev.getNewValue(), antiga.atualizado
+                            ));
+                            atualizarTabelaCalculo();
+                        });
+                    } else {
+                        colStr.setCellFactory(tc -> new TableCell<>() {
+                            @Override
+                            protected void updateItem(String v, boolean empty) {
+                                super.updateItem(v, empty);
+                                if (empty || v == null || v.equals("—")) {
+                                    setText("—");
+                                    setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
+                                } else {
+                                    setText(v);
+                                    setStyle("-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
+            tabelaMateriais.setEditable(ativo);
         }
+
+
         tabelaReceita.setEditable(ativo);
     }
 
@@ -970,7 +1074,11 @@ public class TelaCraft {
                 .max().orElse(0.0);
 
         double custoMateriais = 0;
-        if (tabelaReceita != null) {
+        if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
+            for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
+                custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria;
+            }
+        } else if (tabelaReceita != null) {
             for (LinhaMaterial lm : tabelaReceita.getItems()) {
                 custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
             }
@@ -1022,12 +1130,13 @@ public class TelaCraft {
                 new String[]{"Melhor preco de venda", fmtSilver(melhorVenda)},
                 new String[]{"Local", nomeMelhorCidade},
                 new String[]{"Custo dos materiais", fmtSilver(custoMateriais * qtdProduzir)},
+                new String[]{"Local de compra", melhorCidadeMateriais()},
                 // eu não preciso ver a nutrição
                 // new String[]{"Nutricao", fmtSilver(nutricao)},
                 new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)},
                 new String[]{"Custo total", fmtSilver(custoTotal)},
                 new String[]{"Receita total", fmtSilver(receitaTotal)},
-                new String[]{"Taxa do mercado", "- " + fmtSilver(taxaMercadoValor)},
+                //new String[]{"Taxa do mercado", "- " + fmtSilver(taxaMercadoValor)},
                 new String[]{"Lucro/Prejuizo", (lucro >= 0 ? "+" : "") + fmtSilver(lucro)}
         ));
 
@@ -1059,7 +1168,8 @@ public class TelaCraft {
             final String valor = metrica[1];
 
             TableColumn<LinhaCalculo, String> col = new TableColumn<>(titulo);
-            col.setMinWidth(165);
+            //largura das colunas
+            col.setMinWidth(140);
             col.setPrefWidth(USE_COMPUTED_SIZE_CALC);
             col.setSortable(false);
             col.setCellValueFactory(r ->
@@ -1079,7 +1189,7 @@ public class TelaCraft {
                         setStyle(lucro >= 0
                                 ? "-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-font-size: 13px; -fx-alignment: CENTER;"
                                 : "-fx-text-fill: #e05555; -fx-font-weight: bold; -fx-font-size: 13px; -fx-alignment: CENTER;");
-                    } else if (titulo.equals("Custo total") || titulo.equals("Taxa da barraca") || titulo.equals("Taxa do mercado")) {
+                    } else if (titulo.equals("Custo total") || titulo.equals("Taxa da barraca")) {
                         setStyle("-fx-text-fill: #e05555; -fx-font-size: 12px; -fx-alignment: CENTER;");
                     } else if (titulo.equals("Receita total")) {
                         setStyle("-fx-text-fill: #3dba6e; -fx-font-size: 12px; -fx-alignment: CENTER;");
@@ -1263,5 +1373,19 @@ public class TelaCraft {
         } catch (Exception ex) {
             return padrao;
         }
+    }
+
+
+    private String melhorCidadeMateriais() {
+        if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "—";
+        Map<String, Long> contagem = tabelaMateriais.getItems().stream()
+                .filter(l -> l.cidade != null && !l.cidade.equals("—"))
+                .collect(Collectors.groupingBy(l -> l.cidade, Collectors.counting()));
+        return contagem.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(e -> BancoDeDadosCraft.CIDADES.stream()
+                        .filter(c -> c.getApiId().equals(e.getKey()))
+                        .map(CidadeInfo::getNome).findFirst().orElse(e.getKey()))
+                .orElse("—");
     }
 }
