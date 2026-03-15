@@ -4,7 +4,7 @@ import com.albionmarket.model.Categoria;
 import com.albionmarket.model.EstadoCraftSelecao;
 import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.model.Subcategoria;
-import com.albionmarket.service.BancoDeDados;
+import com.albionmarket.service.BancoDeDadosCraft;
 import com.albionmarket.service.BuscaService;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -38,7 +38,7 @@ public class TelaCraftSelecao {
 
     private final Stage palco;
     private final BuscaService buscaService = new BuscaService();
-    private final List<Categoria> categorias = BancoDeDados.getCategorias();
+    private final List<Categoria> categorias = BancoDeDadosCraft.getCategorias();
 
     private final List<CheckBox> checksCidades = new ArrayList<>();
 
@@ -218,7 +218,7 @@ public class TelaCraftSelecao {
 
         bloco.getChildren().add(criarSecao("Cidades"));
         FlowPane gridCidades = new FlowPane(8, 8);
-        for (com.albionmarket.model.CidadeInfo cidade : BancoDeDados.CIDADES) {
+        for (com.albionmarket.model.CidadeInfo cidade : BancoDeDadosCraft.CIDADES) {
             CheckBox cb = new CheckBox(cidade.getNome());
             cb.setSelected(true);
             cb.setStyle("-fx-text-fill: #ccc;");
@@ -425,7 +425,7 @@ public class TelaCraftSelecao {
 
         if (!itemId.isBlank()) {
             // tenta encontrar o item no BancoDeDados
-            ItemDefinition found = BancoDeDados.getTodosItens().stream()
+            ItemDefinition found = BancoDeDadosCraft.getTodosItens().stream()
                     .filter(i -> i.getId().equals(itemId))
                     .findFirst().orElse(null);
             if (found != null) {

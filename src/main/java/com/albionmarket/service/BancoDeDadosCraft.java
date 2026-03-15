@@ -20,7 +20,7 @@ import java.util.List;
  * Nomes em portugues br
  * IDs baseados na Albion Online Data API (west.albion-online-data.com).
  */
-public class BancoDeDados {
+public class BancoDeDadosCraft {
 
     // cidades
     public static final List<CidadeInfo> CIDADES = Arrays.asList(
@@ -76,8 +76,6 @@ public class BancoDeDados {
                         item("2H_MACE_MORGANA", "Maça Cambriana", "maca cambriana mace"),
                         item("2H_DUALMACE_AVALON", "Jurador", "jurador"),
                         item("MAIN_MACE_CRYSTAL", "Monarca Tempestuoso", "monarca tempestuoso")
-
-
                 )),
 
                 new Subcategoria("Martelo", Arrays.asList(
@@ -89,7 +87,6 @@ public class BancoDeDados {
                         item("2H_RAM_KEEPER", "Guarda-bosques", "guarda bosques"),
                         item("2H_HAMMER_AVALON", "Mão da Justiça", "mao da justica mão"),
                         item("2H_HAMMER_CRYSTAL", "Martelo Estrondoso", "martelo estrondoso")
-
                 )),
 
                 new Subcategoria("Lança", Arrays.asList(
@@ -101,8 +98,6 @@ public class BancoDeDados {
                         item("2H_TRIDENT_UNDEAD", "Lança Trina", "lança trina lanca"),
                         item("MAIN_SPEAR_LANCE_AVALON", "Alvorada", "alvorada"),
                         item("2H_GLAIVE_CRYSTAL", "Archa Fraturada", "archa fraturada")
-
-
                 )),
 
                 new Subcategoria("Adaga", Arrays.asList(
@@ -114,7 +109,6 @@ public class BancoDeDados {
                         item("2H_DUALSICKLE_UNDEAD", "Mortíficos", "mortificos mortíficos"),
                         item("MAIN_DAGGER_HELL", "Presa demoníaca", "presa demoniaca"),
                         item("2H_DAGGERPAIR_CRYSTAL", "Gêmeas Aniquiladoras", "gemeas aniquiladoras")
-
                 )),
 
                 new Subcategoria("Bordão", Arrays.asList(
@@ -126,7 +120,6 @@ public class BancoDeDados {
                         item("2H_ROCKSTAFF_KEEPER", "Cajado do Equilíbrio", "cajado do equilibrio equilibrio"),
                         item("2H_QUARTERSTAFF_AVALON", "Buscador do Graal", "buscador do graal"),
                         item("2H_DOUBLEBLADEDSTAFF_CRYSTAL", "Lâminas Gêmeas Fantasmagóricas", "laminas gemeas fantasmagorias")
-
                 )),
 
                 new Subcategoria("Luvas de Guerra", Arrays.asList(
@@ -138,9 +131,9 @@ public class BancoDeDados {
                         item("2H_KNUCKLES_MORGANA", "Cestus Golpeadores", "cestus golpeadores"),
                         item("2H_KNUCKLES_AVALON", "Punhos de Avalon", "punhos de avalon"),
                         item("2H_KNUCKLES_CRYSTAL", "Braçadeiras Pulsantes", "bracadeiras pulsantes")
-
                 ))
         )));
+
 
         // cajados
         lista.add(new Categoria("", "Cajados", Arrays.asList(
@@ -174,8 +167,6 @@ public class BancoDeDados {
                         item("2H_ICECRYSTAL_UNDEAD", "Prisma Geleterno", "primas geleterno"),
                         item("MAIN_FROSTSTAFF_AVALON", "Uivo Frio", "uivo frio"),
                         item("2H_FROSTSTAFF_CRYSTAL", "Cajado Ártico", "cajado artico")
-
-
                 )),
 
                 new Subcategoria("Cajado Amaldiçoado", Arrays.asList(
@@ -247,10 +238,7 @@ public class BancoDeDados {
                         item("2H_SHAPESHIFTER_AVALON", "Cajado Invocador da Luz", "cajado invocador da luz"),
                         item("2H_SHAPESHIFTER_CRYSTAL", "Cajado Petrificante", "cajado petrificante")
                 ))
-
-
         )));
-
 
         // elmos, capotes e capuz
         lista.add(new Categoria("", "Elmos, Capotes e Capuz", Arrays.asList(
@@ -333,7 +321,6 @@ public class BancoDeDados {
         // botas e sapatos
         lista.add(new Categoria("", "Armadura de Calçado", Arrays.asList(
 
-
                 new Subcategoria("Sapato de Tecido", Arrays.asList(
                         item("SHOES_CLOTH_SET1", "Sandálias de Erudito", "sandálias de erudito"),
                         item("SHOES_CLOTH_SET2", "Sandálias de Clérigo", "sandálias de clerigo"),
@@ -371,17 +358,40 @@ public class BancoDeDados {
                 ))
         )));
 
+
         // mao secundaria
         lista.add(new Categoria("", "Mão Secundária", Arrays.asList(
 
-                new Subcategoria("Escudo", Arrays.asList(
-
+                new Subcategoria("Guerreiro", Arrays.asList(
+                        item("OFF_SHIELD", "Escudo", "escudo"),
+                        item("OFF_TOWERSHIELD_UNDEAD", "Sarcófago", "sarcofago"),
+                        item("OFF_SHIELD_HELL", "Escudo Vampírico", "escudo vampirico"),
+                        item("OFF_SPIKEDSHIELD_MORGANA", "Quebra-rostos", "quebra rostos"),
+                        item("OFF_SHIELD_AVALON", "Égide Astral", "egide astra"),
+                        item("OFF_SHIELD_CRYSTAL", "Barreira Inquebrável", "barreira inquebravel")
                 )),
 
-                new Subcategoria("Livro/Olho/Tocha/Brumário/Raiz", Arrays.asList(
-
+                new Subcategoria("Mago", Arrays.asList(
+                        item("OFF_BOOK", "Tomo de Feitiços", "tomo"),
+                        item("OFF_ORB_MORGANA", "Olho dos Segredos", "olho"),
+                        item("OFF_DEMONSKULL_HELL", "Muisec", "muisec"),
+                        item("OFF_TOTEM_KEEPER", "Raiz Mestra", "raiz"),
+                        item("OFF_CENSER_AVALON", "Incensario Celeste", "incensario"),
+                        item("OFF_TOME_CRYSTAL", "Grimório Estagnado", "grimorio")
                 )),
 
+                new Subcategoria("Caçador", Arrays.asList(
+                        item("OFF_TORCH", "Tocha", "tocha"),
+                        item("OFF_HORN_KEEPER", "Brumário", "brumario"),
+                        item("OFF_TALISMAN_AVALON", "Cetro Sagrado", "cetro sagrado"),
+                        item("OFF_LAMP_UNDEA", "Lume Críptico", "lume"),
+                        item("OFF_JESTERCANE_HELL", "Bengala Maligna", "bengala"),
+                        item("OFF_TORCH_CRYSTAL", "Tocha Chama Azul", "tocha chama azul")
+                ))
+        )));
+
+
+        lista.add(new Categoria("", "Capas", Arrays.asList(
                 new Subcategoria("Capas", Arrays.asList(
                         item("CAPE", "Capa", "capa cape"),
                         item("CAPEITEM_FW_BRIDGEWATCH", "Capa de Bridgewatch", "capa bridgewatch"),
@@ -389,49 +399,164 @@ public class BancoDeDados {
                         item("CAPEITEM_FW_LYMHURST", "Capa de Lymhurst", "capa lymhurst"),
                         item("CAPEITEM_FW_MARTLOCK", "Capa de Martlock", "capa martlock"),
                         item("CAPEITEM_FW_THETFORD", "Capa de Thetford", "capa thetford"),
-                        item("CAPEITEM_FW_FORTSTERLING", "Capa de Fort Sterling", "capa fort sterling")
+                        item("CAPEITEM_FW_FORTSTERLING", "Capa de Fort Sterling", "capa fort sterling"),
+                        item("CAPEITEM_AVALON", "Capa Avaloniana", "capa avaloniana"),
+                        item("CAPEITEM_SMUGGLER", "Capa de Contrabandista", "capa de contrabandista"),
+                        item("CAPEITEM_HERETIC", "Capa Herege", "capa herege"),
+                        item("CAPEITEM_UNDEAD", "Capa Morta-Viva", "capa morta viva"),
+                        item("CAPEITEM_KEEPER", "Capa Protetora", "capa protetora"),
+                        item("CAPEITEM_MORGANA", "Capa de Morgana", "capa de morgana"),
+                        item("CAPEITEM_DEMON", "Capa Demoníaca", "capa demoniaca")
                 ))
         )));
 
-        // montarias
+
+        lista.add(new Categoria("", "Bolsas", Arrays.asList(
+                new Subcategoria("Bolsas", Arrays.asList(
+                        item("BAG", "Bolsa", "bolsa bag"),
+                        item("BAG_INSIGHT", "Sacola da Visão", "sacola da visao")
+                ))
+        )));
+
+
+        // montarias, não é necessário
+        /*
         lista.add(new Categoria("", "Montarias", Arrays.asList(
+                new Subcategoria("Montarias Base", Arrays.asList(
+                        item("MOUNT_HORSE", "Cavalo", "cavalo"),
+                        item("MOUNT_ARMORED_HORSE", "Cavalo Blindado", "cavalo blindado"),
+                        item("MOUNT_OX", "Boi", "boi de transporte"),
+                        item("MOUNT_RAM_FW_MARTLOCK", "Carneiro", "carneiro"),
+                        item("MOUNT_DIREWOLF", "Lobo-Vil", "lobo vil"),
+                        item("MOUNT_GREYWOLF_FW_CAERLEON", "Lobo Cinzento", "lobo cinzento"),
+                        item("MOUNT_GIANTSTAG", "Veado Gigante", "veado gigante"),
+                        item("MOUNT_GIANTSTAG_MOOSE", "Alce", "alce"),
+                        item("MOUNT_COUGAR_KEEPER", "Garra-ligeira", "garra ligeira"),
+                        item("MOUNT_DIREBOAR_FW_LYMHURST", "Javali", "javali"),
+                        item("MOUNT_DIREBOAR_FW_LYMHURST_ELITE", "Javali de elite", "javali de elite"),
+                        item("MOUNT_DIREBOAR", "Javali-vil", "javali vil"),
+                        item("MOUNT_DIREBEAR_FW_FORTSTERLING", "Urso das Neves", "urso das neves"),
+                        item("MOUNT_DIREBEAR", "Urso-Vil", "urso vil"),
+                        item("MOUNT_SWAMPDRAGON_FW_THETFORD", "Salamandra do Pantâno", "salamandra do pantano"),
+                        item("MOUNT_SWAMPDRAGON", "Dragão do Pântano", "dragao do pantano"),
+                        item("MOUNT_MULE", "Mula", "mula"),
+                        item("MOUNT_MAMMOTH_TRANSPORT", "Mamute", "mamute"),
+                        item("MOUNT_TERRORBIRD_ADC", "Terrorbird", "avemoa terrorbird")
+        )));
+))*/
 
-                new Subcategoria("Cavalos", Arrays.asList(
 
+        lista.add(new Categoria("", "Consumíveis", Arrays.asList(
+                new Subcategoria("Comida", Arrays.asList(
+                        item("MEAL_GRILLEDFISH", "Peixe Grelhado", "peixe grelhado"),
+                        item("MEAL_SALAD", "Salada", "salada"),
+                        item("MEAL_SALAD_FISH", "Salada de Peixe", "salada de"),
+                        item("MEAL_SOUP", "Sopa", "sopa"),
+                        item("MEAL_SOUP_FISH", "Sopa de Peixe", "sopa de"),
+                        item("MEAL_OMELETTE", "Omelete", "omelete"),
+                        item("MEAL_OMELETTE_FISH", "Omelete de peixe", "omelete de"),
+                        item("MEAL_STEW", "Guisado", "guisado"),
+                        item("MEAL_STEW_FISH", "Guisado de Peixe", "guisado de")
                 )),
 
-                new Subcategoria("Bois e Mulas", Arrays.asList(
-
-                )),
-
-                new Subcategoria("Cervos e Alces", Arrays.asList(
-
-                )),
-
-                new Subcategoria("Lobos", Arrays.asList(
-                        item("MOUNT_DIREWOLF", "Lobo Feroz", "lobo feroz direwolf"),
-                        item("MOUNT_DIREWOLF_GHOST", "Lobo Fantasma", "lobo fantasma ghost direwolf"),
-                        item("MOUNT_GREYWOLF_FW_CAERLEON", "Lobo Cinza", "lobo cinza greywolf caerleon"),
-                        item("MOUNT_GREYWOLF_FW_CAERLEON_ELITE", "Lobo Cinza de Elite", "lobo cinza elite greywolf"),
-                        item("MOUNT_COUGAR_KEEPER", "Puma do Guardador", "puma cougar keeper"),
-                        item("MOUNT_COUGAR_KEEPER_ELITE", "Puma do Guardador de Elite", "puma cougar keeper elite"),
-                        item("MOUNT_RAGECLAW", "Garra-Fúria", "garra furia rageclaw")
-                )),
-
-                new Subcategoria("Ursos", Arrays.asList(
-
-                )),
-
-                new Subcategoria("Javalis e Dragões", Arrays.asList(
-
-                )),
-
-                new Subcategoria("Mamutes", Arrays.asList(
-
+                new Subcategoria("Poçoes", Arrays.asList(
+                        item("POTION_HEAL", "Poção de Cura", "pocao de cura"),
+                        item("POTION_ENERGY", "Poção de Energia", "pocao de energia"),
+                        item("POTION_REVIVE", "Poção de Crescimento", "pocao de crescimento"),
+                        item("OTION_STONESKIN", "Poção de Resistência", "pocao de resistencia"),
+                        item("POTION_SLOWFIELD", "Poção Pegajosa", "pocao pegajosa"),
+                        item("POTION_COOLDOWN", "Poção Venenosa", "pocao venenosa"),
+                        item("POTION_CLEANSE", "Poção de Invisibilidade", "pocao de invisibilidade"),
+                        item("POTION_MOB_RESET", "Poção Calmante", "pocao calmante"),
+                        item("POTION_CLEANSE2", "Poção Purificadora", "pocao purificadora"),
+                        item("POTION_ACID", "Poção Ácida", "pocao acida"),
+                        item("POTION_BERSERK", "Poção de Fúria", "pocao de furia"),
+                        item("POTION_LAVA", "Poção Infernal", "pocao infernal"),
+                        item("POTION_GATHER", "Poção de Coleta", "pocao de coleta"),
+                        item("POTION_TORNADO", "Tornado Engarrafado", "tornado engarrafado")
                 ))
+        )));
 
+
+        lista.add(new Categoria("", "Equipamento de Coleta", Arrays.asList(
+
+                new Subcategoria("Pesca", Arrays.asList(
+                        item("FISHINGBAIT", "Ísca", "isca"),
+                        item("2H_TOOL_FISHINGROD", "Vara de Pesca", "vara de pesca"),
+                        item("2H_TOOL_FISHINGROD_AVALON", "Vara de Pesca Avaloniana", "vara de pesca avaloniana"),
+                        item("HEAD_GATHERER_FISH", "Chapéu do Pescador", "chapeu do pescador"),
+                        item("ARMOR_GATHERER_FISH", "Traje do Pescador", "traje do pescador"),
+                        item("SHOES_GATHERER_FISH", "Botas do Pescador", "botas do pescador"),
+                        item("BACKPACK_GATHERER_FISH", "Mochila do Pescador", "mochila do pescador")
+                )),
+
+                new Subcategoria("Fibra", Arrays.asList(
+                        //infelizmente ele puxa o icone da foice de cristal pra foicezinha normal
+                        item("2H_TOOL_SICKLE", "Foice", "foice"),
+                        item("2H_TOOL_SICKLE_AVALON", "Foice Avaloniana", "foice avaloniana"),
+                        item("HEAD_GATHERER_FIBER", "Chapéu do Ceifeiro", "chapeu do ceifeiro"),
+                        item("ARMOR_GATHERER_FIBER", "Traje do Ceifeiro", "traje do ceifeiro"),
+                        item("SHOES_GATHERER_FIBER", "Botas do Ceifeiro", "botas do ceifeiro"),
+                        item("BACKPACK_GATHERER_FIBER", "Mochila do Ceifeiro", "mochila do ceifeiro")
+
+                )),
+
+                new Subcategoria("Pelego", Arrays.asList(
+                        item("2H_TOOL_KNIFE", "Faca de Esfolar", "faca de esfolar"),
+                        item("2H_TOOL_KNIFE_AVALON", "Faca de Esfolar Avaloniana", "faca de esfolar avaloniana"),
+                        item("HEAD_GATHERER_HIDE", "Chapéu do Esfolador", "chapeu do esforalor"),
+                        item("ARMOR_GATHERER_FIBER", "Traje do Esfolador", "traje do esfolador"),
+                        item("SHOES_GATHERER_FIBER", "Botas do Esfolador", "botas do esfolador"),
+                        item("BACKPACK_GATHERER_FIBER", "Mochila do Esfolador", "mochila do esfolador")
+                )),
+
+                new Subcategoria("Minérios", Arrays.asList(
+                        item("2H_TOOL_PICK", "Picareta", "picareta"),
+                        item("2H_TOOL_PICK_AVALON", "Picareta Avaloniana", "picareta avaloniana"),
+                        item("HEAD_GATHERER_ORE", "Chapéu do Minerador", "chapeu do minerador"),
+                        item("ARMOR_GATHERER_FIBER", "Traje do Minerador", "traje do minerador"),
+                        item("SHOES_GATHERER_FIBER", "Botas do Minerador", "botas do minerador"),
+                        item("BACKPACK_GATHERER_FIBER", "Mochila do Minerador", "mochila do minerador")
+                )),
+
+                new Subcategoria("Pedra", Arrays.asList(
+                        item("H_TOOL_HAMMER", "Martelo de Pedra", "martelo de pedra"),
+                        item("H_TOOL_HAMMER_AVALON", "Martelo de Pedra Avaloniano", "martelo de pedra avaloniano"),
+                        item("HEAD_GATHERER_ROCK", "Chapéu do Cavouqueiro", ""),
+                        item("ARMOR_GATHERER_FIBER", "Traje do Cavouqueiro", "traje do cavouqueiro"),
+                        item("SHOES_GATHERER_FIBER", "Botas do Cavouqueiro", "botas do cavouqueiro"),
+                        item("BACKPACK_GATHERER_FIBER", "Mochila do Cavouqueiro", "mochila do cavouqueiro")
+                )),
+
+                new Subcategoria("Madeira", Arrays.asList(
+                        item("2H_TOOL_AXE", "Machado", "machado"),
+                        item("2H_TOOL_AXE_AVALON", "Machado Avaloniano", "machado avaloniano"),
+                        item("HEAD_GATHERER_WOOD", "Chapéu do Lenhador", "chapeu do lenhador"),
+                        item("ARMOR_GATHERER_FIBER", "Traje do Lenhador", "traje do lenhador"),
+                        item("SHOES_GATHERER_FIBER", "Botas do Lenhador", "botas do lenhador"),
+                        item("BACKPACK_GATHERER_FIBER", "Mochila do Lenhador", "mochila do lenhador")
+                ))
+        )));
+
+
+
+        /*
+        lista.add(new Categoria("", "Recursos Brutos", Arrays.asList(
+
+                new Subcategoria("Pesca", Arrays.asList(
+                        item("", "", "")
+                        ))
 
         )));
+
+
+        lista.add(new Categoria("", "Recursos refinados", Arrays.asList(
+
+                new Subcategoria("Pesca", Arrays.asList(
+                        item("", "", "")
+                ))
+
+        )));*/
 
 
         return lista;

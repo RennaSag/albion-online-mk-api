@@ -3,7 +3,7 @@ package com.albionmarket.ui;
 import com.albionmarket.model.*;
 import com.albionmarket.model.EstadoCraftSelecao;
 import com.albionmarket.service.ApiService;
-import com.albionmarket.service.BancoDeDados;
+import com.albionmarket.service.BancoDeDadosCraft;
 import com.albionmarket.service.CraftService;
 import com.albionmarket.service.ItemValues;
 import com.albionmarket.util.FormatadorUtil;
@@ -522,7 +522,7 @@ public class TelaCraft {
                 }
                 LinhaMaterialPreco linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDados.CIDADES.stream()
+                String nome = BancoDeDadosCraft.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(v))
                         .map(CidadeInfo::getNome).findFirst().orElse(v);
                 HBox hb = new HBox(6, ponto, new Label(nome));
@@ -559,7 +559,7 @@ public class TelaCraft {
                 && estadoSelecao.cidades != null
                 && !estadoSelecao.cidades.isEmpty())
                 ? estadoSelecao.cidades
-                : BancoDeDados.CIDADES.stream()
+                : BancoDeDadosCraft.CIDADES.stream()
                 .map(CidadeInfo::getApiId)
                 .collect(Collectors.toList());
 
@@ -723,7 +723,7 @@ public class TelaCraft {
         List<LinhaPreco> linhas = new ArrayList<>();
         for (PriceEntry pe : melhor.values()) {
             if (pe.getSellMin() == 0 && pe.getBuyMax() == 0) continue;
-            String corCidade = BancoDeDados.CIDADES.stream()
+            String corCidade = BancoDeDadosCraft.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888");
 
@@ -781,9 +781,9 @@ public class TelaCraft {
                     && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : 4;
 
-            String nomeRecurso = BancoDeDados.getNomeRecurso(sufixoMat, tierMat);
+            String nomeRecurso = BancoDeDadosCraft.getNomeRecurso(sufixoMat, tierMat);
             String nomeMat = nomeRecurso != null ? nomeRecurso
-                    : BancoDeDados.getTodosItens().stream()
+                    : BancoDeDadosCraft.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
                     .map(ItemDefinition::getNome)
                     .findFirst().orElse(idMat);
@@ -796,7 +796,7 @@ public class TelaCraft {
             String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "—";
             String cidade = pe != null ? pe.getCidade() : "—";
             String corCidade = pe != null
-                    ? BancoDeDados.CIDADES.stream()
+                    ? BancoDeDadosCraft.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888")
                     : "#888";
@@ -848,9 +848,9 @@ public class TelaCraft {
                     && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : 4;
 
-            String nomeRecurso = BancoDeDados.getNomeRecurso(sufixoMat, tierMat);
+            String nomeRecurso = BancoDeDadosCraft.getNomeRecurso(sufixoMat, tierMat);
             String nomeMat = nomeRecurso != null ? nomeRecurso
-                    : BancoDeDados.getTodosItens().stream()
+                    : BancoDeDadosCraft.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
                     .map(ItemDefinition::getNome)
                     .findFirst().orElse(idMat);
@@ -861,7 +861,7 @@ public class TelaCraft {
             String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "—";
             String cidade = pe != null ? pe.getCidade() : "—";
             String corCidade = pe != null
-                    ? BancoDeDados.CIDADES.stream()
+                    ? BancoDeDadosCraft.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888")
                     : "#888";
@@ -1001,7 +1001,7 @@ public class TelaCraft {
             }
         }
         final String melhorCidade = melhorCidadeTemp;
-        String nomeMelhorCidade = BancoDeDados.CIDADES.stream()
+        String nomeMelhorCidade = BancoDeDadosCraft.CIDADES.stream()
                 .filter(c -> c.getApiId().equals(melhorCidade))
                 .map(CidadeInfo::getNome).findFirst().orElse(melhorCidade);
 
@@ -1150,7 +1150,7 @@ public class TelaCraft {
                 }
                 LinhaPreco linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDados.CIDADES.stream()
+                String nome = BancoDeDadosCraft.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(v))
                         .map(CidadeInfo::getNome).findFirst().orElse(v);
                 HBox hb = new HBox(6, ponto, new Label(nome));
@@ -1178,7 +1178,7 @@ public class TelaCraft {
                 }
                 LinhaMaterial linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDados.CIDADES.stream()
+                String nome = BancoDeDadosCraft.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(v))
                         .map(CidadeInfo::getNome).findFirst().orElse(v);
                 HBox hb = new HBox(6, ponto, new Label(nome));
