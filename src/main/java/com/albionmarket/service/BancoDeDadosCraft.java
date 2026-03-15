@@ -456,7 +456,14 @@ public class BancoDeDadosCraft {
                         item("MEAL_OMELETTE", "Omelete", "omelete"),
                         item("MEAL_OMELETTE_FISH", "Omelete de peixe", "omelete de"),
                         item("MEAL_STEW", "Guisado", "guisado"),
-                        item("MEAL_STEW_FISH", "Guisado de Peixe", "guisado de")
+                        item("MEAL_STEW_FISH", "Guisado de Peixe", "guisado de"),
+
+                        item("MEAL_PIE", "Torta", "torna"),
+                        item("MEAL_PIE_FISH", "Torta de peixe", "torta de"),
+                        item("MEAL_SANDWICH", "Sanduiche", "sanduiche"),
+                        item("MEAL_SANDWICH_FISH", "Sanduiche de Peixe", "sanduiche de"),
+                        item("MEAL_SANDWICH_AVALON", "Sanduiche de Avaloniano", "sanduiche ava")
+
                 )),
 
                 new Subcategoria("Poçoes", Arrays.asList(
