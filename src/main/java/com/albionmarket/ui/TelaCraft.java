@@ -1017,17 +1017,18 @@ public class TelaCraft {
 
         // monta lista de metricas
         List<String[]> listaMetricas = new ArrayList<>(Arrays.asList(
-                new String[]{"Qtd a craftar", fmt(qtdProduzir) + " un"},
+                new String[]{"Quantidade a craftar", fmt(qtdProduzir) + " un"},
                 new String[]{"Qtd final craftada", String.format("%.2f un", qtdFinal)},
-                new String[]{"Melhor preco venda", fmtSilver(melhorVenda)},
+                new String[]{"Melhor preco de venda", fmtSilver(melhorVenda)},
                 new String[]{"Local", nomeMelhorCidade},
-                new String[]{"Custo materiais", fmtSilver(custoMateriais * qtdProduzir)},
-                new String[]{"Nutricao", fmtSilver(nutricao)},
-                new String[]{"Taxa barraca", fmtSilver(taxaCraftTotal)},
+                new String[]{"Custo dos materiais", fmtSilver(custoMateriais * qtdProduzir)},
+                // eu não preciso ver a nutrição
+                // new String[]{"Nutricao", fmtSilver(nutricao)},
+                new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)},
                 new String[]{"Custo total", fmtSilver(custoTotal)},
                 new String[]{"Receita total", fmtSilver(receitaTotal)},
-                new String[]{"Taxa mercado", "- " + fmtSilver(taxaMercadoValor)},
-                new String[]{"Lucro / Prejuizo", (lucro >= 0 ? "+" : "") + fmtSilver(lucro)}
+                new String[]{"Taxa do mercado", "- " + fmtSilver(taxaMercadoValor)},
+                new String[]{"Lucro/Prejuizo", (lucro >= 0 ? "+" : "") + fmtSilver(lucro)}
         ));
 
         // insere qtd de recursos e artefatos antes de nutricao
@@ -1058,7 +1059,7 @@ public class TelaCraft {
             final String valor = metrica[1];
 
             TableColumn<LinhaCalculo, String> col = new TableColumn<>(titulo);
-            col.setMinWidth(120);
+            col.setMinWidth(165);
             col.setPrefWidth(USE_COMPUTED_SIZE_CALC);
             col.setSortable(false);
             col.setCellValueFactory(r ->
@@ -1074,11 +1075,11 @@ public class TelaCraft {
                     }
                     setText(valor);
                     // lucro verde, prejuízo vermelho
-                    if (titulo.equals("Lucro / Prejuízo")) {
+                    if (titulo.equals("Lucro/Prejuízo")) {
                         setStyle(lucro >= 0
                                 ? "-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-font-size: 13px; -fx-alignment: CENTER;"
                                 : "-fx-text-fill: #e05555; -fx-font-weight: bold; -fx-font-size: 13px; -fx-alignment: CENTER;");
-                    } else if (titulo.equals("Custo total") || titulo.equals("Taxa barraca") || titulo.equals("Taxa mercado")) {
+                    } else if (titulo.equals("Custo total") || titulo.equals("Taxa da barraca") || titulo.equals("Taxa do mercado")) {
                         setStyle("-fx-text-fill: #e05555; -fx-font-size: 12px; -fx-alignment: CENTER;");
                     } else if (titulo.equals("Receita total")) {
                         setStyle("-fx-text-fill: #3dba6e; -fx-font-size: 12px; -fx-alignment: CENTER;");

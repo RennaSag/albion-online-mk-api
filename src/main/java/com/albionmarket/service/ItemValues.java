@@ -275,7 +275,7 @@ public class ItemValues {
         reg("CAPEITEM_FW_CAERLEON", 4, 160);
         reg("CAPEITEM_FW_BRIDGEWATCH", 4, 160);
         reg("CAPEITEM_FW_FORTSTERLING", 4, 160);
-        reg("CAPEITEM_FW_CAERLEON", 4, 160);
+        reg("CAPEITEM_FW_THETFORD", 4, 160);
         reg("CAPEITEM_FW_LYMHURST", 4, 160);
         reg("CAPEITEM_FW_MARTLOCK", 4, 160);
         reg("CAPEITEM_AVALON", 4, 1120);
@@ -308,7 +308,7 @@ public class ItemValues {
         reg("MEAL_SANDWICH_AVALON", 4, 88);
 
         //equipamento de coleta
-        FALTANDO TERMINAR
+        //FALTANDO TERMINAR
     }
 
     // registra um item com seu tier minimo e valor base nesse tier
