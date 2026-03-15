@@ -145,6 +145,7 @@ public class TelaCraft {
                     .filter(c -> c.getApiId().equals(melhorCidadeHolder[0]))
                     .map(CidadeInfo::getNome).findFirst().orElse(melhorCidadeHolder[0]);
 
+
             sb.append("  \"calculadora\": {\n");
             sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdSalvar)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalSalvar)).append("\",\n");
@@ -309,7 +310,6 @@ public class TelaCraft {
         boxIcone.setAlignment(Pos.CENTER);
         boxIcone.setPadding(new Insets(0, 0, 10, 0));
         painel.getChildren().addAll(boxIcone, separador());
-
 
         // parâmetros
         painel.getChildren().add(secao("Parâmetros de Craft"));

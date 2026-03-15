@@ -12,6 +12,7 @@ import java.util.List;
 //sintaxe:
 //item("", "", ""),
 
+
 /**
  *
  * AS SUBCATEGORIAS JA PREENCHIDAS ESTÃO PRONTAS, FALTA AS OUTRAS CATEGORIAS E SUBCATEGORIAS DE ITENS DO JOGO
@@ -457,7 +458,6 @@ public class BancoDeDadosCraft {
                         item("MEAL_OMELETTE_FISH", "Omelete de peixe", "omelete de"),
                         item("MEAL_STEW", "Guisado", "guisado"),
                         item("MEAL_STEW_FISH", "Guisado de Peixe", "guisado de"),
-
                         item("MEAL_PIE", "Torta", "torna"),
                         item("MEAL_PIE_FISH", "Torta de peixe", "torta de"),
                         item("MEAL_SANDWICH", "Sanduiche", "sanduiche"),
@@ -470,7 +470,7 @@ public class BancoDeDadosCraft {
                         item("POTION_HEAL", "Poção de Cura", "pocao de cura"),
                         item("POTION_ENERGY", "Poção de Energia", "pocao de energia"),
                         item("POTION_REVIVE", "Poção de Crescimento", "pocao de crescimento"),
-                        item("OTION_STONESKIN", "Poção de Resistência", "pocao de resistencia"),
+                        item("POTION_STONESKIN", "Poção de Resistência", "pocao de resistencia"),
                         item("POTION_SLOWFIELD", "Poção Pegajosa", "pocao pegajosa"),
                         item("POTION_COOLDOWN", "Poção Venenosa", "pocao venenosa"),
                         item("POTION_CLEANSE", "Poção de Invisibilidade", "pocao de invisibilidade"),
@@ -486,7 +486,6 @@ public class BancoDeDadosCraft {
 
 
         lista.add(new Categoria("", "Equipamento de Coleta", Arrays.asList(
-
                 new Subcategoria("Pesca", Arrays.asList(
                         item("FISHINGBAIT", "Ísca", "isca"),
                         item("2H_TOOL_FISHINGROD", "Vara de Pesca", "vara de pesca"),
@@ -512,45 +511,42 @@ public class BancoDeDadosCraft {
                         item("2H_TOOL_KNIFE", "Faca de Esfolar", "faca de esfolar"),
                         item("2H_TOOL_KNIFE_AVALON", "Faca de Esfolar Avaloniana", "faca de esfolar avaloniana"),
                         item("HEAD_GATHERER_HIDE", "Chapéu do Esfolador", "chapeu do esforalor"),
-                        item("ARMOR_GATHERER_FIBER", "Traje do Esfolador", "traje do esfolador"),
-                        item("SHOES_GATHERER_FIBER", "Botas do Esfolador", "botas do esfolador"),
-                        item("BACKPACK_GATHERER_FIBER", "Mochila do Esfolador", "mochila do esfolador")
+                        item("ARMOR_GATHERER_HIDE", "Traje do Esfolador", "traje do esfolador"),
+                        item("SHOES_GATHERER_HIDE", "Botas do Esfolador", "botas do esfolador"),
+                        item("BACKPACK_GATHERER_HIDE", "Mochila do Esfolador", "mochila do esfolador")
                 )),
 
                 new Subcategoria("Minérios", Arrays.asList(
                         item("2H_TOOL_PICK", "Picareta", "picareta"),
                         item("2H_TOOL_PICK_AVALON", "Picareta Avaloniana", "picareta avaloniana"),
                         item("HEAD_GATHERER_ORE", "Chapéu do Minerador", "chapeu do minerador"),
-                        item("ARMOR_GATHERER_FIBER", "Traje do Minerador", "traje do minerador"),
-                        item("SHOES_GATHERER_FIBER", "Botas do Minerador", "botas do minerador"),
-                        item("BACKPACK_GATHERER_FIBER", "Mochila do Minerador", "mochila do minerador")
+                        item("ARMOR_GATHERER_ORE", "Traje do Minerador", "traje do minerador"),
+                        item("SHOES_GATHERER_ORE", "Botas do Minerador", "botas do minerador"),
+                        item("BACKPACK_GATHERER_ORE", "Mochila do Minerador", "mochila do minerador")
                 )),
 
                 new Subcategoria("Pedra", Arrays.asList(
                         item("H_TOOL_HAMMER", "Martelo de Pedra", "martelo de pedra"),
                         item("H_TOOL_HAMMER_AVALON", "Martelo de Pedra Avaloniano", "martelo de pedra avaloniano"),
                         item("HEAD_GATHERER_ROCK", "Chapéu do Cavouqueiro", ""),
-                        item("ARMOR_GATHERER_FIBER", "Traje do Cavouqueiro", "traje do cavouqueiro"),
-                        item("SHOES_GATHERER_FIBER", "Botas do Cavouqueiro", "botas do cavouqueiro"),
-                        item("BACKPACK_GATHERER_FIBER", "Mochila do Cavouqueiro", "mochila do cavouqueiro")
+                        item("ARMOR_GATHERER_ROCK", "Traje do Cavouqueiro", "traje do cavouqueiro"),
+                        item("SHOES_GATHERER_ROCK", "Botas do Cavouqueiro", "botas do cavouqueiro"),
+                        item("BACKPACK_GATHERER_ROCK", "Mochila do Cavouqueiro", "mochila do cavouqueiro")
                 )),
 
                 new Subcategoria("Madeira", Arrays.asList(
                         item("2H_TOOL_AXE", "Machado", "machado"),
                         item("2H_TOOL_AXE_AVALON", "Machado Avaloniano", "machado avaloniano"),
                         item("HEAD_GATHERER_WOOD", "Chapéu do Lenhador", "chapeu do lenhador"),
-                        item("ARMOR_GATHERER_FIBER", "Traje do Lenhador", "traje do lenhador"),
-                        item("SHOES_GATHERER_FIBER", "Botas do Lenhador", "botas do lenhador"),
-                        item("BACKPACK_GATHERER_FIBER", "Mochila do Lenhador", "mochila do lenhador")
+                        item("ARMOR_GATHERER_WOOD", "Traje do Lenhador", "traje do lenhador"),
+                        item("SHOES_GATHERER_WOOD", "Botas do Lenhador", "botas do lenhador"),
+                        item("BACKPACK_GATHERER_WOOD", "Mochila do Lenhador", "mochila do lenhador")
                 ))
         )));
 
-
-
         /*
         lista.add(new Categoria("", "Recursos Brutos", Arrays.asList(
-
-                new Subcategoria("Pesca", Arrays.asList(
+                new Subcategoria("Minerios", Arrays.asList(
                         item("", "", "")
                         ))
 
@@ -558,8 +554,7 @@ public class BancoDeDadosCraft {
 
 
         lista.add(new Categoria("", "Recursos refinados", Arrays.asList(
-
-                new Subcategoria("Pesca", Arrays.asList(
+                new Subcategoria("Barra", Arrays.asList(
                         item("", "", "")
                 ))
 
@@ -590,7 +585,7 @@ public class BancoDeDadosCraft {
     public static String getNomeRecurso(String sufixo, int tier) {
         String[] nomes = switch (sufixo) {
             case "METALBAR" ->
-                    new String[]{"", "", "Barra de Ferro", "Barra de Aço", "Barra de Aço Nobrium", "Barra de Titânio", "Barra de Runite", "Barra de Mithril", "Barra de Adamantium"};
+                    new String[]{"", "", "Barra de Ferro", "Barra de Aço", "Barra de Aço Nobrium", "Barra de Titânio", "Barra de Runita", "Barra de Mithril", "Barra de Adamantium"};
             case "LEATHER" ->
                     new String[]{"", "", "Couro", "Couro Grosso", "Couro Endurecido", "Couro Rígido", "Couro de Elite", "Couro de Sombra", "Couro de Sangue"};
             case "CLOTH" ->

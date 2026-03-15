@@ -35,6 +35,7 @@ public class CraftService {
         return r;
     }
 
+
     public long buscarItemValue(String itemId) throws IOException, InterruptedException {
         String id = itemId.contains("@") ? itemId.split("@")[0] : itemId;
         HttpResponse<String> resp = executarGet(BASE + id + "/data");
