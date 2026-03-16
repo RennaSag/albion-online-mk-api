@@ -133,7 +133,7 @@ public class TelaCraft {
             double taxaMercSalvar = receitaSalvar * mercadoSalvar;
             double lucroSalvar = receitaSalvar - custoTotalSalvar - taxaMercSalvar;
 
-            String[] melhorCidadeHolder = {"—"};
+            String[] melhorCidadeHolder = {"-"};
             double[] melhorVHolder = {0};
             for (LinhaPreco lp : tabelaPrecos.getItems()) {
                 double v = parseSilver(lp.sellMin);
@@ -244,7 +244,7 @@ public class TelaCraft {
         Scene cena = new Scene(raiz, 1280, 800);
         cena.getStylesheets().add(getClass().getResource("/estilos.css").toExternalForm());
 
-        palco.setTitle("Albion Market — Craft: " + item.getNome());
+        palco.setTitle("Albion Market - Craft: " + item.getNome());
         palco.setScene(cena);
         palco.setResizable(true);
         palco.setMinWidth(900);
@@ -260,7 +260,7 @@ public class TelaCraft {
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
-        Label subtitulo = new Label("Calculadora de Craft — " + item.getNome());
+        Label subtitulo = new Label("Calculadora de Craft - " + item.getNome());
         subtitulo.setStyle("-fx-text-fill: #999;");
 
         VBox textos = new VBox(2, titulo, subtitulo);
@@ -306,14 +306,19 @@ public class TelaCraft {
         campoTaxaMercado = campoCraft("3.0");
 
         campoTaxaBarraca = campoCraft("3.0");
-        labelItemValue = new Label("—");
+        labelItemValue = new Label("-");
         labelItemValue.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 12px; -fx-font-weight: bold;");
 
-        painel.getChildren().addAll(label("Quantidade a craftar"), campoQuantidade, label("Taxa de retorno (%)"), campoRetorno,
+        painel.getChildren().addAll(
+                label("Quantidade a craftar"), campoQuantidade,
+                label("Taxa de retorno (%)"), campoRetorno
                 //label("Taxa do mercado (%)"), campoTaxaMercado,
-                label("Taxa da barraca (%)"), campoTaxaBarraca
+                //label("Taxa da barraca (%)"), campoTaxaBarraca
                 //label("Valor do item"), labelItemValue
+                //essas colunas ai n me interessam
         );
+
+
         painel.getChildren().add(separador());
 
         // switch liga/desliga visual
@@ -533,8 +538,8 @@ public class TelaCraft {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null || v.equals("—")) {
-                    setText("—");
+                if (empty || v == null || v.equals("-")) {
+                    setText("-");
                     setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
                 } else {
                     setText(v);
@@ -606,8 +611,8 @@ public class TelaCraft {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null || v.equals("—")) {
-                    setText("—");
+                if (empty || v == null || v.equals("-")) {
+                    setText("-");
                     setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
                 } else {
                     setText(v);
@@ -623,8 +628,8 @@ public class TelaCraft {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null || v.equals("—")) {
-                    setText("—");
+                if (empty || v == null || v.equals("-")) {
+                    setText("-");
                     setGraphic(null);
                     return;
                 }
@@ -858,10 +863,10 @@ public class TelaCraft {
 
             // melhor preço de compra
             PriceEntry pe = melhorCompra.get(idMat);
-            String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "—";
-            String cidade = pe != null ? pe.getCidade() : "—";
+            String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
+            String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade())).map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
-            String data = pe != null ? FormatadorUtil.formatarData((pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001")) ? pe.getBuyDate() : pe.getSellDate()) : "—";
+            String data = pe != null ? FormatadorUtil.formatarData((pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001")) ? pe.getBuyDate() : pe.getSellDate()) : "-";
 
             linhas.add(new LinhaMaterial(iconeUrl, nomeMat2, tipo, mat.getCount(), cidade, corCidade, buyMax, data));
         }
@@ -905,10 +910,10 @@ public class TelaCraft {
             String nomeExibir = enchantAtual > 0 ? nomeMat + " ." + enchantAtual : nomeMat;
 
             PriceEntry pe = melhorCompra.get(idMat);
-            String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "—";
-            String cidade = pe != null ? pe.getCidade() : "—";
+            String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
+            String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade())).map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
-            String data = pe != null ? FormatadorUtil.formatarData((pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001")) ? pe.getBuyDate() : pe.getSellDate()) : "—";
+            String data = pe != null ? FormatadorUtil.formatarData((pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001")) ? pe.getBuyDate() : pe.getSellDate()) : "-";
 
             String tipoMat = mat.isArtefato() ? "Artefato" : "Recurso";
 
@@ -940,8 +945,8 @@ public class TelaCraft {
                         @Override
                         protected void updateItem(String v, boolean empty) {
                             super.updateItem(v, empty);
-                            if (empty || v == null || v.equals("—")) {
-                                setText("—");
+                            if (empty || v == null || v.equals("-")) {
+                                setText("-");
                                 setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
                             } else {
                                 setText(v);
@@ -975,8 +980,8 @@ public class TelaCraft {
                             @Override
                             protected void updateItem(String v, boolean empty) {
                                 super.updateItem(v, empty);
-                                if (empty || v == null || v.equals("—")) {
-                                    setText("—");
+                                if (empty || v == null || v.equals("-")) {
+                                    setText("-");
                                     setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
                                 } else {
                                     setText(v);
@@ -1026,22 +1031,36 @@ public class TelaCraft {
         long iv = itemValue; // game value puxado da API
 
         double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
+        //formula da soma dos termos da pg infinita
+
         double nutricao = (iv * qtdFinal) * 0.1125;
+        //formula da nutricao
+
         double taxaCraftTotal = (taxaBarraca * nutricao) / 100.0;
+        //custo total da barraquinha de craft
 
         // taxa de compra de materiais: 2.5% com premium, 5% sem
         double taxaCompra = possuiPremium ? 0.025 : 0.05;
-        double custoMatComTaxa = custoMateriais * qtdProduzir * (1.0 + taxaCompra);
+
+        // formula pra custo de compra de tudo com a taxa
+        double custoMatComTaxa = custoMateriais * qtdProduzir + (qtdProduzir * taxaCompra);
+
         double custoTotal = custoMatComTaxa + taxaCraftTotal;
+        //custo total
 
         // taxa de venda: 2.5% com premium, 5% sem
         double taxaVenda = possuiPremium ? 0.025 : 0.05;
+
         double receitaTotal = qtdFinal * precoVenda;
+
         double taxaMercadoValor = receitaTotal * taxaVenda;
+        //taxa na hora de vender
+        //albion igual brazil, imposto sobre tudo
+
         double lucro = receitaTotal - custoTotal - taxaMercadoValor;
 
         // pega melhor preco de venda e seu local
-        String melhorCidadeTemp = "—";
+        String melhorCidadeTemp = "-";
         double melhorVenda = 0;
         for (LinhaPreco lp : tabelaPrecos.getItems()) {
             double v = parseSilver(lp.sellMin);
@@ -1064,8 +1083,8 @@ public class TelaCraft {
                 new String[]{"Quantidade a craftar", fmt(qtdProduzir) + " un"},
                 new String[]{"Qtd final craftada", String.format("%.2f un", qtdFinal)},
                 new String[]{"Melhor preco de venda", fmtSilver(melhorVenda)},
-                new String[]{"Local", nomeMelhorCidade},
-                new String[]{"Custo dos materiais", fmtSilver(custoMatComTaxa)},
+                new String[]{"Local de Venda", nomeMelhorCidade},
+                new String[]{"Custo total dos materiais", fmtSilver(custoMatComTaxa)},
                 new String[]{"Local de Artefato", melhorCidadeMateriais()},
 
                 // eu não preciso ver a nutrição
@@ -1103,16 +1122,16 @@ public class TelaCraft {
             return enchantAtual2 > 0 ? nomeMat + " ." + enchantAtual2 : nomeMat;
         };
 
-        //cidade -> nome legível
-        java.util.function.Function<String, String> cidadeParaNome = apiId -> BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(apiId)).map(CidadeInfo::getNome).findFirst().orElse(apiId != null ? apiId : "—");
+        //cidade -> nome
+        java.util.function.Function<String, String> cidadeParaNome = apiId -> BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(apiId)).map(CidadeInfo::getNome).findFirst().orElse(apiId != null ? apiId : "-");
 
         for (int ri = 0; ri < Math.min(recursosCalc.size(), 3); ri++) {
             int qtdR = recursosCalc.get(ri).getCount() * (int) qtdProduzir;
             // insere "Qtd Recurso N"
             listaMetricas.add(listaMetricas.size() - 5, new String[]{nomesRecCalc[ri], String.valueOf(qtdR)});
-            // insere "Local Recurso N" logo depois
+            // insere "Local Recurso N"
             String nomeMatR = getNomeExibir.apply(recursosCalc.get(ri));
-            String cidadeR = cidadePorMaterial.getOrDefault(nomeMatR, "—");
+            String cidadeR = cidadePorMaterial.getOrDefault(nomeMatR, "-");
             listaMetricas.add(listaMetricas.size() - 5, new String[]{nomesLocCalc[ri], cidadeParaNome.apply(cidadeR)});
         }
         if (!artefatosCalc.isEmpty()) {
@@ -1120,7 +1139,7 @@ public class TelaCraft {
             listaMetricas.add(listaMetricas.size() - 5, new String[]{"Qtd Artefatos", String.valueOf(qtdArt)});
             // local do artefato
             String nomeArt = getNomeExibir.apply(artefatosCalc.get(0));
-            String cidadeArt = cidadePorMaterial.getOrDefault(nomeArt, "—");
+            String cidadeArt = cidadePorMaterial.getOrDefault(nomeArt, "-");
             listaMetricas.add(listaMetricas.size() - 5, new String[]{"Local Artefato", cidadeParaNome.apply(cidadeArt)});
         }
 
@@ -1130,10 +1149,8 @@ public class TelaCraft {
         tabelaCalculo.getColumns().clear();
 
         // modelo: Map<String, String> onde key = título da coluna
-        // usa LinhaCalculo com nomeColuna=título, valor=valor
-        // mas a tabela tem 1 linha e N colunas, então usa
         // List<Map<String,String>> com 1 elemento
-        // Para isso, reutiliza LinhaCalculo
+        // reutiliza LinhaCalculo
         // cada coluna exibe o valor fixo da métrica correspondente
 
         for (String[] metrica : metricas) {
@@ -1187,7 +1204,7 @@ public class TelaCraft {
     private static final double USE_COMPUTED_SIZE_CALC = Region.USE_COMPUTED_SIZE;
 
     private double parseSilver(String val) {
-        if (val == null || val.equals("—")) return 0;
+        if (val == null || val.equals("-")) return 0;
         try {
             return Double.parseDouble(val.replace(".", "").replace(",", "."));
         } catch (Exception e) {
@@ -1216,8 +1233,8 @@ public class TelaCraft {
     }
 
     private String fmtSilver(double v) {
-        if (Math.abs(v) >= 1_000_000) return String.format("%.2fM prata", v / 1_000_000);
-        if (Math.abs(v) >= 1_000) return String.format("%.1fK prata", v / 1_000);
+        if (Math.abs(v) >= 1_000_000) return String.format("%.2fM de prata", v / 1_000_000);
+        if (Math.abs(v) >= 1_000) return String.format("%.1fK de prata", v / 1_000);
         return String.format("%.0f prata", v);
     }
 
@@ -1255,8 +1272,8 @@ public class TelaCraft {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null || v.equals("—")) {
-                    setText("—");
+                if (empty || v == null || v.equals("-")) {
+                    setText("-");
                     setGraphic(null);
                     return;
                 }
@@ -1280,8 +1297,8 @@ public class TelaCraft {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null || v.equals("—")) {
-                    setText("—");
+                if (empty || v == null || v.equals("-")) {
+                    setText("-");
                     setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
                 } else {
                     setText(v);
@@ -1344,8 +1361,8 @@ public class TelaCraft {
 
 
     private String melhorCidadeMateriais() {
-        if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "—";
-        Map<String, Long> contagem = tabelaMateriais.getItems().stream().filter(l -> l.cidade != null && !l.cidade.equals("—")).collect(Collectors.groupingBy(l -> l.cidade, Collectors.counting()));
-        return contagem.entrySet().stream().max(Map.Entry.comparingByValue()).map(e -> BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(e.getKey())).map(CidadeInfo::getNome).findFirst().orElse(e.getKey())).orElse("—");
+        if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "-";
+        Map<String, Long> contagem = tabelaMateriais.getItems().stream().filter(l -> l.cidade != null && !l.cidade.equals("-")).collect(Collectors.groupingBy(l -> l.cidade, Collectors.counting()));
+        return contagem.entrySet().stream().max(Map.Entry.comparingByValue()).map(e -> BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(e.getKey())).map(CidadeInfo::getNome).findFirst().orElse(e.getKey())).orElse("-");
     }
 }
