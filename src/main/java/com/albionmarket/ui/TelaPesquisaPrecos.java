@@ -52,27 +52,33 @@ public class TelaPesquisaPrecos {
     private ProgressIndicator progresso;
     private Button btnBuscar;
 
-    // modelo da tabela
+    // modelo da tabela, template colunas
     public static class LinhaPreco {
         public final String itemId;
         public final String tier;
         public final String enchant;
+        public final String qualidade;
         public final String cidade;
         public final String corCidade;
-        public final String qualidade;
         public final String sellMin;
         public final String buyMax;
         public final String atualizado;
 
-        public LinhaPreco(String itemId, String tier, String enchant, String cidade,
-                          String corCidade, String qualidade,
-                          String sellMin, String buyMax, String atualizado) {
+        public LinhaPreco(String itemId,
+                          String tier,
+                          String enchant,
+                          String qualidade,
+                          String cidade,
+                          String corCidade,
+                          String sellMin,
+                          String buyMax,
+                          String atualizado) {
             this.itemId = itemId;
             this.tier = tier;
             this.enchant = enchant;
+            this.qualidade = qualidade;
             this.cidade = cidade;
             this.corCidade = corCidade;
-            this.qualidade = qualidade;
             this.sellMin = sellMin;
             this.buyMax = buyMax;
             this.atualizado = atualizado;
@@ -130,12 +136,12 @@ public class TelaPesquisaPrecos {
         iconItem.setPreserveRatio(true);
         iconItem.setSmooth(true);
 
-        Label labelIcone = new Label("Item selecionado:");
+        Label labelIcone = new Label();
         labelIcone.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11px; -fx-font-weight: bold;");
-
         VBox painelIcone = new VBox(6, labelIcone, iconItem);
         painelIcone.setAlignment(Pos.CENTER);
         painelIcone.setMaxWidth(Double.MAX_VALUE);
+        //eu n preciso de ter esse texto
 
 
         // barra de busca por texto
@@ -291,18 +297,20 @@ public class TelaPesquisaPrecos {
 
         // colunas
         //parte com as colunas doq vai ser mostrado
-        // o id do item não me interessa, eu n quero ver ele, vide linha 246, adicionar "colItem" antes de "colTier" pra ver
+        // o id do item não me interessa, eu n quero ver ele
         // TableColumn<LinhaPreco, String> colItem   = coluna("Item ID",     180, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().itemId));
         TableColumn<LinhaPreco, String> colTier = coluna("Tier", 55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tier));
         TableColumn<LinhaPreco, String> colEnch = coluna("Encantamento", 55, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().enchant));
-        TableColumn<LinhaPreco, String> colCidade = criarColunaCidade();
         TableColumn<LinhaPreco, String> colQual = coluna("Qualidade", 100, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().qualidade));
+        TableColumn<LinhaPreco, String> colCidade = criarColunaCidade();
         TableColumn<LinhaPreco, String> colSell = criarColunaPreco("Preço dos Pedidos de Venda", 120, true);
         TableColumn<LinhaPreco, String> colBuy = criarColunaPreco("Preço dos Pedidos de Compra", 120, false);
         TableColumn<LinhaPreco, String> colData = coluna("Última atualização", 85, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado));
 
+
+        //desenho resultado da tabela, aqui eu altero a ordem das colunas
         tabelaResultados.getColumns().addAll(
-                colTier, colEnch, colCidade, colQual, colSell, colBuy, colData);
+                colTier, colEnch, colQual, colCidade, colSell, colBuy, colData);
 
         VBox area = new VBox(barraStatus, tabelaResultados);
         VBox.setVgrow(tabelaResultados, Priority.ALWAYS);
@@ -470,14 +478,14 @@ public class TelaPesquisaPrecos {
                     : FormatadorUtil.nomeQualidade(pe.getQualidade());
 
 
-            //formatacao pra aparecer na tela bonitinho
+            //construtor das colunas, precisa ter os parametros ordenados corretamente
             linhas.add(new LinhaPreco(
                     pe.getItemId(),
                     tierStr,
                     enchStr,
+                    qualLabel,
                     pe.getCidade(),
                     corCidade,
-                    qualLabel,
                     FormatadorUtil.formatarPreco(pe.getSellMin()),
                     FormatadorUtil.formatarPreco(pe.getBuyMax()),
 
@@ -512,7 +520,7 @@ public class TelaPesquisaPrecos {
         cbQualidade.setValue(BancoDeDadosCraft.QUALIDADES[0]);
         checksCidades.forEach(cb -> cb.setSelected(true));
         tabelaResultados.setItems(FXCollections.emptyObservableList());
-        labelStatus.setText("Selecione um item e clique em Buscar Preços.");
+        labelStatus.setText("Selecione um item e clique em Buscar Preços");
         itemSelecionado = null;
     }
 

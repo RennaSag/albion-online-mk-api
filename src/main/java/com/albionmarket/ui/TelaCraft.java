@@ -175,6 +175,7 @@ public class TelaCraft {
                     .findFirst()
                     .orElse(melhorCidadeHolder[0]);
 
+
             sb.append("  \"calculadora\": {\n");
             sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdCraftInicial)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalCraftada)).append("\",\n");
@@ -496,6 +497,7 @@ public class TelaCraft {
         TableColumn<LinhaMaterial, String> colIcone = new TableColumn<>("  ");
         colIcone.setPrefWidth(70);
         colIcone.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().iconeUrl));
+
         colIcone.setCellFactory(tc -> new TableCell<>() {
             private final ImageView iv = new ImageView();
 
@@ -512,7 +514,11 @@ public class TelaCraft {
                     setGraphic(null);
                     return;
                 }
-                iv.setImage(new Image(url, true));
+                Image img = new Image(url, 32, 32, true, true, true);
+                img.errorProperty().addListener((obs, ant, erro) -> {
+                    if (erro) System.out.println("ERRO ao carregar: " + url + " | " + img.getException());
+                });
+                iv.setImage(img);
                 setGraphic(iv);
             }
         });
@@ -730,7 +736,6 @@ public class TelaCraft {
                 labelStatus.setText("Erro: " + getException().getMessage());
             }
         };
-
         new Thread(tarefa, "thread-craft").start();
     }
 
@@ -805,24 +810,37 @@ public class TelaCraft {
             String idMat = mat.getUniqueName();
             int enchantAtualR = (enchant == -1) ? 0 : enchant;
             boolean ehArtefato = mat.isArtefato();
+
+            String raw = ehArtefato ? BancoDeDadosCraft.getArtefatoSufixo(itemIdCompleto) : null;
+            String sufixoArtefato = raw != null ? raw.split(";;")[0] : null;
+            String nomeArtefato = raw != null ? raw.split(";;")[1] : null;
+
+            // ícone usa o sufixoArtefato se disponível, se n usa idMat, q mostra o id do material
+            int tAtual = (tier == -1) ? 4 : tier;
             String iconeUrl = ehArtefato
-                    ? "https://render.albiononline.com/v1/item/" + idMat + ".png"
+                    ? "https://render.albiononline.com/v1/item/" +
+                    (sufixoArtefato != null ? "T" + tAtual + "_" + sufixoArtefato : idMat) + ".png"
                     : enchantAtualR > 0
                     ? "https://render.albiononline.com/v1/item/" + idMat + ".png?quality=" + enchantAtualR
                     : "https://render.albiononline.com/v1/item/" + idMat + ".png";
 
-            String sufixoArtefato = ehArtefato ? BancoDeDadosCraft.getArtefatoSufixo(itemIdCompleto) : null;
-            String sufixoMat = sufixoArtefato != null ? sufixoArtefato
+
+            String sufixoMat = ehArtefato
+                    ? (sufixoArtefato != null ? sufixoArtefato : idMat)
                     : (idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat);
 
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : 4;
 
+
+            // nome: tenta getNomeRecurso, senão usa sufixoArtefato direto como fallback legível
             String nomeRecurso = BancoDeDadosCraft.getNomeRecurso(sufixoMat, tierMat);
             String nomeMat = nomeRecurso != null ? nomeRecurso
                     : BancoDeDadosCraft.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
-                    .map(ItemDefinition::getNome).findFirst().orElse(idMat);
+                    .map(ItemDefinition::getNome).findFirst()
+                    .orElse(nomeArtefato != null ? nomeArtefato : idMat);
+
             String nomeMat2 = enchantAtualR > 0 ? nomeMat + " ." + enchantAtualR : nomeMat;
             String tipo = mat.isArtefato() ? "Artefato" : "Recurso";
 
@@ -835,6 +853,8 @@ public class TelaCraft {
             String data = pe != null ? FormatadorUtil.formatarData(
                     (pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001")) ? pe.getBuyDate() : pe.getSellDate()) : "-";
 
+
+            System.out.println("ICONE URL: " + iconeUrl);
             linhas.add(new LinhaMaterial(iconeUrl, nomeMat2, tipo, mat.getCount(), cidade, corCidade, buyMax, data));
         }
 
@@ -844,6 +864,8 @@ public class TelaCraft {
         double alturaCalculada = alturaHeader + (linhas.size() * alturaLinha);
         tabelaReceita.setPrefHeight(alturaCalculada);
         tabelaReceita.setMaxHeight(alturaCalculada);
+
+
     }
 
     private void atualizarTabelaMateriais(ReceitaCraft receita, List<PriceEntry> precosMateirais) {
@@ -865,7 +887,16 @@ public class TelaCraft {
 
         for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
             String idMat = mat.getUniqueName();
-            String sufixoMat = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
+            boolean ehArtefato = mat.isArtefato();
+
+            String raw = ehArtefato ? BancoDeDadosCraft.getArtefatoSufixo(itemIdCompleto) : null;
+            String sufixoArtefato = raw != null ? raw.split(";;")[0] : null;
+            String nomeArtefato = raw != null ? raw.split(";;")[1] : null;
+
+            String sufixoMat = ehArtefato
+                    ? (sufixoArtefato != null ? sufixoArtefato : idMat)
+                    : (idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat);
+
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : 4;
 
@@ -873,8 +904,10 @@ public class TelaCraft {
             String nomeMat = nomeRecurso != null ? nomeRecurso
                     : BancoDeDadosCraft.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
-                    .map(ItemDefinition::getNome).findFirst().orElse(idMat);
+                    .map(ItemDefinition::getNome).findFirst()
+                    .orElse(nomeArtefato != null ? nomeArtefato : idMat);
             String nomeExibir = enchantAtual > 0 ? nomeMat + " ." + enchantAtual : nomeMat;
+
 
             PriceEntry pe = melhorCompra.get(idMat);
             String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
@@ -1350,6 +1383,5 @@ public class TelaCraft {
         sb.append("]");
         return sb.toString();
     }
-
-
 }
+
