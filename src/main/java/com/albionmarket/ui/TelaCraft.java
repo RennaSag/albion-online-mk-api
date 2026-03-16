@@ -424,7 +424,7 @@ public class TelaCraft {
     }
 
     // area central
-    private VBox criarAreaCentral() {
+    private ScrollPane criarAreaCentral() {
         // tabela de preços do item
         Label tituloPrecos = new Label("Preços no Mercado");
         tituloPrecos.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
@@ -656,13 +656,21 @@ public class TelaCraft {
                 tituloMateriais, tabelaMateriais,
                 tituloCalculo, tabelaCalculo
         );
+
         area.setPadding(new Insets(16));
         area.setStyle("-fx-background-color: #1e1e1e;");
         VBox.setVgrow(tabelaPrecos, Priority.SOMETIMES);
         VBox.setVgrow(tabelaReceita, Priority.SOMETIMES);
         VBox.setVgrow(tabelaMateriais, Priority.SOMETIMES);
         VBox.setVgrow(tabelaCalculo, Priority.ALWAYS);
-        return area;
+
+        ScrollPane scroll = new ScrollPane(area);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background: #1e1e1e; -fx-background-color: #1e1e1e;");
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        return scroll;
     }
 
     // logica principal
