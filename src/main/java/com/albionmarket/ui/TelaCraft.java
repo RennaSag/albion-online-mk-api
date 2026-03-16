@@ -841,7 +841,7 @@ public class TelaCraft {
                     .map(ItemDefinition::getNome).findFirst()
                     .orElse(nomeArtefato != null ? nomeArtefato : idMat);
 
-            String nomeMat2 = enchantAtualR > 0 ? nomeMat + " ." + enchantAtualR : nomeMat;
+            String nomeMat2 = (enchantAtualR > 0 && !ehArtefato) ? nomeMat + " ." + enchantAtualR : nomeMat;
             String tipo = mat.isArtefato() ? "Artefato" : "Recurso";
 
             PriceEntry pe = melhorCompra.get(idMat);
@@ -906,7 +906,7 @@ public class TelaCraft {
                     .filter(i -> i.getId().equals(sufixoMat))
                     .map(ItemDefinition::getNome).findFirst()
                     .orElse(nomeArtefato != null ? nomeArtefato : idMat);
-            String nomeExibir = enchantAtual > 0 ? nomeMat + " ." + enchantAtual : nomeMat;
+            String nomeExibir = (enchantAtual > 0 && !ehArtefato) ? nomeMat + " ." + enchantAtual : nomeMat;
 
 
             PriceEntry pe = melhorCompra.get(idMat);

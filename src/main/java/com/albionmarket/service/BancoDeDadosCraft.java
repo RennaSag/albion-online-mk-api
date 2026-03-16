@@ -37,7 +37,7 @@ public class BancoDeDadosCraft {
     };
 
     // mapeia itemId -> sufixo correto do artefato
-    // ids dos artefatos
+    // ids dos artefatos com os nomes deles pra ser usado separadamente
     public static String getArtefatoSufixo(String itemId) {
         String base = itemId.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");
         return switch (base) {
