@@ -894,9 +894,21 @@ public class TelaCraft {
             String idMat = mat.getUniqueName();
 
             int enchantAtualR = (enchant == -1) ? 0 : enchant;
-            String iconeUrl = "https://render.albiononline.com/v1/item/" + idMat + ".png";
+            boolean ehArtefato = mat.isArtefato();
+            int tAtual = (tier == -1) ? 4 : tier;
+            String iconeUrl = ehArtefato
+                    ? "https://render.albiononline.com/v1/item/" + idMat + ".png"
+                    : enchantAtualR > 0
+                    ? "https://render.albiononline.com/v1/item/" + idMat + ".png?quality=" + enchantAtualR
+                    : "https://render.albiononline.com/v1/item/" + idMat + ".png";
+            //o icone do artefato ta vindo errado
+                        String sufixoArtefato = ehArtefato
+                    ? BancoDeDadosCraft.getArtefatoSufixo(itemIdCompleto)
+                    : null;
+            String sufixoMat = sufixoArtefato != null ? sufixoArtefato
+                    : (idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat);
 
-            String sufixoMat = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
+
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T'
                     && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : 4;

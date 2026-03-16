@@ -36,6 +36,17 @@ public class BancoDeDadosCraft {
             "Todos (mais barato)", "Normal", "Boa", "Notável", "Excelente", "Obra-prima"
     };
 
+    // mapeia itemId -> sufixo correto do artefato
+    public static String getArtefatoSufixo(String itemId) {
+        // remove tier e enchant, pega só o sufixo base
+        String base = itemId.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");
+        return switch (base) {
+            case "2H_HAMMER_UNDEAD" -> "ARTEFACT_2H_HAMMER_UNDEAD";
+            // adicione outros conforme for usando
+            default -> null;
+        };
+    }
+
     // categorias
     public static List<Categoria> getCategorias() {
         List<Categoria> lista = new ArrayList<>();
@@ -590,6 +601,12 @@ public class BancoDeDadosCraft {
                     new String[]{"Tábuas de Bétual", "Tábuas de Castanheira", "Tábuas de Pinho", "Tábuas de Cedro", "Tábuas de Carvalho-Sangue", "Tábuas de Freixo", "Tábuas de Pau-Branco"};
             case "STONEBLOCK" ->
                     new String[]{"Bloco de Calcário", "Bloco de Arenito", "Bloco de Travertino", "Bloco de Granito", "Bloco de Ardósia", "Bloco de Basalto", "Bloco de Mármore"};
+
+            //parte dos artefatos, faltando terminar
+            case "ARTEFACT_2H_HAMMER_UNDEAD" ->
+                    new String[]{"", "", "", "Cabeça de Martelo Antiga do Aprendiz", "Cabeça de Martelo Antiga do Adepto", "Cabeça de Martelo Antiga do Especialista", "Cabeça de Martelo Antiga do Mestre", "Cabeça de Martelo Antiga do Grão-Mestre"};
+
+
             default -> null;
         };
         if (nomes == null || tier < 0 || tier >= nomes.length) return null;
