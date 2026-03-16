@@ -150,6 +150,7 @@ public class TelaOperacoesAtivas {
                 "Lucro/Prejuizo"
         );
 
+        //nessa parte ele monta os materiais com quantidades e cidades
         FlowPane boxCalc = new FlowPane();
         boxCalc.setHgap(20);
         boxCalc.setVgap(8);
@@ -163,7 +164,7 @@ public class TelaOperacoesAtivas {
                         String cid = extrairCampoInline(entrada, "cidade");
                         String qtd = extrairCampoInlineNumero(entrada, "quantidade");
                         if (mat != null && cid != null) {
-                            String label = qtd != null ? qtd + " - em " + cid : cid;
+                            String label = qtd != null ? qtd + " un - em " + cid : cid;
                             boxCalc.getChildren().add(miniLabel("Comprar: " + mat, label, "#5a8dee"));
                         }
 
