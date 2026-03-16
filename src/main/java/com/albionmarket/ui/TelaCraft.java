@@ -37,6 +37,7 @@ public class TelaCraft {
     private final int tier;
     private final int enchant;
     private final String itemIdCompleto;
+    private boolean possuiPremium = false;
 
     // serviços
     private final ApiService apiService = new ApiService();
@@ -346,7 +347,43 @@ public class TelaCraft {
         });
 
         painel.getChildren().add(switchBox);
+
+// switch premium
+        javafx.scene.canvas.Canvas canvasPremium = new javafx.scene.canvas.Canvas(44, 22);
+        final boolean[] estadoPremium = {false};
+
+        Runnable desenharPremium = () -> {
+            javafx.scene.canvas.GraphicsContext gc = canvasPremium.getGraphicsContext2D();
+            gc.clearRect(0, 0, 44, 22);
+            gc.setFill(estadoPremium[0]
+                    ? javafx.scene.paint.Color.web("#e0b84a")
+                    : javafx.scene.paint.Color.web("#555"));
+            gc.fillRoundRect(0, 0, 44, 22, 22, 22);
+            double bx = estadoPremium[0] ? 24 : 2;
+            gc.setFill(javafx.scene.paint.Color.WHITE);
+            gc.fillOval(bx, 2, 18, 18);
+        };
+        desenharPremium.run();
+
+        Label labelPremium = new Label("Possui premium ativa?");
+        labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
+
+        HBox switchPremiumBox = new HBox(8, canvasPremium, labelPremium);
+        switchPremiumBox.setAlignment(Pos.CENTER_LEFT);
+        switchPremiumBox.setCursor(javafx.scene.Cursor.HAND);
+        switchPremiumBox.setOnMouseClicked(ev -> {
+            estadoPremium[0] = !estadoPremium[0];
+            desenharPremium.run();
+            possuiPremium = estadoPremium[0];
+            atualizarTabelaCalculo();
+        });
+
+        painel.getChildren().add(switchPremiumBox);
         painel.getChildren().add(separador());
+
+
+        painel.getChildren().add(separador());
+
 
         // status
         progresso = new ProgressIndicator();
@@ -980,6 +1017,8 @@ public class TelaCraft {
             }
         }
 
+
+        //parte dos calulos
         double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
         double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
         double taxaMercado = parseDoubleSafe(campoTaxaMercado, 3.0) / 100.0;
@@ -989,9 +1028,16 @@ public class TelaCraft {
         double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
         double nutricao = (iv * qtdFinal) * 0.1125;
         double taxaCraftTotal = (taxaBarraca * nutricao) / 100.0;
-        double custoTotal = (custoMateriais * qtdProduzir) + taxaCraftTotal;
+
+        // taxa de compra de materiais: 2.5% com premium, 5% sem
+        double taxaCompra = possuiPremium ? 0.025 : 0.05;
+        double custoMatComTaxa = custoMateriais * qtdProduzir * (1.0 + taxaCompra);
+        double custoTotal = custoMatComTaxa + taxaCraftTotal;
+
+        // taxa de venda: 2.5% com premium, 5% sem
+        double taxaVenda = possuiPremium ? 0.025 : 0.05;
         double receitaTotal = qtdFinal * precoVenda;
-        double taxaMercadoValor = receitaTotal * taxaMercado;
+        double taxaMercadoValor = receitaTotal * taxaVenda;
         double lucro = receitaTotal - custoTotal - taxaMercadoValor;
 
         // pega melhor preco de venda e seu local
@@ -1019,14 +1065,16 @@ public class TelaCraft {
                 new String[]{"Qtd final craftada", String.format("%.2f un", qtdFinal)},
                 new String[]{"Melhor preco de venda", fmtSilver(melhorVenda)},
                 new String[]{"Local", nomeMelhorCidade},
-                new String[]{"Custo dos materiais", fmtSilver(custoMateriais * qtdProduzir)},
+                new String[]{"Custo dos materiais", fmtSilver(custoMatComTaxa)},
                 new String[]{"Local de Artefato", melhorCidadeMateriais()},
 
                 // eu não preciso ver a nutrição
                 // new String[]{"Nutricao", fmtSilver(nutricao)},
                 new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)}, new String[]{"Custo total", fmtSilver(custoTotal)}, new String[]{"Receita total", fmtSilver(receitaTotal)},
+                //tbm n preciso ver a taxa do mercado
                 //new String[]{"Taxa do mercado", "- " + fmtSilver(taxaMercadoValor)},
-                new String[]{"Lucro/Prejuizo", (lucro >= 0 ? "+" : "") + fmtSilver(lucro)}));
+                new String[]{"Lucro/Prejuizo", (lucro >= 0 ? "+" : "") + fmtSilver(lucro)}
+        ));
 
         // insere qtd de recursos e artefatos antes de nutricao
         String[] nomesRecCalc = {"Qtd Recurso 1", "Qtd Recurso 2", "Qtd Recurso 3"};
@@ -1102,14 +1150,16 @@ public class TelaCraft {
                 @Override
                 protected void updateItem(String v, boolean empty) {
                     super.updateItem(v, empty);
-                    if (empty) {
+                    if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                         setText(null);
                         setStyle("");
                         return;
                     }
+
+                    setText(valor);
                     setText(valor);
                     // lucro verde, prejuízo vermelho
-                    if (titulo.equals("Lucro/Prejuízo")) {
+                    if (titulo.equals("Lucro/Prejuizo")) {
                         setStyle(lucro >= 0 ? "-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-font-size: 13px; -fx-alignment: CENTER;" : "-fx-text-fill: #e05555; -fx-font-weight: bold; -fx-font-size: 13px; -fx-alignment: CENTER;");
                     } else if (titulo.equals("Custo total") || titulo.equals("Taxa da barraca")) {
                         setStyle("-fx-text-fill: #e05555; -fx-font-size: 12px; -fx-alignment: CENTER;");
@@ -1127,6 +1177,11 @@ public class TelaCraft {
 
         // 1 linha dummy para renderizar as células
         tabelaCalculo.setItems(FXCollections.observableArrayList(new LinhaCalculo("", "")));
+        // força recalculo do layout e scroll horizontal após reconstruir colunas
+        javafx.application.Platform.runLater(() -> {
+            tabelaCalculo.requestLayout();
+            tabelaCalculo.scrollToColumn(tabelaCalculo.getColumns().get(0));
+        });
     }
 
     private static final double USE_COMPUTED_SIZE_CALC = Region.USE_COMPUTED_SIZE;
