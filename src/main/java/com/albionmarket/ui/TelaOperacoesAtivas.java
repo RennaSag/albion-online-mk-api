@@ -105,8 +105,8 @@ public class TelaOperacoesAtivas {
     }
 
     private VBox criarCard(String json, Path arquivo) {
-        String item    = extrair(json, "item");
-        String tier    = extrair(json, "tier");
+        String item = extrair(json, "item");
+        String tier = extrair(json, "tier");
         String enchant = extrair(json, "encantamento");
 
         // calculadora — parse linha a linha mais robusto
@@ -119,7 +119,7 @@ public class TelaOperacoesAtivas {
                 int sepIdx = linha.indexOf("\":");
                 if (sepIdx == -1) continue;
                 String chave = linha.substring(1, sepIdx).trim();
-                String resto  = linha.substring(sepIdx + 2).trim();
+                String resto = linha.substring(sepIdx + 2).trim();
                 // remove vírgula final
                 if (resto.endsWith(",")) resto = resto.substring(0, resto.length() - 1).trim();
                 // remove aspas
@@ -154,14 +154,34 @@ public class TelaOperacoesAtivas {
         boxCalc.setHgap(20);
         boxCalc.setVgap(8);
         for (String campo : camposExibir) {
+            if (campo.equals("Local de compra dos materiais")) {
+                String blocoLocais = calculadora.getOrDefault(campo, "");
+                if (blocoLocais.startsWith("[")) {
+                    String[] entradas = blocoLocais.split("\\},\\s*\\{");
+                    for (String entrada : entradas) {
+                        String mat = extrairCampoInline(entrada, "material");
+                        String cid = extrairCampoInline(entrada, "cidade");
+                        String qtd = extrairCampoInlineNumero(entrada, "quantidade");
+                        if (mat != null && cid != null) {
+                            String label = qtd != null ? qtd + " - em " + cid : cid;
+                            boxCalc.getChildren().add(miniLabel("Comprar: " + mat, label, "#5a8dee"));
+                        }
+
+                    }
+                } else {
+                    boxCalc.getChildren().add(miniLabel(campo, blocoLocais.isEmpty() ? "—" : blocoLocais, "#5a8dee"));
+                }
+                continue;
+            }
+
             String valor = calculadora.getOrDefault(campo, "—");
             String cor = "#e0e0e0";
-            if (campo.contains("Lucro"))                    cor = valor.startsWith("+") ? "#3dba6e" : "#e05555";
-            else if (campo.equals("Custo dos materiais"))   cor = "#e05555";
+            if (campo.contains("Lucro")) cor = valor.startsWith("+") ? "#3dba6e" : "#e05555";
+            else if (campo.equals("Custo dos materiais")) cor = "#e05555";
             else if (campo.equals("Local de compra dos materiais")) cor = "#5a8dee";
-            else if (campo.contains("Custo"))               cor = "#e05555";
-            else if (campo.contains("venda"))               cor = "#e05555";
-            else if (campo.equals("Local"))                 cor = "#5a8dee";
+            else if (campo.contains("Custo")) cor = "#e05555";
+            else if (campo.contains("venda")) cor = "#e05555";
+            else if (campo.equals("Local")) cor = "#5a8dee";
             boxCalc.getChildren().add(miniLabel(campo, valor, cor));
         }
 
@@ -203,8 +223,6 @@ public class TelaOperacoesAtivas {
                 + "-fx-border-color: #333; -fx-border-radius: 8;");
         return card;
     }
-
-
 
 
     private VBox miniLabel(String titulo, String valor, String corValor) {
@@ -257,5 +275,28 @@ public class TelaOperacoesAtivas {
             }
         }
         return fecha == -1 ? null : json.substring(abre + 1, fecha);
+    }
+
+    private String extrairCampoInline(String trecho, String chave) {
+        String padrao = "\"" + chave + "\": \"";
+        int idx = trecho.indexOf(padrao);
+        if (idx == -1) return null;
+        int inicio = idx + padrao.length();
+        int fim = trecho.indexOf("\"", inicio);
+        return fim == -1 ? null : trecho.substring(inicio, fim);
+    }
+
+    private String extrairCampoInlineNumero(String trecho, String chave) {
+        String padrao = "\"" + chave + "\": ";
+        int idx = trecho.indexOf(padrao);
+        if (idx == -1) return null;
+        int inicio = idx + padrao.length();
+        StringBuilder sb = new StringBuilder();
+        for (int i = inicio; i < trecho.length(); i++) {
+            char c = trecho.charAt(i);
+            if (Character.isDigit(c)) sb.append(c);
+            else if (sb.length() > 0) break;
+        }
+        return sb.length() > 0 ? sb.toString() : null;
     }
 }

@@ -136,7 +136,7 @@ public class TelaCraft {
             if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
                 for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria;
-                    //custo dos materiais
+                //custo dos materiais
             } else if (tabelaReceita != null) {
                 for (LinhaMaterial lm : tabelaReceita.getItems())
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
@@ -149,7 +149,6 @@ public class TelaCraft {
             //custo total
 
 
-
             double precoVendaSalvar = tabelaPrecos.getItems().stream()
                     .mapToDouble(l -> parseSilver(l.sellMin))
                     .max()
@@ -159,8 +158,10 @@ public class TelaCraft {
             double taxaMercSalvar = receitaSalvar * taxaMercado;
             double lucroSalvar = receitaSalvar - custoTotal - taxaMercSalvar;
 
+
             String[] melhorCidadeHolder = {"-"};
             double[] melhorVHolder = {0};
+
             for (LinhaPreco lp : tabelaPrecos.getItems()) {
                 double v = parseSilver(lp.sellMin);
                 if (v > melhorVHolder[0]) {
@@ -180,7 +181,7 @@ public class TelaCraft {
             sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(precoVendaSalvar)).append("\",\n");
             sb.append("    \"Local\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
             sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoMateriaisComTaxa)).append("\",\n");
-            sb.append("    \"Local de compra dos materiais\": \"").append(melhorCidadeMateriais()).append("\",\n");
+            sb.append("    \"Local de compra dos materiais\": ").append(cidadesPorMaterialJson()).append(",\n");
             sb.append("    \"Custo total\": \"").append(fmtSilver(custoTotal)).append("\",\n");
             sb.append("    \"Lucro/Prejuizo\": \"").append(lucroSalvar >= 0 ? "+" : "").append(fmtSilver(lucroSalvar)).append("\"\n");
             sb.append("  }\n");
@@ -235,7 +236,6 @@ public class TelaCraft {
             this.atualizado = atualizado;
         }
     }
-
 
 
     // modelo da tabela de cálculo
@@ -735,7 +735,6 @@ public class TelaCraft {
     }
 
 
-
     private void atualizarTabelaPrecos(List<PriceEntry> entradas) {
         int r1 = 0, r2 = 0, r3 = 0, art = 0;
         if (receitaAtual != null) {
@@ -970,7 +969,6 @@ public class TelaCraft {
     }
 
 
-
     @SuppressWarnings("unchecked")
     private void atualizarTabelaCalculo() {
         if (tabelaCalculo == null) return;
@@ -1016,7 +1014,7 @@ public class TelaCraft {
             }
         }
         final String melhorCidade = melhorCidadeTemp;
-        String nomeMelhorCidade = BancoDeDadosCraft.CIDADES.stream()
+        String nomeMelhorCidadeVenda = BancoDeDadosCraft.CIDADES.stream()
                 .filter(c -> c.getApiId().equals(melhorCidade))
                 .map(CidadeInfo::getNome)
                 .findFirst().orElse(melhorCidade);
@@ -1064,14 +1062,13 @@ public class TelaCraft {
                         .map(CidadeInfo::getNome)
                         .findFirst().orElse(apiId != null ? apiId : "-");
 
-        // monta lista de métricas
+        // monta lista de métricas, parte da tabela
         List<String[]> listaMetricas = new ArrayList<>(Arrays.asList(
                 new String[]{"Quantidade a craftar", fmt(qtdProduzir) + " un"},
                 new String[]{"Qtd final craftada", String.format("%.2f un", qtdFinal)},
                 new String[]{"Melhor preco de venda", fmtSilver(melhorVenda)},
-                new String[]{"Local de Venda", nomeMelhorCidade},
+                new String[]{"Local de Venda", nomeMelhorCidadeVenda},
                 new String[]{"Custo total dos materiais", fmtSilver(custoMatComTaxa)},
-                new String[]{"Local de Artefato", melhorCidadeMateriais()},
                 new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)},
                 new String[]{"Custo total", fmtSilver(custoTotal)},
                 new String[]{"Receita total", fmtSilver(receitaTotal)},
@@ -1093,7 +1090,7 @@ public class TelaCraft {
             listaMetricas.add(listaMetricas.size() - 5, new String[]{"Qtd Artefatos", String.valueOf(qtdArt)});
             String nomeArt = getNomeExibir.apply(artefatosCalc.get(0));
             String cidadeArt = cidadePorMaterial.getOrDefault(nomeArt, "-");
-            listaMetricas.add(listaMetricas.size() - 5, new String[]{"Local Artefato", cidadeParaNome.apply(cidadeArt)});
+            listaMetricas.add(listaMetricas.size() - 5, new String[]{"Local do Artefato", cidadeParaNome.apply(cidadeArt)});
         }
 
         String[][] metricas = listaMetricas.toArray(new String[0][]);
@@ -1311,7 +1308,8 @@ public class TelaCraft {
         }
     }
 
-    private String melhorCidadeMateriais() {
+
+    private String melhorCidadeArtefato() {
         if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "-";
         Map<String, Long> contagem = tabelaMateriais.getItems().stream()
                 .filter(l -> l.cidade != null && !l.cidade.equals("-"))
@@ -1323,4 +1321,35 @@ public class TelaCraft {
                         .map(CidadeInfo::getNome).findFirst().orElse(e.getKey()))
                 .orElse("-");
     }
+
+
+    //essa é a funcao pra montar o json das cidades diferentes pra cada material e as quantidades deles
+    private String cidadesPorMaterialJson() {
+        if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "[]";
+
+        StringBuilder sb = new StringBuilder("[");
+        boolean primeiro = true;
+        for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
+            if (!primeiro) sb.append(", ");
+            primeiro = false;
+
+            String nomeCidade = BancoDeDadosCraft.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(lm.cidade))
+                    .map(CidadeInfo::getNome)
+                    .findFirst()
+                    .orElse(lm.cidade != null ? lm.cidade : "-");
+
+            int qtdReal = lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1);
+
+            sb.append("{\"material\": \"")
+                    .append(lm.nome.replace("\"", "\\\""))
+                    .append("\", \"quantidade\": ").append(qtdReal)
+                    .append(", \"cidade\": \"").append(nomeCidade)
+                    .append("\"}");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+
 }
