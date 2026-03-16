@@ -203,12 +203,13 @@ public class TelaCraft {
 
     // modelo da tabela de precos dos materiais
     public static class LinhaMaterialPreco {
-        public final String nome, cidade, corCidade, buyMax, atualizado;
+        public final String nome, tipo, cidade, corCidade, buyMax, atualizado;
         public final int qtdNecessaria;
 
-        public LinhaMaterialPreco(String nome, int qtdNecessaria,
+        public LinhaMaterialPreco(String nome, String tipo, int qtdNecessaria,
                                   String cidade, String corCidade,
                                   String buyMax, String atualizado) {
+            this.tipo = tipo;
             this.nome = nome;
             this.qtdNecessaria = qtdNecessaria;
             this.cidade = cidade;
@@ -575,11 +576,21 @@ public class TelaCraft {
 
         TableColumn<LinhaMaterialPreco, String> colMatQtd = new TableColumn<>("Qtd necessaria");
         colMatQtd.setPrefWidth(120);
-        colMatQtd.setCellValueFactory(r -> {
-            int q = parseIntSafe(campoQuantidade, 1);
 
+
+        colMatQtd.setCellValueFactory(r -> {
+            LinhaMaterialPreco lm = r.getValue();
+            if (lm.tipo != null && lm.tipo.equals("Artefato")) {
+                // artefato usa qtd final craftada da calculadora, pq o artefato não retorna
+                double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
+                double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+                double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
+                return new javafx.beans.property.SimpleStringProperty(
+                        String.format("%.2f", qtdFinal));
+            }
+            int q = parseIntSafe(campoQuantidade, 1);
             return new javafx.beans.property.SimpleStringProperty(
-                    String.valueOf(r.getValue().qtdNecessaria * q));
+                    String.valueOf(lm.qtdNecessaria * q));
         });
         colMatQtd.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -972,7 +983,9 @@ public class TelaCraft {
                             ? pe.getBuyDate() : pe.getSellDate())
                     : "—";
 
-            linhas.add(new LinhaMaterialPreco(nomeExibir, mat.getCount(),
+            String tipoMat = mat.isArtefato() ? "Artefato" : "Recurso";
+
+            linhas.add(new LinhaMaterialPreco(nomeExibir, tipoMat, mat.getCount(),
                     cidade, corCidade, buyMax, data));
         }
 
@@ -1032,11 +1045,13 @@ public class TelaCraft {
                         colStr.setOnEditCommit(ev -> {
                             LinhaMaterialPreco antiga = ev.getRowValue();
                             int idx = tabelaMateriais.getItems().indexOf(antiga);
+
                             tabelaMateriais.getItems().set(idx, new LinhaMaterialPreco(
-                                    antiga.nome, antiga.qtdNecessaria,
+                                    antiga.nome, antiga.tipo, antiga.qtdNecessaria,
                                     antiga.cidade, antiga.corCidade,
                                     ev.getNewValue(), antiga.atualizado
                             ));
+
                             atualizarTabelaCalculo();
                         });
                     } else {
