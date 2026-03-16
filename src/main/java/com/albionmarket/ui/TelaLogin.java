@@ -102,7 +102,6 @@ public class TelaLogin {
                     prefs.remove("usuario");
                     prefs.remove("senha");
                 }
-
                 abrirTelaHome();
             }
         };
