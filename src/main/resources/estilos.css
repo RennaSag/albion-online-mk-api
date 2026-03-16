@@ -194,15 +194,18 @@
     -fx-max-width: 36px;
     -fx-max-height: 18px;
 }
+
 .check-box.switch:selected .box {
     -fx-background-color: #5a8dee;
 }
+
 .check-box.switch .mark {
     -fx-background-color: white;
     -fx-background-radius: 50%;
     -fx-padding: 6;
     -fx-translate-x: 0;
 }
+
 .check-box.switch:selected .mark {
     -fx-translate-x: 16;
 }

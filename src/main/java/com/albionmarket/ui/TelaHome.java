@@ -11,6 +11,8 @@ import javafx.stage.Stage;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.Priority;
 
+import com.albionmarket.ui.TelaLogin;
+
 /**
  * tela inicial pós-login
  */
@@ -26,26 +28,30 @@ public class TelaHome {
         Label titulo = new Label("O que vamos fazer hoje?");
         titulo.getStyleClass().add("home-titulo");
 
-        Button btnPesquisar = criarBotao("  Pesquisar", "home-botao");
-        Button btnCraftar = criarBotao("  Craftar", "home-botao");
-        Button btnRefinar = criarBotao("  Refinar", "home-botao");
-        Button btnOperacoes = criarBotao("  Operações Ativas", "home-botao");
+        Button btnPesquisar = criarBotao("Pesquisar", "home-botao");
+        Button btnCraftar = criarBotao("Craftar", "home-botao");
+        Button btnRefinar = criarBotao("Refinar", "home-botao");
+        Button btnOperacoes = criarBotao("Operações Ativas", "home-botao");
 
         btnPesquisar.setOnAction(e -> {
-            Scene cena = new Scene(new TelaPesquisaPrecos().getCriarLayout(), 1280, 800);
+            Scene cena = new Scene(new TelaPesquisaPrecos().getCriarLayout());
             cena.getStylesheets().add(getClass().getResource("/estilos.css").toExternalForm());
-            palco.setTitle("Albion Market — Consulta de Preços");
+            palco.setTitle("Albion Market - Consulta de Preços");
+            palco.setScene(cena);
             palco.setScene(cena);
             palco.setResizable(true);
-            palco.setMinWidth(900);
-            palco.setMinHeight(600);
+            palco.setMaximized(false);
             palco.setMaximized(true);
         });
 
 
+        // refinar ainda sem tela, só deixa o botão desabilitado por enquanto
+        btnCraftar.setOnAction(e -> {
+            palco.setMaximized(false);
+            new TelaCraftSelecao(palco).mostrar();
+        });
 
-        // craftar e refinar ainda sem tela, só deixa o botão desabilitado por enquanto
-        btnCraftar.setOnAction(e -> new TelaCraftSelecao(palco).mostrar());
+
         btnRefinar.setDisable(true);
 
         btnOperacoes.setOnAction(e -> new TelaOperacoesAtivas(palco).mostrar());
@@ -58,12 +64,13 @@ public class TelaHome {
         Button btnVoltar = new Button("Voltar");
         btnVoltar.getStyleClass().add("home-botao");
         btnVoltar.setPrefWidth(180);
+        //apesar de ter definido a classe de estido "home-botao", eu quero q o btnVoltar seja um pouco maior
 
 
         btnVoltar.setOnAction(e -> {
-            palco.setMaximized(false);
             new TelaLogin(palco).mostrar();
         });
+
 
         VBox raiz = new VBox(30, titulo, botoes, espaco, btnVoltar);
         raiz.setAlignment(Pos.CENTER);
@@ -73,22 +80,20 @@ public class TelaHome {
         raiz.setPadding(new Insets(80));
         raiz.getStyleClass().add("home-raiz");
 
-        Scene cena = new Scene(raiz, 700, 400);
+        Scene cena = new Scene(raiz);
         cena.getStylesheets().add(
                 getClass().getResource("/estilos.css").toExternalForm()
         );
 
-        palco.setTitle("Albion Market — Home");
+        //isso aqui é uma questão logica pra tela home sempre abrir maximizada, mesmo n clicando em tal botao
+        palco.setTitle("Albion Market - Home");
+        palco.setTitle("Albion Market - Home");
         palco.setScene(cena);
-        palco.setResizable(false);
-
-        palco.setWidth(700);
-        palco.setHeight(400);
-        palco.centerOnScreen();
-
-
         palco.show();
+        palco.setMaximized(false);
+        palco.setMaximized(true);
     }
+
 
     private void abrirTela(javafx.scene.layout.Pane layout,
                            int largura, int altura, String tituloPalco) {
@@ -96,15 +101,7 @@ public class TelaHome {
         cena.getStylesheets().add(
                 getClass().getResource("/estilos.css").toExternalForm()
         );
-        palco.setTitle(tituloPalco);
-        palco.setScene(cena);
-        palco.setResizable(true);
-        palco.setMinWidth(900);
-        palco.setMinHeight(600);
 
-        // abre centralizado e tela cheia
-        palco.centerOnScreen();
-        palco.setMaximized(true);
     }
 
     private Button criarBotao(String texto, String estilo) {

@@ -4,25 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * valores base dos itens para calculo de nutricao no craft.
+ * valores base dos itens para calculo de nutricao no craft
  * o valor real de um item e calculado pela formula:
  * valor = valorBase * 2^(tier - tierBase) * 2^encantamento
- * <p>
- * exemplo com botas de soldado (SHOES_PLATE_SET1):
- * tier base = 2, valor base = 8
- * t4.0 = 8 * 2^(4-2) * 2^0 = 8 * 4 * 1 = 32
- * t4.1 = 8 * 2^(4-2) * 2^1 = 8 * 4 * 2 = 64... espera, no exemplo dado t4.0=128
- * ajuste: tier base = 1, valor base = 4
- * t4.0 = 4 * 2^(4-1) = 4 * 8 = 32 ok
- * t5.0 = 4 * 2^(5-1) = 4 * 16 = 64... mas no exemplo t5.0 = 256
- * ajuste final: o valor base cadastrado ja e para t2 (tier minimo real do item)
- * e a formula usa tier - 2 como expoente
- * <p>
- * forma mais simples: cada item tem valorT2 (valor no tier 2 sem encantamento).
- * valor final = valorT2 * 2^(tier-2) * 2^encantamento
- * <p>
- * para itens que comecam no t4 (armas, armaduras pesadas etc):
- * cadastramos valorT4 e usamos tier - 4 como base.
  */
 public class ItemValues {
 
@@ -44,9 +28,6 @@ public class ItemValues {
         // sapatos / botas
         // botas do soldado: t2=8, t4.0=32, t5.0=64(errado)... usando t4.0=128
         // t4.0=128, t5.0=256, t6.0=512, t8.4=32768
-        // t4.0=128 -> t5.0 deveria ser 256 (dobra) ok
-        // t6.0=512 ok, t8.0=2048, t8.4=2048*16=32768 ok
-        // entao valor base no t4 = 128
         reg("SHOES_PLATE_SET1", 4, 128);
         reg("SHOES_PLATE_SET2", 4, 128);
         reg("SHOES_PLATE_SET3", 4, 128);
@@ -296,7 +277,7 @@ public class ItemValues {
         reg("MEAL_SALAD", 1, 5);
         reg("MEAL_SALAD_FISH", 2, 106);
         reg("MEAL_SOUP", 1, 77);
-        reg("MEAL_SOUP_FISH", 1,106);
+        reg("MEAL_SOUP_FISH", 1, 106);
         reg("MEAL_OMELETTE", 3, 77);
         reg("MEAL_OMELETTE_FISH", 3, 116);
         reg("MEAL_STEW", 4, 91);

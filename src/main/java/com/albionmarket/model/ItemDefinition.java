@@ -5,9 +5,9 @@ package com.albionmarket.model;
  */
 public class ItemDefinition {
 
-    private final String id;       // sufixo da API, "MAIN_SWORD", "2H_CLAYMORE"
-    private final String nome;     // nome oficial na tradução em portugues
-    private final String keywords; // palavras extras para busca fuzzy
+    private final String id;       // INFIXO da API, "MAIN_SWORD", "2H_CLAYMORE"
+    private final String nome;     // nome do item
+    private final String keywords; // palavras chave extras para busca fuzzy
 
     public ItemDefinition(String id, String nome, String keywords) {
         this.id = id;
@@ -15,16 +15,30 @@ public class ItemDefinition {
         this.keywords = keywords;
     }
 
-    /** monta o ID completo para a API com tier e encantamento sintaxe: T5_MAIN_SWORD@2, tier, iten, encantamento*/
+    /**
+     * monta o ID do item  de acordo com os IDS base de BancoDeDadosCraft.java,
+     * juntamente com o tier e encantamento inserido na busca
+     * sintaxe: T5_MAIN_SWORD@2: tier, iten, encantamento
+     */
     public String buildApiId(int tier, int encantamento) {
         String base = "T" + tier + "_" + id;
         return encantamento > 0 ? base + "@" + encantamento : base;
     }
 
-    public String getId()       { return id; }
-    public String getNome()     { return nome; }
-    public String getKeywords() { return keywords; }
+    public String getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getKeywords() {
+        return keywords;
+    }
 
     @Override
-    public String toString() { return nome; }
+    public String toString() {
+        return nome;
+    }
 }

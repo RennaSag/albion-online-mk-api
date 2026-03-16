@@ -256,7 +256,7 @@ public class TelaPesquisaPrecos {
             new TelaHome(palco).mostrar();
 
             palco.centerOnScreen();
-            palco.setMaximized(false);
+            palco.setMaximized(true);
         });
 
 

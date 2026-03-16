@@ -8,7 +8,11 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage palco) {
+
+        palco.setMaximized(true);
+        palco.setResizable(true);
         new TelaLogin(palco).mostrar();
+
     }
 
     public static void main(String[] args) {

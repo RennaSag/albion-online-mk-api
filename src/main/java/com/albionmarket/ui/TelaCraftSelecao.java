@@ -73,17 +73,16 @@ public class TelaCraftSelecao {
         raiz.setCenter(criarConteudo());
         raiz.setBottom(criarRodape());
 
-        Scene cena = new Scene(raiz, 1100, 750);
+        Scene cena = new Scene(raiz);
         cena.getStylesheets().add(
                 getClass().getResource("/estilos.css").toExternalForm()
         );
 
-        palco.setTitle("Albion Market — Craft");
+        palco.setTitle("Albion Market - Craft");
         palco.setScene(cena);
         palco.setResizable(true);
-        palco.setMinWidth(800);
-        palco.setMinHeight(600);
-        palco.centerOnScreen();
+        palco.setMaximized(false);
+        palco.setMaximized(true);
 
         // restaura filtros: estado anterior (voltou da TelaCraft) ou preferências salvas
         if (estadoAnterior != null) {
@@ -298,7 +297,12 @@ public class TelaCraftSelecao {
         btnVoltar.setPrefWidth(120);
         btnVoltar.setPrefHeight(42);
         btnVoltar.getStyleClass().add("home-botao");
-        btnVoltar.setOnAction(e -> new TelaHome(palco).mostrar());
+
+
+        btnVoltar.setOnAction(e -> {
+            palco.setMaximized(false);
+            new TelaHome(palco).mostrar();
+        });
 
         HBox hb = new HBox(btnVoltar);
         hb.setAlignment(Pos.CENTER);

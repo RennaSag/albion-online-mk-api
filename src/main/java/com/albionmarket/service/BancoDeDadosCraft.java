@@ -14,11 +14,7 @@ import java.util.List;
 
 
 /**
- *
- * AS SUBCATEGORIAS JA PREENCHIDAS ESTÃO PRONTAS, FALTA AS OUTRAS CATEGORIAS E SUBCATEGORIAS DE ITENS DO JOGO
- * <p>
- * catalogo completo de itens, categorias e cidades do Albion Online.
- * Nomes em portugues br
+ * catalogo completo (ou quase) de itens, categorias e cidades do Albion Online.
  * IDs baseados na Albion Online Data API (west.albion-online-data.com).
  */
 public class BancoDeDadosCraft {
@@ -564,7 +560,6 @@ public class BancoDeDadosCraft {
         return lista;
     }
 
-    // utilitario: cria um ItemDefinition de forma mais concisa
     private static ItemDefinition item(String id, String nome, String keywords) {
         return new ItemDefinition(id, nome, keywords);
     }
@@ -584,16 +579,17 @@ public class BancoDeDadosCraft {
     // indices: 2=T2, 3=T3 ... 8=T8
     public static String getNomeRecurso(String sufixo, int tier) {
         String[] nomes = switch (sufixo) {
+            //corrigi alguns itens q estavão com o nome errado pras receitas
             case "METALBAR" ->
-                    new String[]{"", "", "Barra de Ferro", "Barra de Aço", "Barra de Aço Nobrium", "Barra de Titânio", "Barra de Runita", "Barra de Mithril", "Barra de Adamantium"};
+                    new String[]{"Barra de Cobre", "Barra de Bronze", "Barra de Aço", "Barra de Titânio", "Barra de Runita", "Barra de Aço Meteorito", "Barra de Adamantium"};
             case "LEATHER" ->
-                    new String[]{"", "", "Couro", "Couro Grosso", "Couro Endurecido", "Couro Rígido", "Couro de Elite", "Couro de Sombra", "Couro de Sangue"};
+                    new String[]{"Couro Esticado", "Couro Grosso", "Couro Trabalhado", "Couro Curtido", "Couro Endurecido", "Couro de Reforçado", "Couro de Fortificado"};
             case "CLOTH" ->
-                    new String[]{"", "", "Tecido", "Tecido Grosso", "Seda Encantada", "Seda de Elite", "Seda da Sombra", "Seda do Vazio", "Seda Astral"};
+                    new String[]{"Tecido Simples", "Tecido Limpo", "Tecido Fino", "Tecido Ornado", "Tecido Rico", "Tecido Opulento", "Tecido Barroco"};
             case "PLANKS" ->
-                    new String[]{"", "", "Tábuas", "Tábuas Grossas", "Tábuas de Carvalho", "Tábuas de Teixo", "Tábuas de Álamo Negro", "Tábuas de Freixo", "Tábuas de Cerejeira"};
+                    new String[]{"Tábuas de Bétual", "Tábuas de Castanheira", "Tábuas de Pinho", "Tábuas de Cedro", "Tábuas de Carvalho-Sangue", "Tábuas de Freixo", "Tábuas de Pau-Branco"};
             case "STONEBLOCK" ->
-                    new String[]{"", "", "Bloco de Calcário", "Bloco de Arenito", "Bloco de Travertino", "Bloco de Granito", "Bloco de Basalto", "Bloco de Mármore", "Bloco de Rocha Negra"};
+                    new String[]{"Bloco de Calcário", "Bloco de Arenito", "Bloco de Travertino", "Bloco de Granito", "Bloco de Ardósia", "Bloco de Basalto", "Bloco de Mármore"};
             default -> null;
         };
         if (nomes == null || tier < 0 || tier >= nomes.length) return null;
