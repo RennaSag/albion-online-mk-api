@@ -123,23 +123,26 @@ public class TelaCraft {
                 for (LinhaMaterial lm : tabelaReceita.getItems())
                     custoMatSalvar += parseSilver(lm.buyMax) * lm.qtd;
             }
-            double qtdSalvar     = parseDoubleSafe(campoQuantidade, 1.0);
+            double qtdSalvar = parseDoubleSafe(campoQuantidade, 1.0);
             double retornoSalvar = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
             double mercadoSalvar = parseDoubleSafe(campoTaxaMercado, 3.0) / 100.0;
             double barracaSalvar = parseDoubleSafe(campoTaxaBarraca, 3.0);
-            double qtdFinalSalvar   = qtdSalvar / (1.0 - retornoSalvar);
-            double nutricaoSalvar   = (itemValue * qtdFinalSalvar) * 0.1125;
-            double taxaCraftSalvar  = (barracaSalvar * nutricaoSalvar) / 100.0;
+            double qtdFinalSalvar = qtdSalvar / (1.0 - retornoSalvar);
+            double nutricaoSalvar = (itemValue * qtdFinalSalvar) * 0.1125;
+            double taxaCraftSalvar = (barracaSalvar * nutricaoSalvar) / 100.0;
             double custoTotalSalvar = (custoMatSalvar * qtdSalvar) + taxaCraftSalvar;
-            double receitaSalvar    = qtdFinalSalvar * precoVendaSalvar;
-            double taxaMercSalvar   = receitaSalvar * mercadoSalvar;
-            double lucroSalvar      = receitaSalvar - custoTotalSalvar - taxaMercSalvar;
+            double receitaSalvar = qtdFinalSalvar * precoVendaSalvar;
+            double taxaMercSalvar = receitaSalvar * mercadoSalvar;
+            double lucroSalvar = receitaSalvar - custoTotalSalvar - taxaMercSalvar;
 
             String[] melhorCidadeHolder = {"—"};
             double[] melhorVHolder = {0};
             for (LinhaPreco lp : tabelaPrecos.getItems()) {
                 double v = parseSilver(lp.sellMin);
-                if (v > melhorVHolder[0]) { melhorVHolder[0] = v; melhorCidadeHolder[0] = lp.cidade; }
+                if (v > melhorVHolder[0]) {
+                    melhorVHolder[0] = v;
+                    melhorCidadeHolder[0] = lp.cidade;
+                }
             }
             String nomeCidadeVendaSalvar = BancoDeDadosCraft.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(melhorCidadeHolder[0]))
@@ -574,6 +577,7 @@ public class TelaCraft {
         colMatQtd.setPrefWidth(120);
         colMatQtd.setCellValueFactory(r -> {
             int q = parseIntSafe(campoQuantidade, 1);
+
             return new javafx.beans.property.SimpleStringProperty(
                     String.valueOf(r.getValue().qtdNecessaria * q));
         });
@@ -1360,8 +1364,10 @@ public class TelaCraft {
         TextField tf = new TextField(valor);
         tf.setStyle("-fx-background-color: #2e2e2e; -fx-text-fill: #e0e0e0; "
                 + "-fx-border-color: #444; -fx-border-radius: 4; -fx-background-radius: 4;");
+
         tf.textProperty().addListener((obs, ant, novo) -> {
             if (tabelaPrecos != null) tabelaPrecos.refresh();
+            if (tabelaMateriais != null) tabelaMateriais.refresh();
             atualizarTabelaCalculo();
         });
         return tf;

@@ -154,6 +154,7 @@ public class TelaLogin {
         palco.setScene(cena);
 
         //ta redundante? ta, mas se n colocar isso ele n traz em tela cheia sempre, mt paia, ent deixa assim msm
+        // repeti isso em outras funcoes de botões voltar
         palco.setMaximized(false);
         palco.setMaximized(true);
         palco.show();

@@ -17,15 +17,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import java.util.ArrayList;
-
 import java.util.List;
 import java.util.prefs.Preferences;
 
-/**
- * Tela de seleção de item para craft.
- * Possui filtro de busca idêntico ao de TelaPesquisaPrecos,
- * sem o seletor de qualidade.
- */
 public class TelaCraftSelecao {
 
     private static final String PREF_TIER = "craft_tier";
@@ -39,7 +33,6 @@ public class TelaCraftSelecao {
     private final Stage palco;
     private final BuscaService buscaService = new BuscaService();
     private final List<Categoria> categorias = BancoDeDadosCraft.getCategorias();
-
     private final List<CheckBox> checksCidades = new ArrayList<>();
 
     private ItemDefinition itemSelecionado = null;
@@ -53,7 +46,6 @@ public class TelaCraftSelecao {
     private Label labelItemAtual;
     private ImageView iconItem;
 
-    // estado anterior (pode ser null se for abertura limpa)
     private final EstadoCraftSelecao estadoAnterior;
 
     public TelaCraftSelecao(Stage palco) {
@@ -71,7 +63,6 @@ public class TelaCraftSelecao {
         raiz.setStyle("-fx-background-color: #1e1e1e;");
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarConteudo());
-        raiz.setBottom(criarRodape());
 
         Scene cena = new Scene(raiz);
         cena.getStylesheets().add(
@@ -84,7 +75,6 @@ public class TelaCraftSelecao {
         palco.setMaximized(false);
         palco.setMaximized(true);
 
-        // restaura filtros: estado anterior (voltou da TelaCraft) ou preferências salvas
         if (estadoAnterior != null) {
             restaurarEstado();
         } else {
@@ -93,18 +83,15 @@ public class TelaCraftSelecao {
     }
 
     private void restaurarEstado() {
-        // restaura tier
         String tierStr = estadoAnterior.tier == -1 ? "Todos" : "T" + estadoAnterior.tier;
         cbTier.setValue(tierStr);
 
-        // restaura encantamento
         String enchStr;
         if (estadoAnterior.enchant == -1) enchStr = "Todos";
         else if (estadoAnterior.enchant == 0) enchStr = "Sem encantamento";
         else enchStr = "." + estadoAnterior.enchant;
         cbEncantamento.setValue(enchStr);
 
-        // restaura item selecionado
         if (estadoAnterior.item != null) {
             itemSelecionado = estadoAnterior.item;
             campoBusca.setText(estadoAnterior.textoBusca != null
@@ -115,9 +102,8 @@ public class TelaCraftSelecao {
         }
     }
 
-    // header igual ao de TelaPesquisaPrecos
     private HBox criarCabecalho() {
-        Label titulo = new Label("Albion Market");
+        Label titulo = new Label("Albion Online Craft");
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
@@ -133,10 +119,9 @@ public class TelaCraftSelecao {
         return cabecalho;
     }
 
-    // conteudo central com o filtro
     private VBox criarConteudo() {
-        VBox conteudo = new VBox(20);
-        conteudo.setPadding(new Insets(30, 60, 30, 60));
+        VBox conteudo = new VBox(10);
+        conteudo.setPadding(new Insets(15, 60, 15, 60));
         conteudo.setAlignment(Pos.TOP_CENTER);
         conteudo.setStyle("-fx-background-color: #1e1e1e;");
 
@@ -149,12 +134,10 @@ public class TelaCraftSelecao {
         return conteudo;
     }
 
-    // bloco de filtros centralizado
     private VBox criarBlocoFiltros() {
-        VBox bloco = new VBox(12);
+        VBox bloco = new VBox(6);
         bloco.setMaxWidth(500);
 
-        // busca por texto
         bloco.getChildren().add(criarSecao("Busca por Nome"));
         campoBusca = new TextField();
         campoBusca.setPromptText("Ex: espada larga, cajado sagrado...");
@@ -163,7 +146,6 @@ public class TelaCraftSelecao {
         campoBusca.textProperty().addListener((obs, ant, novo) -> onBuscaTexto(novo));
         bloco.getChildren().add(campoBusca);
 
-        // categoria > subcategoria > item
         bloco.getChildren().add(criarSecao("Categoria"));
 
         cbCategoria = new ComboBox<>();
@@ -189,7 +171,6 @@ public class TelaCraftSelecao {
 
         bloco.getChildren().addAll(cbCategoria, cbSubcategoria, cbItem);
 
-        // tier
         bloco.getChildren().add(criarSecao("Tier"));
         cbTier = new ComboBox<>();
         cbTier.setItems(FXCollections.observableArrayList(
@@ -202,7 +183,6 @@ public class TelaCraftSelecao {
         });
         bloco.getChildren().add(cbTier);
 
-        // encantamento
         bloco.getChildren().add(criarSecao("Encantamento"));
         cbEncantamento = new ComboBox<>();
         cbEncantamento.setItems(FXCollections.observableArrayList(
@@ -227,19 +207,15 @@ public class TelaCraftSelecao {
         }
         bloco.getChildren().add(gridCidades);
 
-        // centraliza o bloco
         HBox wrapper = new HBox(bloco);
         wrapper.setAlignment(Pos.CENTER);
 
         VBox container = new VBox(wrapper);
         container.setAlignment(Pos.CENTER);
 
-
-
         return container;
     }
 
-    // label e icone que mostram o item selecionado
     private VBox criarLabelItemAtual() {
         iconItem = new ImageView();
         iconItem.setFitWidth(80);
@@ -255,25 +231,42 @@ public class TelaCraftSelecao {
         return vb;
     }
 
-    // botoes
     private VBox criarBotoesAcao() {
         Button btnSelecionar = new Button("Selecionar");
         btnSelecionar.setPrefWidth(160);
-        btnSelecionar.setPrefHeight(42);
-        btnSelecionar.setStyle(
-                "-fx-background-color: #5a8dee; -fx-text-fill: white; "
-                        + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
-        btnSelecionar.setOnAction(e -> onSelecionar());
+        btnSelecionar.setPrefHeight(40);
+        btnSelecionar.setStyle("-fx-background-color: #5a8dee; -fx-text-fill: white; "
+                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
+
+
+        btnSelecionar.setOnAction(e -> {
+            onSelecionar();
+            palco.setMaximized(false);
+            palco.setMaximized(true);
+
+
+        });
+
+
 
         Button btnLimpar = new Button("Limpar");
         btnLimpar.setPrefWidth(160);
-        btnLimpar.setPrefHeight(42);
-        btnLimpar.setStyle(
-                "-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
-                        + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
+        btnLimpar.setPrefHeight(40);
+        btnLimpar.setStyle("-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
+                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
         btnLimpar.setOnAction(e -> limpar());
 
-        VBox vb = new VBox(10, btnSelecionar, btnLimpar);
+        Button btnVoltar = new Button("Voltar");
+        btnVoltar.setPrefWidth(160);
+        btnVoltar.setPrefHeight(40);
+        btnVoltar.setStyle("-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
+                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
+        btnVoltar.setOnAction(e -> {
+            palco.setMaximized(false);
+            new TelaHome(palco).mostrar();
+        });
+
+        VBox vb = new VBox(8, btnSelecionar, btnLimpar, btnVoltar);
         vb.setAlignment(Pos.CENTER);
         return vb;
     }
@@ -291,27 +284,6 @@ public class TelaCraftSelecao {
         atualizarLabelSemSelecao();
     }
 
-    // botão voltar centralizado no rodapé
-    private HBox criarRodape() {
-        Button btnVoltar = new Button("Voltar");
-        btnVoltar.setPrefWidth(120);
-        btnVoltar.setPrefHeight(42);
-        btnVoltar.getStyleClass().add("home-botao");
-
-
-        btnVoltar.setOnAction(e -> {
-            palco.setMaximized(false);
-            new TelaHome(palco).mostrar();
-        });
-
-        HBox hb = new HBox(btnVoltar);
-        hb.setAlignment(Pos.CENTER);
-        hb.setPadding(new Insets(0, 0, 24, 0));
-        hb.setStyle("-fx-background-color: #1e1e1e;");
-        return hb;
-    }
-
-    // icone do item selecionado
     private void atualizarIconeItem(String itemId) {
         if (itemId == null || itemId.isBlank()) {
             iconItem.setImage(null);
@@ -321,7 +293,6 @@ public class TelaCraftSelecao {
         iconItem.setImage(new javafx.scene.image.Image(url, true));
     }
 
-    // logica dos filtros (igual a TelaPesquisaPrecos)
     private void onBuscaTexto(String texto) {
         itemSelecionado = null;
         List<ItemDefinition> sugestoes = buscaService.buscar(texto, 1);
@@ -338,11 +309,9 @@ public class TelaCraftSelecao {
         campoBusca.clear();
         itemSelecionado = null;
         atualizarLabelSemSelecao();
-
         cbSubcategoria.setDisable(cat == null);
         cbItem.setDisable(true);
         cbItem.setItems(FXCollections.emptyObservableList());
-
         if (cat != null) {
             cbSubcategoria.setItems(FXCollections.observableArrayList(cat.getSubcategorias()));
             cbSubcategoria.setValue(null);
@@ -353,7 +322,6 @@ public class TelaCraftSelecao {
         Subcategoria sub = cbSubcategoria.getValue();
         itemSelecionado = null;
         atualizarLabelSemSelecao();
-
         cbItem.setDisable(sub == null);
         if (sub != null) {
             cbItem.setItems(FXCollections.observableArrayList(sub.getItens()));
@@ -378,22 +346,18 @@ public class TelaCraftSelecao {
     }
 
     private void onSelecionar() {
-        // resolve item: combo ou busca por texto
         ItemDefinition item = itemSelecionado;
         if (item == null && !campoBusca.getText().isBlank()) {
             List<ItemDefinition> res = buscaService.buscar(campoBusca.getText(), 1);
             if (!res.isEmpty()) item = res.get(0);
         }
-
         if (item == null) {
             labelItemAtual.setText("Selecione um item antes de continuar.");
             labelItemAtual.setStyle("-fx-text-fill: #e05555; -fx-font-size: 13px;");
             return;
         }
-
         int tier = parseTier(cbTier.getValue());
         int enchant = parseEnchant(cbEncantamento.getValue());
-
         List<String> cidadesSelecionadas = checksCidades.stream()
                 .filter(CheckBox::isSelected)
                 .map(cb -> (String) cb.getUserData())
@@ -404,7 +368,6 @@ public class TelaCraftSelecao {
         new TelaCraft(palco, item, tier, enchant, estado).mostrar();
     }
 
-    // persistência de filtros
     private void salvarPreferencias(ItemDefinition it, int tier, int enchant, String busca) {
         PREFS.put(PREF_TIER, tier == -1 ? "Todos" : "T" + tier);
         PREFS.put(PREF_ENCHANT, enchant == -1 ? "Todos"
@@ -421,14 +384,10 @@ public class TelaCraftSelecao {
         String itemId = PREFS.get(PREF_ITEM_ID, "");
         String itemNome = PREFS.get(PREF_ITEM_NOME, "");
         String busca = PREFS.get(PREF_BUSCA, "");
-
-        if (itemId.isBlank()) return; // nada salvo ainda
-
+        if (itemId.isBlank()) return;
         if (!tierStr.isBlank()) cbTier.setValue(tierStr);
         if (!enchStr.isBlank()) cbEncantamento.setValue(enchStr);
-
         if (!itemId.isBlank()) {
-            // tenta encontrar o item no BancoDeDados
             ItemDefinition found = BancoDeDadosCraft.getTodosItens().stream()
                     .filter(i -> i.getId().equals(itemId))
                     .findFirst().orElse(null);
@@ -452,7 +411,6 @@ public class TelaCraftSelecao {
         return e > 0 ? base + "@" + e : base;
     }
 
-    // utilitarios
     private int parseTier(String val) {
         if (val == null || val.equals("Todos")) return -1;
         return Integer.parseInt(val.replace("T", ""));
