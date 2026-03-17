@@ -197,7 +197,6 @@ public class ItemValues {
         /*
         esses itens estao faltando, e os de cima podem estar errados
 
-
         reg("2H_SCYTHE_CRYSTAL", 0, 0);
         reg("2H_FLAIL", 0, 0);
         reg("MAIN_ROCKMACE_KEEPER", 0, 0);
@@ -287,45 +286,65 @@ public class ItemValues {
         reg("2H_SHAPESHIFTER_CRYSTAL", 0, 0);
         */
 
-        /*
-        reg("FISHINGBAIT", 0, 0);
-        reg("2H_TOOL_FISHINGROD", 0, 0);
-        reg("2H_TOOL_FISHINGROD_AVALON", 0, 0);
-        reg("HEAD_GATHERER_FISH", 0, 0);
-        reg("ARMOR_GATHERER_FISH", 0, 0);
-        reg("SHOES_GATHERER_FISH", 0, 0);
-        reg("BACKPACK_GATHERER_FISH", 0, 0);
-        reg("2H_TOOL_SICKLE", 0, 0);
-        reg("2H_TOOL_SICKLE_AVALON", 0, 0);
-        reg("HEAD_GATHERER_FIBER", 0, 0);
-        reg("ARMOR_GATHERER_FIBER", 0, 0);
-        reg("SHOES_GATHERER_FIBER", 0, 0);
-        reg("BACKPACK_GATHERER_FIBER", 0, 0);
-        reg("2H_TOOL_KNIFE", 0, 0);
-        reg("2H_TOOL_KNIFE_AVALON", 0, 0);
-        reg("HEAD_GATHERER_HIDE", 0, 0);
-        reg("ARMOR_GATHERER_HIDE", 0, 0);
-        reg("SHOES_GATHERER_HIDE", 0, 0);
-        reg("BACKPACK_GATHERER_HIDE", 0, 0);
-        reg("2H_TOOL_PICK", 0, 0);
-        reg("2H_TOOL_PICK_AVALON", 0, 0);
-        reg("HEAD_GATHERER_ORE", 0, 0);
-        reg("ARMOR_GATHERER_ORE", 0, 0);
-        reg("SHOES_GATHERER_ORE", 0, 0);
-        reg("BACKPACK_GATHERER_ORE", 0, 0);
-        reg("H_TOOL_HAMMER", 0, 0);
-        reg("H_TOOL_HAMMER_AVALON", 0, 0);
-        reg("HEAD_GATHERER_ROCK", 0, 0);
-        reg("ARMOR_GATHERER_ROCK", 0, 0);
-        reg("SHOES_GATHERER_ROCK", 0, 0);
-        reg("BACKPACK_GATHERER_ROCK", 0, 0);
-        reg("2H_TOOL_AXE", 0, 0);
-        reg("2H_TOOL_AXE_AVALON", 0, 0);
-        reg("HEAD_GATHERER_WOOD", 0, 0);
-        reg("ARMOR_GATHERER_WOOD", 0, 0);
-        reg("SHOES_GATHERER_WOOD", 0, 0);
-        reg("BACKPACK_GATHERER_WOOD", 0, 0);
-*/
+
+        reg("FISHINGBAIT", 1, 0);
+        reg("2H_TOOL_FISHINGROD", 3, 64);
+        reg("2H_TOOL_FISHINGROD_AVALON", 4, 1408);
+        reg("HEAD_GATHERER_FISH", 4, 128);
+        reg("ARMOR_GATHERER_FISH", 4, 256);
+        reg("SHOES_GATHERER_FISH", 4, 128);
+        reg("BACKPACK_GATHERER_FISH", 4, 128);
+
+        reg("2H_TOOL_SICKLE", 3, 64);
+        reg("2H_TOOL_SICKLE_AVALON", 4, 1408);
+        reg("HEAD_GATHERER_FIBER", 4, 128);
+        reg("ARMOR_GATHERER_FIBER", 4, 256);
+        reg("SHOES_GATHERER_FIBER", 4, 128);
+        reg("BACKPACK_GATHERER_FIBER", 4, 128);
+
+        reg("2H_TOOL_KNIFE", 3, 64);
+        reg("2H_TOOL_KNIFE_AVALON", 4, 1408);
+        reg("HEAD_GATHERER_HIDE", 4, 128);
+        reg("ARMOR_GATHERER_HIDE", 4, 256);
+        reg("SHOES_GATHERER_HIDE", 4, 128);
+        reg("BACKPACK_GATHERER_HIDE", 4, 128);
+
+        reg("2H_TOOL_PICK", 3, 64);
+        reg("2H_TOOL_PICK_AVALON", 4, 1408);
+        reg("HEAD_GATHERER_ORE", 4, 128);
+        reg("ARMOR_GATHERER_ORE", 4, 256);
+        reg("SHOES_GATHERER_ORE", 4, 128);
+        reg("BACKPACK_GATHERER_ORE", 4, 128);
+
+        reg("H_TOOL_HAMMER", 3, 64);
+        reg("H_TOOL_HAMMER_AVALON", 4, 1408);
+        reg("HEAD_GATHERER_ROCK", 4, 128);
+        reg("ARMOR_GATHERER_ROCK", 4, 256);
+        reg("SHOES_GATHERER_ROCK", 4, 128);
+        reg("BACKPACK_GATHERER_ROCK", 4, 128);
+
+        reg("2H_TOOL_AXE", 3, 64);
+        reg("2H_TOOL_AXE_AVALON", 4, 1408);
+        reg("HEAD_GATHERER_WOOD", 4, 128);
+        reg("ARMOR_GATHERER_WOOD", 4, 256);
+        reg("SHOES_GATHERER_WOOD", 4, 128);
+        reg("BACKPACK_GATHERER_WOOD", 4, 128);
+
+        reg("ORE", 3, 2);
+        reg("METALBAR", 3, 8);
+
+        reg("FIBER", 3, 2);
+        reg("CLOTH", 3, 8);
+
+        reg("WOOD", 3, 2);
+        reg("PLANKS", 3, 8);
+
+        reg("HIDE", 3, 2);
+        reg("LEATHER", 3, 8);
+
+        reg("ROCK", 3, 2);
+        reg("STONEBLOCK", 3, 8);
+
 
     }
 
