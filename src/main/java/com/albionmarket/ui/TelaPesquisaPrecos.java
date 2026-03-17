@@ -85,6 +85,8 @@ public class TelaPesquisaPrecos {
         }
     }
 
+    private static final List<String> recursos = List.of("ORE", "FIBER", "HIDE", "ROCK", "WOOD", "METALBAR", "CLOTH", "PLANKS", "LEATHER", "STONEBLOCK");
+
     //metodo auxiliar dos icones
     private void atualizarIconeItem(String itemId) {
         if (itemId == null || itemId.isBlank()) {
@@ -389,13 +391,18 @@ public class TelaPesquisaPrecos {
         int enchant = parseEnchant(cbEncantamento.getValue());
         int quality = parseQuality(cbQualidade.getValue());
 
-        final ItemDefinition itemFinal = item;
 
-        // executa em thread separada para não travar a UI
+        //situacao anomala dos recursos brutos
+        final ItemDefinition itemFinal = item;
+        boolean ehRecurso = recursos.contains(itemFinal.getId());
+        final String idParaBusca = ehRecurso && enchant > 0
+                ? itemFinal.getId() + "_LEVEL" + enchant
+                : itemFinal.getId();
+
         Task<List<PriceEntry>> tarefa = new Task<>() {
             @Override
             protected List<PriceEntry> call() throws Exception {
-                return apiService.buscarPrecos(itemFinal.getId(), tier, enchant, quality, cidades);
+                return apiService.buscarPrecos(idParaBusca, tier, enchant, quality, cidades);
             }
         };
 

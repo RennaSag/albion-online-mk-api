@@ -715,17 +715,34 @@ public class BancoDeDadosCraft {
                 ))
         )));
 
-        /*faltando terminar
-        lista.add(new Categoria("", "Recursos Brutos", Arrays.asList(
-                new Subcategoria("Minerios", Arrays.asList(
-                        item("", "", "")
-                        ))
-        )));
-        lista.add(new Categoria("", "Recursos refinados", Arrays.asList(
-                new Subcategoria("Barra", Arrays.asList(
-                        item("", "", "")
+
+        lista.add(new Categoria("", "Recursos", Arrays.asList(
+
+                new Subcategoria("Minerios e Barras", Arrays.asList(
+                        item("ORE", "Minério", "minerio de minério de"),
+                        item("METALBAR", "Barra", "barra barras")
+                )),
+
+                new Subcategoria("Fibras e Tecidos", Arrays.asList(
+                        item("FIBER", "Fibra", "fibra"),
+                        item("CLOTH", "Tecido", "tecido")
+                )),
+
+                new Subcategoria("Troncos e Tábuas", Arrays.asList(
+                        item("WOOD", "Tronco", "troncos de"),
+                        item("PLANKS", "Tecido", "tábua tabua")
+                )),
+
+                new Subcategoria("Pelego e Couros", Arrays.asList(
+                        item("HIDE", "Pelego", "pelego de "),
+                        item("LEATHER", "Couro", "couros couro")
+                )),
+
+                new Subcategoria("Pedras e Blocos", Arrays.asList(
+                        item("ROCK", "Pedra", "pedra "),
+                        item("STONEBLOCK", "Blocos", "blocos de")
                 ))
-        )));*/
+        )));
 
 
         return lista;

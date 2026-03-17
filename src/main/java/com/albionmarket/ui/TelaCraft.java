@@ -138,7 +138,7 @@ public class TelaCraft {
             if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
                 for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdCraftInicial;
-                    //custo dos materiais já multiplicado pela quantidade a craftar
+                //custo dos materiais já multiplicado pela quantidade a craftar
             } else if (tabelaReceita != null) {
                 for (LinhaMaterial lm : tabelaReceita.getItems())
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtd * qtdCraftInicial;
@@ -1369,4 +1369,3 @@ public class TelaCraft {
         return sb.toString();
     }
 }
-

@@ -149,7 +149,14 @@ public class TelaCraftSelecao {
         bloco.getChildren().add(criarSecao("Categoria"));
 
         cbCategoria = new ComboBox<>();
-        cbCategoria.setItems(FXCollections.observableArrayList(categorias));
+
+        //a categoria de recursos n deve aparecer, ja que essa não é a tela de refino
+        cbCategoria.setItems(FXCollections.observableArrayList(
+                categorias.stream()
+                        .filter(c -> !c.getNome().equals("Recursos"))
+                        .collect(java.util.stream.Collectors.toList())
+        ));
+
         cbCategoria.setPromptText("Categoria");
         cbCategoria.setMaxWidth(Double.MAX_VALUE);
         cbCategoria.setOnAction(e -> onCategoriaSelecionada());
