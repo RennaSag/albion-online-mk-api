@@ -36,6 +36,178 @@ public class BancoDeDadosCraft {
             "Todos (mais barato)", "Normal", "Boa", "Notável", "Excelente", "Obra-prima"
     };
 
+
+            /*case "" -> "ARTEFACT_2H_ARCANESTAFF_HELL;;Orbe Oculto";
+            case "" -> "ARTEFACT_2H_BOW_HELL;;Pontas de Flecha Demoníacas";
+            case "" -> "ARTEFACT_2H_BOW_KEEPER;;Osso Entalhado";
+            case "" -> "ARTEFACT_2H_CLEAVER_HELL;;Lâmina Demoníaca";
+            case "" -> "ARTEFACT_2H_COMBATSTAFF_MORGANA;;Estaca de Morgana Reforçada";
+            case "" -> "ARTEFACT_2H_CROSSBOWLARGE_MORGANA;;Virotes Fascinantes";
+            case "" -> "ARTEFACT_2H_CURSEDSTAFF_MORGANA;;Catalizador Forjado em Sangue";
+            case "" -> "ARTEFACT_2H_DUALAXE_KEEPER;;Cabeças de Machado Protetoras";
+            case "" -> "ARTEFACT_2H_DUALCROSSBOW_HELL;;Virotes Diabólicos";
+            case "" -> "ARTEFACT_2H_HAMMER_UNDEAD;;Cabeça de Martelo Diabólicas";
+            case "" -> "ARTEFACT_2H_DUALSCIMITAR_UNDEAD;;Lâminas Amaldiçoadas";
+            case "" -> "ARTEFACT_2H_DUALSICKLE_UNDEAD;;Lâminas Sinistras";
+            case "" -> "ARTEFACT_2H_ENIGMATICORB_MORGANA;;Catalisador Possuído";
+            case "" -> "ARTEFACT_2H_FIRESTAFF_HELL;;Orbe Inflamado";
+            case "" -> "ARTEFACT_2H_HALBERD_MORGANA;;Cabeça de Alabarda";
+            case "" -> "ARTEFACT_2H_HAMMER_UNDEAD;;Cabeça de Martelo Ancestral";
+            case "" -> "ARTEFACT_2H_HARPOON_HELL;;Ponta de Arpão Infernal";
+            case "" -> "ARTEFACT_MAIN_HOLYSTAFF_MORGANA;;Pergaminho Possuído";
+            case "" -> "ARTEFACT_2H_HOLYSTAFF_UNDEAD;;Pergaminho Sinistro";
+            case "" -> ";;Cristal Congelado Amaldiçoado";
+            case "" -> "ARTEFACT_2H_ICECRYSTAL_UNDEAD;;Orbe Sincelo";
+            case "" -> "ARTEFACT_2H_INFERNOSTAFF_MORGANA;;Pergaminho Profano";
+            case "" -> "ARTEFACT_2H_LONGBOW_UNDEAD;;Flechas Sinistras";
+            case "" -> "ARTEFACT_2H_MACE_MORGANA;;Cabeça de Maça Imbuída";
+            case "" -> "ARTEFACT_2H_NATURESTAFF_HELL;;Símbolo de Malignidade";
+            case "" -> "ARTEFACT_2H_NATURESTAFF_KEEPER;;Cepo Preservado";
+            case "" -> ";;Cepo Entalhado";
+            case "" -> ";;Mecanismo de Besta Perdido";
+            case "" -> ";;Rochas Preservadas";
+            case "" -> ";;Mandíbula Amaldiçoada";
+            case "" -> ";;Farpas Amaldiçoadas";
+            case "" -> ";;Par de Cabeças de Foice Diabólicas";
+            case "" -> ";;Cristal Arcano Perdido";
+            case "" -> ";;Cristal Amaldiçoado Perdido";
+            case "" -> ";;Orbe Incendiário";
+            case "" -> ";;Orbe Enregelante";
+            case "" -> ";;Cabeça de Maça Infernal";
+            case "" -> ";;Inscrições Druídicas";
+            case "" -> ";;Débil Endurecido";
+            case "" -> ";;Rocha com Runa";
+            case "" -> ";;Lâmina Forjada em Sangue";
+            case "" -> ";;Cabeça de Lança Protetora";
+            case "" -> ";;Cabeça de Foice Diabólica";
+            case "" -> ";;Antiquidades Ensanguentadas";
+            case "" -> ";;Vamplate Ancestral Arruinado";
+            case "" -> ";;Memórias de Batalha Avaloniana";
+            case "" -> ";;Restos do Velho Rei";
+            case "" -> ";;Bengala Desgastada";
+            case "" -> ";;Mão Metálica";
+            case "" -> ";;Juramentos Quebrados";
+            case "" -> ";;Tubo Bem Fabricado";
+            case "" -> ";;Turbilhão Sussurrante Avaloniano";
+            case "" -> ";;Orbe Opaca Fraturada";
+            case "" -> ";;Anel Harmônico Brilhante";
+            case "" -> ";;Fragmento Cristalino Gelado";
+            case "" -> ";;Anel Harmônico Hipnótico";
+            case "" -> ";;Raridade Messiânica";
+            case "" -> ";;Muda Desenraizada Perene";
+            case "" -> ";;Restos de Guardião Ursino";
+            case "" -> ";;Chifres Demoníacos Cortados";
+            case "" -> ";;Placa de Corvo Deformado";
+            case "" -> ";;Manopla Avaloniana Danificada";
+            case "" -> ";;Presa Demoníaca Quebrada";
+            case "" -> ";;Restos de Lobisomem";
+            case "" -> ";;Restos de Diabrete Infernal";
+            case "" -> ";;Restos de Golem de Pedra Rúnica";
+            case "" -> ";;Restos de Águia da Alvorada";
+            case "" -> ";;Cristal Fraturado";
+            case "" -> ";;Cristal Estrelado";
+            case "" -> ";;Cristal Infinito";
+            case "" -> ";;Cristal Ilusório";
+            case "" -> ";;Cristal Gelado";
+            case "" -> ";;Cristal Afiado";
+            case "" -> ";;Cristal Tempestuoso";
+            case "" -> ";;Cristal Exaltado";
+            case "" -> ";;Cristal Mortífero";
+            case "" -> ";;Cristal Apodrecido";
+            case "" -> ";;Cristal Pulsante";
+            case "" -> ";;Cristal Aéreo";
+            case "" -> ";;Cristal Pírico";
+            case "" -> ";;Cristal Forjado";
+            case "" -> ";;Cristal Reluzente";
+            case "" -> ";;Cristal Crepitante";
+            case "" -> ";;Cristal Serpentino";
+            case "" -> ";;Cristal Inquebrável";
+            case "" -> ";;Cristal Chama Azul";
+            case "" -> ";;Cristal Estagnado";
+            case "" -> ";;Núcleo de Escudo Ancestral";
+            case "" -> ";;Núcleo de Escudo Infernal";
+            case "" -> ";;Cavilhas Forjadas em Sangue";
+            case "" -> ";;Relíquia Avaloniana Destruída";
+            case "" -> ";;Cristal Fascinante";
+            case "" -> ";;Mandíbula Demoníaca";
+            case "" -> ";;Pedra Inscrita";
+            case "" -> ";;Lembrança Celestial Rompida";
+            case "" -> ";;Chifre com Runa";
+            case "" -> ";;Manípulo Diabólico";
+            case "" -> ";;Vela Sinistra";
+            case "" -> ";;Lembrança Avaloniana";
+
+            case "" -> ";;Estofamento Ancestral";
+            case "" -> ";;Anilhas Ancestrais";
+            case "" -> ";;Ataduras Ancestrais";
+            case "" -> ";;Restos Demoníacos";
+            case "" -> ";;Placas Demoníacas";
+            case "" -> ";;Preenchimento Demoníaco";
+            case "" -> ";;Estofamento de Caveira Entalhada";
+            case "" -> ";;Pele Preservada";
+            case "" -> ";;Ataduras Inscritas";
+            case "" -> ";;Viseira Elevada";
+            case "" -> ";;Couraça Elevada";
+            case "" -> ";;Perneira Elevada";
+            case "" -> ";;Carapaça da Tecelã";
+            case "" -> ";;Mandíbulas da Tecelã";
+            case "" -> ";;Garras da Tecelã";
+            case "" -> ";;Visor Imbuído";
+            case "" -> ";;Peças de Couro Imbuído";
+            case "" -> ";;Solas Imbuídas";
+            case "" -> ";;Estofamento de Pele Demoníaca";
+            case "" -> ";;Couro de Pele Demoníaca";
+            case "" -> ";;Ataduras de Pele Demoníaca";
+            case "" -> ";;Visor Sinistro";
+            case "" -> ";;Ataduras Sinistras";
+            case "" -> ";;Estofamento Augurado";
+            case "" -> ";;Cinturão Augurado";
+            case "" -> ";;Botas Auguradas";
+            case "" -> ";;Penas de Grifo Imaculadas";
+            case "" -> ";;Bico de Grifo Impecável";
+            case "" -> ";;Penugem de Grifo";
+            case "" -> ";;Bico Preservado";
+            case "" -> ";;Penas Druídicas";
+            case "" -> ";;Ataduras Druídicas";
+            case "" -> ";;Visor de Tecido Infernal";
+            case "" -> ";;Peças de Tecido Infernal";
+            case "" -> ";;Ataduras de Tecido Infernal";
+            case "" -> ";;Estofamento Fascinante";
+            case "" -> ";;Amuleto Fascinante";
+            case "" -> ";;Ataduras Fascinantes";
+            case "" -> ";;Mascara Santificada";
+            case "" -> ";;Cinto Santificado";
+            case "" -> ";;Ligaduras Santificadas";
+            case "" -> ";;Asas de Fada";
+            case "" -> ";;Fíbula Intacta de Fada";
+            case "" -> ";;Escamas Feéricas";
+            case "" -> ";;Espírito Cristalizado";
+            case "" -> ";;Terrível Cristalizado";
+            case "" -> ";;Magia Cristalizada";
+            case "" -> ";;Dinvindade Cristalizada";
+            case "" -> ";;Runa";
+
+            case "" -> ";;Alma";
+            case "" -> ";;Relíquia";
+            case "" -> ";;Fragmento de Avalon";
+            case "" -> ";;Fragmento de Cristal";
+            case "" -> ";;Ornamento de Bridewatch";
+            case "" -> ";;Ornamento de FortSterling";
+            case "" -> ";;Ornamento de Lymhurst";
+            case "" -> ";;Ornamento de Martlock";
+            case "" -> ";;Ornamento de Thetford";
+            case "" -> ";;Ornamento de Caerleon";
+            case "" -> ";;Ornamento deContrabandista";
+            case "" -> ";;Ornamento de Brecellien";
+            case "" -> ";;Ornamento Avaloniano";
+            case "" -> ";;Ornamento do Herege";
+            case "" -> ";;Ornamento Morto-vivo";
+            case "" -> ";;Ornamento Protetor";
+            case "" -> ";;Ornamento de Morgana";
+            case "" -> ";;Ornamento Demoníaco";
+*/
+
+
     // mapeia itemId -> sufixo correto do artefato
     // ids dos artefatos com os nomes deles pra ser usado separadamente
     public static String getArtefatoSufixo(String itemId) {
@@ -562,7 +734,7 @@ public class BancoDeDadosCraft {
                 ))
 
         )));*/
-                return lista;
+        return lista;
     }
 
     private static ItemDefinition item(String id, String nome, String keywords) {
