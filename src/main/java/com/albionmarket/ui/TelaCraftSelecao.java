@@ -248,7 +248,6 @@ public class TelaCraftSelecao {
         });
 
 
-
         Button btnLimpar = new Button("Limpar");
         btnLimpar.setPrefWidth(160);
         btnLimpar.setPrefHeight(40);

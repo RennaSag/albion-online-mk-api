@@ -175,7 +175,6 @@ public class TelaCraft {
                     .findFirst()
                     .orElse(melhorCidadeHolder[0]);
 
-
             sb.append("  \"calculadora\": {\n");
             sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdCraftInicial)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalCraftada)).append("\",\n");
@@ -1179,7 +1178,6 @@ public class TelaCraft {
     }
 
     // utilitários
-
     private double parseSilver(String val) {
         if (val == null || val.equals("-")) return 0;
         try {
@@ -1192,14 +1190,6 @@ public class TelaCraft {
     private double parseDoubleSafe(TextField campo, double padrao) {
         try {
             return Double.parseDouble(campo.getText().trim().replace(",", "."));
-        } catch (Exception e) {
-            return padrao;
-        }
-    }
-
-    private long parseLongSafe(TextField campo, long padrao) {
-        try {
-            return Long.parseLong(campo.getText().trim());
         } catch (Exception e) {
             return padrao;
         }
@@ -1289,16 +1279,14 @@ public class TelaCraft {
         return col;
     }
 
-    private <T> TableColumn<T, String> coluna(String titulo, double largura,
-                                              javafx.util.Callback<TableColumn.CellDataFeatures<T, String>, javafx.beans.value.ObservableValue<String>> callback) {
+    private <T> TableColumn<T, String> coluna(String titulo, double largura, javafx.util.Callback<TableColumn.CellDataFeatures<T, String>, javafx.beans.value.ObservableValue<String>> callback) {
         TableColumn<T, String> col = new TableColumn<>(titulo);
         col.setPrefWidth(largura);
         col.setCellValueFactory(callback);
         return col;
     }
 
-    private TableColumn<LinhaMaterial, String> colunaMat(String titulo, double largura,
-                                                         javafx.util.Callback<TableColumn.CellDataFeatures<LinhaMaterial, String>, javafx.beans.value.ObservableValue<String>> callback) {
+    private TableColumn<LinhaMaterial, String> colunaMat(String titulo, double largura, javafx.util.Callback<TableColumn.CellDataFeatures<LinhaMaterial, String>, javafx.beans.value.ObservableValue<String>> callback) {
         TableColumn<LinhaMaterial, String> col = new TableColumn<>(titulo);
         col.setPrefWidth(largura);
         col.setCellValueFactory(callback);
@@ -1340,21 +1328,6 @@ public class TelaCraft {
             return padrao;
         }
     }
-
-
-    private String melhorCidadeArtefato() {
-        if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "-";
-        Map<String, Long> contagem = tabelaMateriais.getItems().stream()
-                .filter(l -> l.cidade != null && !l.cidade.equals("-"))
-                .collect(Collectors.groupingBy(l -> l.cidade, Collectors.counting()));
-        return contagem.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(e -> BancoDeDadosCraft.CIDADES.stream()
-                        .filter(c -> c.getApiId().equals(e.getKey()))
-                        .map(CidadeInfo::getNome).findFirst().orElse(e.getKey()))
-                .orElse("-");
-    }
-
 
     //essa é a funcao pra montar o json das cidades diferentes pra cada material e as quantidades deles
     private String cidadesPorMaterialJson() {
