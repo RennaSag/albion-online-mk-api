@@ -2,7 +2,7 @@
 
 Projeto pessoal em desenvolvimento.
 
-Albion Market é uma aplicação desktop desenvolvida em Java com JavaFX, inspirada em Albion Online — um MMO com economia complexa baseada inteiramente na atividade dos jogadores, funcionando de forma semelhante a um mercado financeiro real.
+Albion Market é uma aplicação desktop desenvolvida em Java com JavaFX, inspirada em Albion Online — um MMORGP com economia complexa baseada inteiramente na atividade dos jogadores, funcionando de forma semelhante a um mercado financeiro real.
 
 ---
 
