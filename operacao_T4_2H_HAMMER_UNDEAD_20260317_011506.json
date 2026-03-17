@@ -1,0 +1,23 @@
+{
+  "item": "Martelo Fúnebre",
+  "itemId": "T4_2H_HAMMER_UNDEAD",
+  "tier": 4,
+  "encantamento": 0,
+  "parametros": {
+    "quantidade": "1",
+    "taxaRetorno": "15",
+    "taxaMercado": "3.0",
+    "taxaBarraca": "3.0",
+    "itemValue": "256"
+  },
+  "calculadora": {
+    "Quantidade a craftar": "1 un",
+    "Qtd final craftada": "1,18 un",
+    "Melhor preco de venda": "9,5K de prata",
+    "Local": "Black Market",
+    "Custo dos materiais": "10,0K de prata",
+    "Local de compra dos materiais": [{"material": "Barra de Aço", "quantidade": 20, "cidade": "Bridgewatch"}, {"material": "Tecido Fino", "quantidade": 12, "cidade": "Brecilien"}, {"material": "Cabeça de Martelo", "quantidade": 1, "cidade": "Lymhurst"}],
+    "Custo total": "10,6K de prata",
+    "Lucro/Prejuizo": "+584 prata"
+  }
+}

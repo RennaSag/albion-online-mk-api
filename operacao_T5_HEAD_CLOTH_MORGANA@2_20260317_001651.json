@@ -1,0 +1,23 @@
+{
+  "item": "Capote Sectário",
+  "itemId": "T5_HEAD_CLOTH_MORGANA@2",
+  "tier": 5,
+  "encantamento": 2,
+  "parametros": {
+    "quantidade": "1",
+    "taxaRetorno": "15.2",
+    "taxaMercado": "3.0",
+    "taxaBarraca": "3.0",
+    "itemValue": "1.024"
+  },
+  "calculadora": {
+    "Quantidade a craftar": "1 un",
+    "Qtd final craftada": "1,18 un",
+    "Melhor preco de venda": "109,0K de prata",
+    "Local": "Caerleon",
+    "Custo dos materiais": "8,3K de prata",
+    "Local de compra dos materiais": [{"material": "Tecido Ornado .2", "quantidade": 8, "cidade": "Lymhurst"}, {"material": "Estofamento Fascinante", "quantidade": 1, "cidade": "Black Market"}],
+    "Custo total": "8,3K de prata",
+    "Lucro/Prejuizo": "+113,8K de prata"
+  }
+}

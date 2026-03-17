@@ -36,8 +36,6 @@ public class BancoDeDadosCraft {
             "Todos (mais barato)", "Normal", "Boa", "Notável", "Excelente", "Obra-prima"
     };
 
-
-
             /*
             case "" -> "ARTEFACT_TOKEN_FAVOR_1;;Espírito Cristalizado";
             case "" -> "ARTEFACT_TOKEN_FAVOR_2;;Terrível Cristalizado";
@@ -49,7 +47,6 @@ public class BancoDeDadosCraft {
             case "" -> "SHARD_CRYSTAL;;Fragmento de Cristal";
             case "" -> "RELIC;;Relíquia";
             */
-
 
     // mapeia itemId -> sufixo correto do artefato
     // ids dos artefatos com os nomes deles pra ser usado separadamente
@@ -718,21 +715,19 @@ public class BancoDeDadosCraft {
                 ))
         )));
 
-        /*
+        /*faltando terminar
         lista.add(new Categoria("", "Recursos Brutos", Arrays.asList(
                 new Subcategoria("Minerios", Arrays.asList(
                         item("", "", "")
                         ))
-
         )));
-
-
         lista.add(new Categoria("", "Recursos refinados", Arrays.asList(
                 new Subcategoria("Barra", Arrays.asList(
                         item("", "", "")
                 ))
-
         )));*/
+
+
         return lista;
     }
 

@@ -52,6 +52,7 @@ public class ItemValues {
         reg("SHOES_CLOTH_AVALON", 4, 128);
         reg("SHOES_CLOTH_ROYAL", 4, 128);
 
+
         //  armaduras (peitoral)
         reg("ARMOR_PLATE_SET1", 4, 128);
         reg("ARMOR_PLATE_SET2", 4, 128);
@@ -82,6 +83,7 @@ public class ItemValues {
         reg("ARMOR_CLOTH_UNDEAD", 4, 128);
         reg("ARMOR_CLOTH_AVALON", 4, 128);
         reg("ARMOR_CLOTH_ROYAL", 4, 128);
+
 
         // capacetes
         reg("HEAD_PLATE_SET1", 4, 128);
@@ -114,21 +116,16 @@ public class ItemValues {
         reg("HEAD_CLOTH_AVALON", 4, 128);
         reg("HEAD_CLOTH_ROYAL", 4, 128);
 
-        //  armas 1h (espada, machado, maca etc)
+
+        // armas 1h
         reg("MAIN_SWORD", 4, 128);
-        reg("MAIN_SCIMITAR_MORGANA", 4, 128);
-        reg("MAIN_AXE", 4, 128);
-        reg("MAIN_ROCKCUTTER_AVALON", 4, 128);
+        reg("MAIN_SCIMITAR_MORGANA", 4, 434);
+        reg("MAIN_AXE", 3, 192);
         reg("MAIN_MACE", 4, 128);
-        reg("MAIN_ROCKTEETH_AVALON", 4, 128);
         reg("MAIN_MACE_HELL", 4, 128);
         reg("MAIN_SPEAR", 4, 128);
-        reg("MAIN_SPEAR_MORGANA", 4, 128);
         reg("MAIN_DAGGER", 4, 128);
-        reg("MAIN_RAPIER_MORGANA", 4, 128);
         reg("MAIN_ENIGMATICORB_AVALON", 4, 128);
-        reg("MAIN_KNUCKLES_SET1", 4, 128);
-        reg("MAIN_KNUCKLES_SET2", 4, 128);
 
         // armas 2h
         reg("2H_CLAYMORE", 4, 256);
@@ -144,128 +141,37 @@ public class ItemValues {
         reg("2H_REALMBREAKER_AVALON", 4, 256);
         reg("2H_MACE", 4, 256);
         reg("2H_DUALMACE_AVALON", 4, 256);
-        reg("2H_FLAIL_HELL", 4, 256);
-        reg("2H_HAMMER_UNDEAD", 4, 256);
+        reg("2H_HAMMER_UNDEAD", 4, 562);
         reg("2H_HAMMER", 4, 256);
         reg("2H_POLEHAMMER", 4, 256);
-        reg("2H_HAMMER_HELL", 4, 256);
-        reg("2H_DUALHAMMER_AVALON", 4, 256);
-        reg("2H_POLEHAMMER_UNDEAD", 4, 256);
-        reg("2H_HAMMER_MORGANA", 4, 256);
-        reg("2H_HANDOFJUSTICE_AVALON", 4, 256);
         reg("2H_SPEAR", 4, 256);
         reg("2H_HARPOON_HELL", 4, 256);
-        reg("2H_GLAIVE_HELL", 4, 256);
-        reg("2H_JOUSTING_LANCE_AVALON", 4, 256);
-        reg("2H_SPIRITHUNTER", 4, 256);
         reg("2H_DAGGER", 4, 256);
         reg("2H_CLAWS_HELL", 4, 256);
-        reg("2H_DUALDAGGER_UNDEAD", 4, 256);
-        reg("2H_SOULSCYTHE_AVALON", 4, 256);
         reg("2H_QUARTERSTAFF", 4, 256);
-        reg("2H_IRONCLADEDSTAFF_HELL", 4, 256);
-        reg("2H_DOUBLEBLADEDSTAFF_UNDEAD", 4, 256);
-        reg("2H_TWINSCYTHE_AVALON", 4, 256);
-        reg("2H_TRANSFORMATIONSTAFF_UNDEAD", 4, 256);
-        reg("2H_KNUCKLES_SET1", 4, 256);
         reg("2H_KNUCKLES_SET2", 4, 256);
         reg("2H_KNUCKLES_HELL", 4, 256);
-        reg("2H_CESTUS_AVALON", 4, 256);
         reg("2H_KNUCKLES_AVALON", 4, 256);
         reg("2H_BOW", 4, 256);
-        reg("2H_WARBOW_UNDEAD", 4, 256);
-        reg("2H_LONGBOW_MORGANA", 4, 256);
-        reg("2H_WHISPERBOW_HELL", 4, 256);
         reg("2H_BOW_AVALON", 4, 256);
         reg("2H_CROSSBOW", 4, 256);
-        reg("2H_CROSSBOW_MORGANA", 4, 256);
         reg("2H_DUALCROSSBOW_HELL", 4, 256);
-        reg("2H_REPEATINGCROSSBOW_AVALON", 4, 256);
-        reg("2H_BOLTCASTERS_UNDEAD", 4, 256);
 
         // cajados 1h
         reg("MAIN_ARCANESTAFF", 4, 128);
-        reg("MAIN_GRACEFULSTAFF_AVALON", 4, 128);
         reg("MAIN_FIRESTAFF", 4, 128);
-        reg("MAIN_INFERNOSTAFF_HELL", 4, 128);
         reg("MAIN_FROSTSTAFF", 4, 128);
-        reg("MAIN_ICETEMPEST_UNDEAD", 4, 128);
         reg("MAIN_CURSESTAFF", 4, 128);
-        reg("MAIN_DEMONICSTAFF_HELL", 4, 128);
         reg("MAIN_HOLYSTAFF", 4, 128);
-        reg("MAIN_DIVINESTAFF_MORGANA", 4, 128);
         reg("MAIN_NATURESTAFF", 4, 128);
-        reg("MAIN_WILDSTAFF_HELL", 4, 128);
-        reg("MAIN_BOW", 4, 128);
         reg("MAIN_LONGBOW_UNDEAD", 4, 128);
-        reg("MAIN_CROSSBOW", 4, 128);
-        reg("MAIN_CROSSBOW_MORGANA", 4, 128);
 
         // cajados 2h
         reg("2H_ARCANESTAFF", 4, 256);
-        reg("2H_ENIGMATICSTAFF_UNDEAD", 4, 256);
-        reg("2H_WITCHWORKSTAFF_MORGANA", 4, 256);
-        reg("2H_OCCULTSTAFF_UNDEAD", 4, 256);
-        reg("2H_RUNESTAFF_AVALON", 4, 256);
         reg("2H_FIRESTAFF", 4, 256);
-        reg("2H_INFERNOSTAFF_HELL", 4, 256);
-        reg("2H_WILDFIRE_HELL", 4, 256);
-        reg("2H_ROOTOFLIFE_AVALON", 4, 256);
-        reg("2H_BRIMSTONESTAFF_AVALON", 4, 256);
         reg("2H_FROSTSTAFF", 4, 256);
-        reg("2H_GLACIALSTAFF_UNDEAD", 4, 256);
-        reg("2H_ICECRYSTALSTAFF_AVALON", 4, 256);
-        reg("2H_HOARFROSTSTAFF_UNDEAD", 4, 256);
-        reg("2H_CURSESTAFF", 4, 256);
-        reg("2H_SKULLJESTER_UNDEAD", 4, 256);
-        reg("2H_SHADOWCALLER_UNDEAD", 4, 256);
-        reg("2H_LIFECURSE_UNDEAD", 4, 256);
-        reg("2H_CURSEDPELL_AVALON", 4, 256);
         reg("2H_HOLYSTAFF", 4, 256);
-        reg("2H_LIFETOUCH_UNDEAD", 4, 256);
-        reg("2H_HOLYORB_MORGANA", 4, 256);
-        reg("2H_HALLOWFALL_AVALON", 4, 256);
-        reg("2H_REDEMPTIONSTAFF_AVALON", 4, 256);
         reg("2H_NATURESTAFF", 4, 256);
-        reg("2H_IRONROOT_UNDEAD", 4, 256);
-        reg("2H_DRUIDICSTAFF_AVALON", 4, 256);
-        reg("2H_ROTVINE_UNDEAD", 4, 256);
-        reg("2H_BLIGHT_HELL", 4, 256);
-
-        // mao secundaria
-        reg("OFF_SHIELD_SET1", 4, 128);
-        reg("OFF_SHIELD_SET2", 4, 128);
-        reg("OFF_SHIELD_SET3", 4, 128);
-        reg("OFF_SHIELD_UNDEAD", 4, 128);
-        reg("OFF_SHIELD_MORGANA", 4, 128);
-        reg("OFF_SHIELD_KEEPER", 4, 128);
-        reg("OFF_BOOK_SET1", 4, 128);
-        reg("OFF_BOOK_SET2", 4, 128);
-        reg("OFF_TORCH_SET1", 4, 128);
-        reg("OFF_TORCH_SET2", 4, 128);
-        reg("OFF_ORB_SET1", 4, 128);
-        reg("OFF_ORB_SET2", 4, 128);
-        reg("OFF_HORN_SET1", 4, 128);
-        reg("OFF_HORN_SET2", 4, 128);
-        reg("OFF_TOTEM_SET1", 4, 128);
-        reg("OFF_TOTEM_SET2", 4, 128);
-
-
-        //capa
-        reg("CAPE", 2, 32);
-        reg("CAPEITEM_FW_CAERLEON", 4, 160);
-        reg("CAPEITEM_FW_BRIDGEWATCH", 4, 160);
-        reg("CAPEITEM_FW_FORTSTERLING", 4, 160);
-        reg("CAPEITEM_FW_THETFORD", 4, 160);
-        reg("CAPEITEM_FW_LYMHURST", 4, 160);
-        reg("CAPEITEM_FW_MARTLOCK", 4, 160);
-        reg("CAPEITEM_AVALON", 4, 1120);
-        reg("CAPEITEM_SMUGGLER", 4, 160);
-        reg("CAPEITEM_HERETIC", 4, 160);
-        reg("CAPEITEM_UNDEAD", 4, 160);
-        reg("CAPEITEM_KEEPER", 4, 160);
-        reg("CAPEITEM_MORGANA", 4, 160);
-        reg("CAPEITEM_DEMON", 4, 160);
 
 
         //bolsa
@@ -288,8 +194,139 @@ public class ItemValues {
         reg("MEAL_SANDWICH_FISH", 4, 120);
         reg("MEAL_SANDWICH_AVALON", 4, 88);
 
-        //equipamento de coleta
-        //FALTANDO TERMINAR
+        /*
+        esses itens estao faltando, e os de cima podem estar errados
+
+
+        reg("2H_SCYTHE_CRYSTAL", 0, 0);
+        reg("2H_FLAIL", 0, 0);
+        reg("MAIN_ROCKMACE_KEEPER", 0, 0);
+        reg("2H_MACE_MORGANA", 0, 0);
+        reg("MAIN_MACE_CRYSTAL", 0, 0);
+        reg("MAIN_HAMMER", 0, 0);
+        reg("2H_DUALHAMMER_HELL", 0, 0);
+        reg("2H_RAM_KEEPER", 0, 0);
+        reg("2H_HAMMER_AVALON", 0, 0);
+        reg("2H_HAMMER_CRYSTAL", 0, 0);
+        reg("2H_GLAIVE", 0, 0);
+        reg("MAIN_SPEAR_KEEPER", 0, 0);
+        reg("2H_TRIDENT_UNDEAD", 0, 0);
+        reg("MAIN_SPEAR_LANCE_AVALON", 0, 0);
+        reg("2H_GLAIVE_CRYSTAL", 0, 0);
+        reg("MAIN_RAPIER_MORGANA", 0, 0);
+        reg("2H_DAGGER_KATAR_AVALON", 0, 0);
+        reg("2H_DUALSICKLE_UNDEAD", 0, 0);
+        reg("MAIN_DAGGER_HELL", 0, 0);
+        reg("2H_DAGGERPAIR_CRYSTAL", 0, 0);
+        reg("2H_IRONCLADEDSTAFF", 0, 0);
+        reg("2H_DOUBLEBLADEDSTAFF", 0, 0);
+        reg("2H_COMBATSTAFF_MORGANA", 0, 0);
+        reg("2H_TWINSCYTHE_HELL", 0, 0);
+        reg("2H_ROCKSTAFF_KEEPER", 0, 0);
+        reg("2H_QUARTERSTAFF_AVALON", 0, 0);
+        reg("2H_DOUBLEBLADEDSTAFF_CRYSTAL", 0, 0);
+        reg("2H_KNUCKLES_SET", 0, 0);
+        reg("2H_KNUCKLES_SET3", 0, 0);
+        reg("2H_KNUCKLES_KEEPER", 0, 0);
+        reg("2H_KNUCKLES_MORGANA", 0, 0);
+        reg("2H_KNUCKLES_CRYSTAL", 0, 0);
+        reg("2H_ENIGMATICSTAFF", 0, 0);
+        reg("MAIN_ARCANESTAFF_UNDEAD", 0, 0);
+        reg("2H_ARCANESTAFF_HELL", 0, 0);
+        reg("2H_ENIGMATICORB_MORGANA", 0, 0);
+        reg("2H_ARCANE_RINGPAIR_AVALON", 0, 0);
+        reg("2H_ARCANESTAFF_CRYSTAL", 0, 0);
+        reg("2H_INFERNOSTAFF", 0, 0);
+        reg("MAIN_FIRESTAFF_KEEPER", 0, 0);
+        reg("2H_FIRESTAFF_HELL", 0, 0);
+        reg("2H_FIRE_RINGPAIR_AVALON", 0, 0);
+        reg("MAIN_FIRESTAFF_CRYSTAL", 0, 0);
+        reg("2H_GLACIALSTAFF", 0, 0);
+        reg("MAIN_FROSTSTAFF_KEEPER", 0, 0);
+        reg("2H_ICEGAUNTLETS_HELL", 0, 0);
+        reg("2H_ICECRYSTAL_UNDEAD", 0, 0);
+        reg("MAIN_FROSTSTAFF_AVALON", 0, 0);
+        reg("2H_FROSTSTAFF_CRYSTAL", 0, 0);
+        reg("2H_CURSEDSTAFF", 0, 0);
+        reg("2H_DEMONICSTAFF", 0, 0);
+        reg("MAIN_CURSEDSTAFF_UNDEAD", 0, 0);
+        reg("2H_SKULLORB_HELL", 0, 0);
+        reg("2H_CURSEDSTAFF_MORGANA", 0, 0);
+        reg("MAIN_CURSEDSTAFF_AVALON", 0, 0);
+        reg("MAIN_CURSEDSTAFF_CRYSTAL", 0, 0);
+        reg("2H_DIVINESTAFF", 0, 0);
+        reg("MAIN_HOLYSTAFF_MORGANA", 0, 0);
+        reg("2H_HOLYSTAFF_HELL", 0, 0);
+        reg("2H_HOLYSTAFF_UNDEAD", 0, 0);
+        reg("MAIN_HOLYSTAFF_AVALON", 0, 0);
+        reg("2H_HOLYSTAFF_CRYSTAL", 0, 0);
+        reg("2H_WILDSTAFF", 0, 0);
+        reg("MAIN_NATURESTAFF_KEEPER", 0, 0);
+        reg("2H_NATURESTAFF_HELL", 0, 0);
+        reg("2H_NATURESTAFF_KEEPER", 0, 0);
+        reg("MAIN_NATURESTAFF_AVALON", 0, 0);
+        reg("MAIN_NATURESTAFF_CRYSTAL", 0, 0);
+        reg("2H_WARBOW", 0, 0);
+        reg("2H_LONGBOW", 0, 0);
+        reg("2H_BOW_HELL", 0, 0);
+        reg("2H_BOW_KEEPER", 0, 0);
+        reg("2H_BOW_CRYSTAL", 0, 0);
+        reg("2H_CROSSBOWLARGE", 0, 0);
+        reg("MAIN_1HCROSSBOW", 0, 0);
+        reg("2H_REPEATINGCROSSBOW_UNDEAD", 0, 0);
+        reg("2H_CROSSBOWLARGE_MORGANA", 0, 0);
+        reg("2H_CROSSBOW_CANNON_AVALON", 0, 0);
+        reg("2H_DUALCROSSBOW_CRYSTAL", 0, 0);
+        reg("2H_SHAPESHIFTER_SET1", 0, 0);
+        reg("2H_SHAPESHIFTER_SET2", 0, 0);
+        reg("2H_SHAPESHIFTER_SET3", 0, 0);
+        reg("2H_SHAPESHIFTER_MORGANA", 0, 0);
+        reg("2H_SHAPESHIFTER_HELL", 0, 0);
+        reg("2H_SHAPESHIFTER_KEEPER", 0, 0);
+        reg("2H_SHAPESHIFTER_AVALON", 0, 0);
+        reg("2H_SHAPESHIFTER_CRYSTAL", 0, 0);
+        */
+
+        /*
+        reg("FISHINGBAIT", 0, 0);
+        reg("2H_TOOL_FISHINGROD", 0, 0);
+        reg("2H_TOOL_FISHINGROD_AVALON", 0, 0);
+        reg("HEAD_GATHERER_FISH", 0, 0);
+        reg("ARMOR_GATHERER_FISH", 0, 0);
+        reg("SHOES_GATHERER_FISH", 0, 0);
+        reg("BACKPACK_GATHERER_FISH", 0, 0);
+        reg("2H_TOOL_SICKLE", 0, 0);
+        reg("2H_TOOL_SICKLE_AVALON", 0, 0);
+        reg("HEAD_GATHERER_FIBER", 0, 0);
+        reg("ARMOR_GATHERER_FIBER", 0, 0);
+        reg("SHOES_GATHERER_FIBER", 0, 0);
+        reg("BACKPACK_GATHERER_FIBER", 0, 0);
+        reg("2H_TOOL_KNIFE", 0, 0);
+        reg("2H_TOOL_KNIFE_AVALON", 0, 0);
+        reg("HEAD_GATHERER_HIDE", 0, 0);
+        reg("ARMOR_GATHERER_HIDE", 0, 0);
+        reg("SHOES_GATHERER_HIDE", 0, 0);
+        reg("BACKPACK_GATHERER_HIDE", 0, 0);
+        reg("2H_TOOL_PICK", 0, 0);
+        reg("2H_TOOL_PICK_AVALON", 0, 0);
+        reg("HEAD_GATHERER_ORE", 0, 0);
+        reg("ARMOR_GATHERER_ORE", 0, 0);
+        reg("SHOES_GATHERER_ORE", 0, 0);
+        reg("BACKPACK_GATHERER_ORE", 0, 0);
+        reg("H_TOOL_HAMMER", 0, 0);
+        reg("H_TOOL_HAMMER_AVALON", 0, 0);
+        reg("HEAD_GATHERER_ROCK", 0, 0);
+        reg("ARMOR_GATHERER_ROCK", 0, 0);
+        reg("SHOES_GATHERER_ROCK", 0, 0);
+        reg("BACKPACK_GATHERER_ROCK", 0, 0);
+        reg("2H_TOOL_AXE", 0, 0);
+        reg("2H_TOOL_AXE_AVALON", 0, 0);
+        reg("HEAD_GATHERER_WOOD", 0, 0);
+        reg("ARMOR_GATHERER_WOOD", 0, 0);
+        reg("SHOES_GATHERER_WOOD", 0, 0);
+        reg("BACKPACK_GATHERER_WOOD", 0, 0);
+*/
+
     }
 
     // registra um item com seu tier minimo e valor base nesse tier
