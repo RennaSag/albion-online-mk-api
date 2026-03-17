@@ -1,0 +1,23 @@
+{
+  "item": "Espada Entalhada",
+  "itemId": "T5_2H_CLEAVER_HELL@2",
+  "tier": 5,
+  "encantamento": 2,
+  "parametros": {
+    "quantidade": "1",
+    "taxaRetorno": "15.2",
+    "taxaMercado": "3.0",
+    "taxaBarraca": "3.0",
+    "itemValue": "2.048"
+  },
+  "calculadora": {
+    "Quantidade a craftar": "1 un",
+    "Qtd final craftada": "1,18 un",
+    "Melhor preco de venda": "249,9K de prata",
+    "Local": "Lymhurst",
+    "Custo dos materiais": "39,7K de prata",
+    "Local de compra dos materiais": [{"material": "Barra de Titânio .2", "quantidade": 20, "cidade": "Caerleon"}, {"material": "Couro Curtido .2", "quantidade": 12, "cidade": "Caerleon"}, {"material": "Lâmina Demoníaca", "quantidade": 1, "cidade": "Black Market"}],
+    "Custo total": "39,7K de prata",
+    "Lucro/Prejuizo": "+240,3K de prata"
+  }
+}

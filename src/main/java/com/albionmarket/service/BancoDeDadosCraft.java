@@ -56,7 +56,7 @@ public class BancoDeDadosCraft {
     public static String getArtefatoSufixo(String itemId) {
         String base = itemId.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");
         return switch (base) {
-            case "2H_HAMMER_UNDEAD" -> "ARTEFACT_2H_HAMMER_UNDEAD;;Martelo dos Mortos-Vivos";
+            case "2H_HAMMER_UNDEAD" -> "ARTEFACT_2H_HAMMER_UNDEAD;;Cabeça de Martelo";
             case "2H_ARCANESTAFF_HELL" -> "ARTEFACT_2H_ARCANESTAFF_HELL;;Orbe Oculto";
             case "2H_BOW_HELL" -> "ARTEFACT_2H_BOW_HELL;;Pontas de Flecha Demoníacas";
             case "2H_BOW_KEEPER" -> "ARTEFACT_2H_BOW_KEEPER;;Osso Entalhado";
