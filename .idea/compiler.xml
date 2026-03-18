@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="albion-market" />
+        <module name="albion-online-mk-api" />
       </profile>
     </annotationProcessing>
   </component>
