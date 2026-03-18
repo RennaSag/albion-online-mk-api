@@ -60,7 +60,7 @@ public class TelaOperacoesAtivas {
         Scene cena = new Scene(raiz, 1280, 800);
         cena.getStylesheets().add(getClass().getResource("/estilos.css").toExternalForm());
 
-        palco.setTitle("Albion Market — Operações Ativas");
+        palco.setTitle("Albion Market - Operações Ativas");
         palco.setScene(cena);
         palco.setResizable(true);
         palco.setMinWidth(900);
@@ -195,7 +195,7 @@ public class TelaOperacoesAtivas {
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
             confirm.setTitle("Finalizar Operação");
             confirm.setHeaderText("Deseja finalizar esta operação?");
-            confirm.setContentText(item + " — " + arquivo.getFileName());
+            confirm.setContentText(item); //confirm.setContentText(item + " - " + arquivo.getFileName()); se deixar assim ele traz o nome do arquivo, e isso não me interessa
             confirm.showAndWait().ifPresent(resposta -> {
                 if (resposta == ButtonType.OK) {
                     try {
@@ -238,13 +238,13 @@ public class TelaOperacoesAtivas {
     private String extrair(String json, String chave) {
         String padrao = "\"" + chave + "\"";
         int idx = json.indexOf(padrao);
-        if (idx == -1) return "—";
+        if (idx == -1) return "-";
         int colon = json.indexOf(":", idx);
-        if (colon == -1) return "—";
+        if (colon == -1) return "-";
         String resto = json.substring(colon + 1).trim();
         if (resto.startsWith("\"")) {
             int fim = resto.indexOf("\"", 1);
-            return fim == -1 ? "—" : resto.substring(1, fim);
+            return fim == -1 ? "-" : resto.substring(1, fim);
         } else {
             // número
             StringBuilder sb = new StringBuilder();
@@ -256,7 +256,7 @@ public class TelaOperacoesAtivas {
         }
     }
 
-    // extrai bloco {...} após uma chave
+    // extrai bloco {...} apos uma chave, puxa do json
     private String extrairBloco(String json, String chave) {
         String padrao = "\"" + chave + "\"";
         int idx = json.indexOf(padrao);

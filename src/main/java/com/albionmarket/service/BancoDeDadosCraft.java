@@ -637,7 +637,7 @@ public class BancoDeDadosCraft {
 
                 )),
 
-                new Subcategoria("Poçoes", Arrays.asList(
+                new Subcategoria("Poções", Arrays.asList(
                         item("POTION_HEAL", "Poção de Cura", "pocao de cura"),
                         item("POTION_ENERGY", "Poção de Energia", "pocao de energia"),
                         item("POTION_REVIVE", "Poção de Crescimento", "pocao de crescimento"),
@@ -766,7 +766,7 @@ public class BancoDeDadosCraft {
     // retorna nome do recurso refinado pelo sufixo e tier
     // indices: 2=T2, 3=T3 ... 8=T8
     public static String getNomeRecurso(String sufixo, int tier) {
-        int idx = tier - 2; // T2 = índice 0, T3 = índice 1, etc.
+        int idx = tier - 2; // T2 = índice 0, T3 = índice 1, etc
         String[] nomes = switch (sufixo) {
             case "METALBAR" ->
                     new String[]{"Barra de Cobre", "Barra de Bronze", "Barra de Aço", "Barra de Titânio", "Barra de Runita", "Barra de Aço Meteorito", "Barra de Adamantium"};
