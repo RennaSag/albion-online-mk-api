@@ -64,16 +64,8 @@ public class TelaCraftSelecao {
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarConteudo());
 
-        Scene cena = new Scene(raiz);
-        cena.getStylesheets().add(
-                getClass().getResource("/estilos.css").toExternalForm()
-        );
-
         palco.setTitle("Albion Market - Craft");
-        palco.setScene(cena);
-        palco.setResizable(true);
-        palco.setMaximized(false);
-        palco.setMaximized(true);
+        palco.getScene().setRoot(raiz);
 
         if (estadoAnterior != null) {
             restaurarEstado();
@@ -104,6 +96,9 @@ public class TelaCraftSelecao {
 
     private HBox criarCabecalho() {
         Label titulo = new Label("Albion Online Craft");
+        palco.setMinWidth(1280);
+        palco.setMinHeight(720);
+
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
@@ -246,13 +241,9 @@ public class TelaCraftSelecao {
                 + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
 
 
-        btnSelecionar.setOnAction(e -> {
-            onSelecionar();
-            palco.setMaximized(false);
-            palco.setMaximized(true);
-
-
-        });
+        btnSelecionar.setOnAction(e ->
+                onSelecionar()
+        );
 
 
         Button btnLimpar = new Button("Limpar");
@@ -267,10 +258,10 @@ public class TelaCraftSelecao {
         btnVoltar.setPrefHeight(40);
         btnVoltar.setStyle("-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
                 + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
-        btnVoltar.setOnAction(e -> {
-            palco.setMaximized(false);
-            new TelaHome(palco).mostrar();
-        });
+
+        btnVoltar.setOnAction(e ->
+                new TelaHome(palco).mostrar()
+        );
 
         VBox vb = new VBox(8, btnSelecionar, btnLimpar, btnVoltar);
         vb.setAlignment(Pos.CENTER);

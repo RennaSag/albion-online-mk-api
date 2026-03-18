@@ -57,15 +57,10 @@ public class TelaOperacoesAtivas {
         raiz.setTop(cabecalho);
         raiz.setCenter(scroll);
 
-        Scene cena = new Scene(raiz, 1280, 800);
-        cena.getStylesheets().add(getClass().getResource("/estilos.css").toExternalForm());
-
         palco.setTitle("Albion Market - Operações Ativas");
-        palco.setScene(cena);
-        palco.setResizable(true);
-        palco.setMinWidth(900);
-        palco.setMinHeight(600);
-        palco.setMaximized(true);
+        palco.getScene().setRoot(raiz);
+        palco.setMinWidth(1280);
+        palco.setMinHeight(720);
 
         carregarCards();
     }

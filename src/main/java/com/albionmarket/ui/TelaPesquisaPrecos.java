@@ -98,7 +98,7 @@ public class TelaPesquisaPrecos {
     }
 
 
-    // ponto de entrada: cria e retorna o layout raiz
+    // ponto de entrada cria e retorna o layout raiz
     public BorderPane getCriarLayout() {
         BorderPane raiz = new BorderPane();
         raiz.setTop(criarCabecalho());
@@ -110,6 +110,8 @@ public class TelaPesquisaPrecos {
     // header
     private HBox criarCabecalho() {
         Label titulo = new Label("Albion Market");
+
+
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
@@ -251,7 +253,6 @@ public class TelaPesquisaPrecos {
 
         //espaço pro boltão "voltar" ficar mais afastado dos outros
         Region espaco = new Region();
-        //espaco.setMinHeight(10);
         VBox.setVgrow(espaco, Priority.ALWAYS);
 
 
@@ -262,9 +263,6 @@ public class TelaPesquisaPrecos {
         btnVoltar.setOnAction(e -> {
             Stage palco = (Stage) btnVoltar.getScene().getWindow();
             new TelaHome(palco).mostrar();
-
-            palco.centerOnScreen();
-            palco.setMaximized(true);
         });
 
 

@@ -277,15 +277,10 @@ public class TelaCraft {
         raiz.setLeft(criarLateral());
         raiz.setCenter(criarAreaCentral());
 
-        Scene cena = new Scene(raiz, 1280, 800);
-        cena.getStylesheets().add(getClass().getResource("/estilos.css").toExternalForm());
-
         palco.setTitle("Albion Market - Craft: " + item.getNome());
-        palco.setScene(cena);
-        palco.setResizable(true);
-        palco.setMinWidth(900);
-        palco.setMinHeight(600);
-        palco.setMaximized(true);
+        palco.getScene().setRoot(raiz);
+        palco.setMinWidth(1280);
+        palco.setMinHeight(720);
 
         buscarTudo();
     }
@@ -442,13 +437,10 @@ public class TelaCraft {
         Button btnVoltar = new Button("Voltar");
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
         btnVoltar.getStyleClass().add("home-botao");
-        btnVoltar.setOnAction(ev -> {
-            if (estadoSelecao != null) {
-                new TelaCraftSelecao(palco, estadoSelecao).mostrar();
-            } else {
-                new TelaCraftSelecao(palco).mostrar();
-            }
-        });
+
+        btnVoltar.setOnAction(v ->
+                new TelaCraftSelecao(palco, estadoSelecao).mostrar()
+        );
 
         Button btnIniciarOperacao = new Button("Iniciar Operação");
         btnIniciarOperacao.setMaxWidth(Double.MAX_VALUE);
