@@ -1,0 +1,14 @@
+jpackage `
+  --type msi `
+  --name "Albion Market" `
+  --app-version 1.0.0 `
+  --input target `
+  --main-jar albion-market-fat.jar `
+  --main-class com.albionmarket.MainApp `
+  --module-path "C:\javafx-sdk\javafx-sdk-21.0.2\lib" `
+  --add-modules java.base,java.desktop,java.net.http,java.prefs,java.scripting,java.sql,jdk.jfr,jdk.unsupported,javafx.controls,javafx.fxml,javafx.graphics `
+  --icon "src\main\resources\icons\icone.ico" `
+  --win-shortcut `
+  --win-menu `
+  --win-dir-chooser `
+  --dest instalador
