@@ -297,15 +297,12 @@ public class TelaOperacoesAtivas {
     }
 
     private java.nio.file.Path getDiretorioOperacoes() {
+        java.nio.file.Path dir = java.nio.file.Paths.get(
+                System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes"
+        );
         try {
-            java.nio.file.Path exe = java.nio.file.Paths.get(
-                    ProcessHandle.current().info().command().orElse("")
-            );
-            java.nio.file.Path dir = exe.getParent();
-            if (dir != null && java.nio.file.Files.isWritable(dir)) {
-                return dir;
-            }
+            java.nio.file.Files.createDirectories(dir);
         } catch (Exception ignored) {}
-        return java.nio.file.Paths.get(System.getProperty("user.home"));
+        return dir;
     }
 }
