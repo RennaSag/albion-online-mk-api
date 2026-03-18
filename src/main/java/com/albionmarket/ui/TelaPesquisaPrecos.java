@@ -479,7 +479,7 @@ public class TelaPesquisaPrecos {
                     .orElse("#888");
 
             String qualLabel = quality == -1
-                    ? FormatadorUtil.nomeQualidade(pe.getQualidade()) + " *"
+                    ? FormatadorUtil.nomeQualidade(pe.getQualidade()) + " "
                     : FormatadorUtil.nomeQualidade(pe.getQualidade());
 
 

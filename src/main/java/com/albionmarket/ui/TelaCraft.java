@@ -295,7 +295,20 @@ public class TelaCraft {
         subtitulo.setStyle("-fx-text-fill: #999;");
 
         VBox textos = new VBox(2, titulo, subtitulo);
-        HBox cab = new HBox(textos);
+
+        Region espacador = new Region();
+        HBox.setHgrow(espacador, Priority.ALWAYS);
+
+        // voltar pra home
+        Label btnHome = new Label("Início");
+        btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;");
+        btnHome.setTooltip(new Tooltip("Voltar para Home"));
+        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 20px; -fx-cursor: hand; -fx-opacity: 0.7;"));
+        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 20px; -fx-cursor: hand;"));
+        btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
+
+        HBox cab = new HBox(textos, espacador, btnHome);
+        cab.setAlignment(Pos.CENTER_LEFT);
         cab.setPadding(new Insets(14, 20, 14, 20));
         cab.setStyle("-fx-background-color: #1e1e1e; -fx-border-color: #333; -fx-border-width: 0 0 1 0;");
         return cab;
