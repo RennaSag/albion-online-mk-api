@@ -196,7 +196,7 @@ public class TelaCraft {
             String nomeArquivo = "operacao_" + itemIdCompleto + "_"
                     + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
                     + ".json";
-            java.nio.file.Path caminho = java.nio.file.Paths.get(nomeArquivo);
+            java.nio.file.Path caminho = getDiretorioOperacoes().resolve(nomeArquivo);
             java.nio.file.Files.writeString(caminho, sb.toString());
 
             labelStatus.setText("Operação salva: " + nomeArquivo);
@@ -1374,5 +1374,18 @@ public class TelaCraft {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    private java.nio.file.Path getDiretorioOperacoes() {
+        try {
+            java.nio.file.Path exe = java.nio.file.Paths.get(
+                    ProcessHandle.current().info().command().orElse("")
+            );
+            java.nio.file.Path dir = exe.getParent();
+            if (dir != null && java.nio.file.Files.isWritable(dir)) {
+                return dir;
+            }
+        } catch (Exception ignored) {}
+        return java.nio.file.Paths.get(System.getProperty("user.home"));
     }
 }

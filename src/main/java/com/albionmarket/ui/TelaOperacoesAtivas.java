@@ -69,7 +69,7 @@ public class TelaOperacoesAtivas {
         painelCards.getChildren().clear();
 
         try {
-            List<Path> arquivos = Files.list(Paths.get("."))
+            List<Path> arquivos = Files.list(getDiretorioOperacoes())
                     .filter(p -> p.getFileName().toString().startsWith("operacao_")
                             && p.getFileName().toString().endsWith(".json"))
                     .sorted(Comparator.comparing(p -> p.getFileName().toString()))
@@ -294,5 +294,18 @@ public class TelaOperacoesAtivas {
             else if (sb.length() > 0) break;
         }
         return sb.length() > 0 ? sb.toString() : null;
+    }
+
+    private java.nio.file.Path getDiretorioOperacoes() {
+        try {
+            java.nio.file.Path exe = java.nio.file.Paths.get(
+                    ProcessHandle.current().info().command().orElse("")
+            );
+            java.nio.file.Path dir = exe.getParent();
+            if (dir != null && java.nio.file.Files.isWritable(dir)) {
+                return dir;
+            }
+        } catch (Exception ignored) {}
+        return java.nio.file.Paths.get(System.getProperty("user.home"));
     }
 }

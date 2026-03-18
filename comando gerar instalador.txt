@@ -1,3 +1,5 @@
+mvn clean package
+
 jpackage `
   --type msi `
   --name "Albion Market" `
