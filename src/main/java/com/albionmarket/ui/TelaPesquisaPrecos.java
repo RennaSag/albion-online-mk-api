@@ -94,7 +94,7 @@ public class TelaPesquisaPrecos {
             return;
         }
         String url = "https://render.albiononline.com/v1/item/" + itemId + ".png";
-        iconItem.setImage(new javafx.scene.image.Image(url, true)); // true = carrega em background
+        iconItem.setImage(new javafx.scene.image.Image(url, true));
     }
 
 

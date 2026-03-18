@@ -816,12 +816,14 @@ public class TelaCraft {
             String nomeArtefato = raw != null ? raw.split(";;")[1] : null;
 
             // ícone usa o sufixoArtefato se disponível, se n usa idMat, q mostra o id do material
+            // se não aparecer o nome do material é pq ele n ta cadastrado no BancoDeDadosCraft.java
             int tAtual = (tier == -1) ? 4 : tier;
             String iconeUrl = ehArtefato
                     ? "https://render.albiononline.com/v1/item/" +
                     (sufixoArtefato != null ? "T" + tAtual + "_" + sufixoArtefato : idMat) + ".png"
                     : enchantAtualR > 0
-                    ? "https://render.albiononline.com/v1/item/" + idMat + ".png?quality=" + enchantAtualR
+                    ? "https://render.albiononline.com/v1/item/" + idMat + "_LEVEL" + enchantAtualR + ".png"
+                    // pra recursos usa _LEVEL em vez de @ pro encantamento
                     : "https://render.albiononline.com/v1/item/" + idMat + ".png";
 
 

@@ -178,22 +178,6 @@ public class ItemValues {
         reg("BAG", 2, 128);
         reg("BAG_INSIGHT", 4, 256);
 
-        //consumivel
-        reg("MEAL_GRILLEDFISH", 1, 20);
-        reg("MEAL_SALAD", 1, 5);
-        reg("MEAL_SALAD_FISH", 2, 106);
-        reg("MEAL_SOUP", 1, 77);
-        reg("MEAL_SOUP_FISH", 1, 106);
-        reg("MEAL_OMELETTE", 3, 77);
-        reg("MEAL_OMELETTE_FISH", 3, 116);
-        reg("MEAL_STEW", 4, 91);
-        reg("MEAL_STEW_FISH", 3, 78);
-        reg("MEAL_PIE", 3, 78);
-        reg("MEAL_PIE_FISH", 2, 120);
-        reg("MEAL_SANDWICH", 4, 81);
-        reg("MEAL_SANDWICH_FISH", 4, 120);
-        reg("MEAL_SANDWICH_AVALON", 4, 88);
-
         /*
         esses itens estao faltando, e os de cima podem estar errados
 
@@ -346,7 +330,25 @@ public class ItemValues {
         reg("STONEBLOCK", 3, 8);
 
 
+
+        //consumivel
+        reg("MEAL_GRILLEDFISH", 1, 20);
+        reg("MEAL_SALAD", 1, 5);
+        reg("MEAL_SALAD_FISH", 2, 106);
+        reg("MEAL_SOUP", 1, 77);
+        reg("MEAL_SOUP_FISH", 1, 106);
+        reg("MEAL_OMELETTE", 3, 77);
+        reg("MEAL_OMELETTE_FISH", 3, 116);
+        reg("MEAL_STEW", 4, 91);
+        reg("MEAL_STEW_FISH", 3, 78);
+        reg("MEAL_PIE", 3, 78);
+        reg("MEAL_PIE_FISH", 2, 120);
+        reg("MEAL_SANDWICH", 4, 81);
+        reg("MEAL_SANDWICH_FISH", 4, 120);
+        reg("MEAL_SANDWICH_AVALON", 4, 88);
     }
+
+
 
     // registra um item com seu tier minimo e valor base nesse tier
     private static void reg(String sufixo, int tierMinimo, double valorNoTierMinimo) {
