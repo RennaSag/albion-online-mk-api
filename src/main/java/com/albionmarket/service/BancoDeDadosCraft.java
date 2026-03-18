@@ -239,7 +239,7 @@ public class BancoDeDadosCraft {
                         item("2H_SCYTHE_HELL", "Chama-Corpos", "chama corpos scythe"),
                         item("2H_BEARCLAW_AVALON", "Patas de Urso", "patas urso bearclaw"),
                         item("2H_REALMBREAKER_AVALON", "Quebra-Reinos", "quebra reinos realmbreaker"),
-                        item("2H_SCYTHE_CRYSTAL", "Foice de Cristal", "foice de cristal")
+                        item("2H_SCYTHE_CRYSTAL", "Foice de Cristal", "foice de cristal crystal weapon")
                 )),
 
                 new Subcategoria("Maça", Arrays.asList(
@@ -668,7 +668,6 @@ public class BancoDeDadosCraft {
                 )),
 
                 new Subcategoria("Fibra", Arrays.asList(
-                        //infelizmente ele puxa o icone da foice de cristal pra foicezinha normal
                         item("2H_TOOL_SICKLE", "Foice", "foice"),
                         item("2H_TOOL_SICKLE_AVALON", "Foice Avaloniana", "foice avaloniana"),
                         item("HEAD_GATHERER_FIBER", "Chapéu do Ceifeiro", "chapeu do ceifeiro"),
