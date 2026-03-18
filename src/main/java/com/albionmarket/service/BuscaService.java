@@ -46,8 +46,11 @@ public class BuscaService {
             }
 
             // bonus se o nome começa exatamente com a query
+            if (normalizar(item.getNome()).equals(q)) pontuacao += 50;
             if (normalizar(item.getNome()).startsWith(q)) pontuacao += 20;
             if (pontuacao > 0) candidatos.add(new ResultadoInterno(item, pontuacao));
+
+
         }
 
         candidatos.sort(Comparator.comparingInt(ResultadoInterno::getPontuacao).reversed());

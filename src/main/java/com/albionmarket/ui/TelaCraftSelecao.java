@@ -36,6 +36,8 @@ public class TelaCraftSelecao {
     private final List<CheckBox> checksCidades = new ArrayList<>();
 
     private ItemDefinition itemSelecionado = null;
+    private boolean ignorarBuscaTexto = false;
+
 
     private TextField campoBusca;
     private ComboBox<Categoria> cbCategoria;
@@ -291,6 +293,7 @@ public class TelaCraftSelecao {
     }
 
     private void onBuscaTexto(String texto) {
+        if (ignorarBuscaTexto) return;
         itemSelecionado = null;
         List<ItemDefinition> sugestoes = buscaService.buscar(texto, 1);
         if (!sugestoes.isEmpty()) {
@@ -329,7 +332,9 @@ public class TelaCraftSelecao {
     private void onItemSelecionado() {
         itemSelecionado = cbItem.getValue();
         if (itemSelecionado != null) {
+            ignorarBuscaTexto = true;
             campoBusca.setText(itemSelecionado.getNome());
+            ignorarBuscaTexto = false;
             labelItemAtual.setText("Selecionado: " + itemSelecionado.getNome());
             labelItemAtual.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 13px;");
             atualizarIconeItem(montarIdIcone());
