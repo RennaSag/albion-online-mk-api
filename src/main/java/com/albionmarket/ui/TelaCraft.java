@@ -277,7 +277,7 @@ public class TelaCraft {
         raiz.setLeft(criarLateral());
         raiz.setCenter(criarAreaCentral());
 
-        palco.setTitle("Albion Market - Craft: " + item.getNome());
+        palco.setTitle("Craft de: " + item.getNome());
         palco.getScene().setRoot(raiz);
         palco.setMinWidth(1280);
         palco.setMinHeight(720);
@@ -287,7 +287,7 @@ public class TelaCraft {
 
     // cabeçalho
     private HBox criarCabecalho() {
-        Label titulo = new Label("Albion Market");
+        Label titulo = new Label("Analisador de Mercado");
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
@@ -1157,8 +1157,6 @@ public class TelaCraft {
         linhaDestaque.getChildren().addAll(cardCusto, cardReceita, cardLucro);
 
         painelCalculo.getChildren().setAll(fluxoNormal, sep, linhaDestaque);
-
-
     }
 
 
@@ -1217,32 +1215,6 @@ public class TelaCraft {
         return col;
     }
 
-    private TableColumn<LinhaMaterial, String> criarColunaCidadeMaterial() {
-        TableColumn<LinhaMaterial, String> col = new TableColumn<>("Cidade");
-        col.setPrefWidth(130);
-        col.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().cidade));
-        col.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                if (empty || v == null || v.equals("-")) {
-                    setText("-");
-                    setGraphic(null);
-                    return;
-                }
-                LinhaMaterial linha = getTableView().getItems().get(getIndex());
-                Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDadosCraft.CIDADES.stream()
-                        .filter(c -> c.getApiId().equals(v))
-                        .map(CidadeInfo::getNome).findFirst().orElse(v);
-                HBox hb = new HBox(6, ponto, new Label(nome));
-                hb.setAlignment(Pos.CENTER_LEFT);
-                setGraphic(hb);
-                setText(null);
-            }
-        });
-        return col;
-    }
 
     private TableColumn<LinhaPreco, String> criarColunaPreco(String titulo, double largura) {
         TableColumn<LinhaPreco, String> col = new TableColumn<>(titulo);
@@ -1382,7 +1354,8 @@ public class TelaCraft {
         );
         try {
             java.nio.file.Files.createDirectories(dir);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return dir;
     }
 }

@@ -2,7 +2,9 @@ package com.albionmarket.model;
 
 import java.util.List;
 
-/** aba de seleção das categoria principais, como "Armas Corpo a Corpo", "Cajados", "Armaduras" etc */
+/**
+ * aba de seleção das categoria principais, como "Armas Corpo a Corpo", "Cajados", "Armaduras" etc
+ */
 public class Categoria {
 
     private final String icone;
@@ -16,10 +18,17 @@ public class Categoria {
         this.subcategorias = subcategorias;
     }
 
-    public String getIcone()                          { return icone; }
-    public String getNome()                           { return nome; }
-    public List<Subcategoria> getSubcategorias()      { return subcategorias; }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public List<Subcategoria> getSubcategorias() {
+        return subcategorias;
+    }
 
     @Override
-    public String toString() { return icone + " " + nome; }
+    public String toString() {
+        return icone + " " + nome;
+    }
 }

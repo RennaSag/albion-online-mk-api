@@ -57,7 +57,7 @@ public class TelaOperacoesAtivas {
         raiz.setTop(cabecalho);
         raiz.setCenter(scroll);
 
-        palco.setTitle("Albion Market - Operações Ativas");
+        palco.setTitle("Operações Ativas");
         palco.getScene().setRoot(raiz);
         palco.setMinWidth(1280);
         palco.setMinHeight(720);

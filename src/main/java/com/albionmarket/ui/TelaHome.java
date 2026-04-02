@@ -2,10 +2,8 @@ package com.albionmarket.ui;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.Priority;
@@ -29,7 +27,7 @@ public class TelaHome {
         Button btnOperacoes = criarBotao("Operações Ativas", "home-botao");
 
         btnPesquisar.setOnAction(e -> {
-            palco.setTitle("Albion Market - Consulta de Preços");
+            palco.setTitle("Albion Online - Analisador de Mercado");
             palco.setMinWidth(1280);
             palco.setMinHeight(720);
 
@@ -47,8 +45,9 @@ public class TelaHome {
                         new TelaOperacoesAtivas(palco).mostrar();
         });
 
-        HBox botoes = new HBox(20, btnPesquisar, btnCraftar, btnRefinar, btnOperacoes);
+        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnOperacoes);
         botoes.setAlignment(Pos.CENTER);
+        // esse é o alinhamento dos botões pra ficar verticalmente, troquei de Hbox pra Vbox
 
         Region espaco = new Region();
         VBox.setVgrow(espaco, Priority.ALWAYS);
@@ -64,15 +63,17 @@ public class TelaHome {
         raiz.setPadding(new Insets(80));
         raiz.getStyleClass().add("home-raiz");
 
-        palco.setTitle("Albion Market - Home");
+        palco.setTitle("Albion Online - Analisador de Mercado");
         palco.getScene().setRoot(raiz);
     }
 
     private Button criarBotao(String texto, String estilo) {
         Button btn = new Button(texto);
         btn.getStyleClass().add(estilo);
-        btn.setPrefWidth(180);
+        btn.setPrefWidth(250);
         btn.setPrefHeight(80);
+        // largura e altura do tamanho dos botoes
+
         return btn;
     }
 }

@@ -345,7 +345,7 @@ public class BancoDeDadosCraft {
                 )),
 
                 new Subcategoria("Cajado Amaldiçoado", Arrays.asList(
-                        item("MAIN_CURSESTAFF", "Cajado Amaldiçoado", "cajado amaldicado curse"),
+                        item("MAIN_CURSEDSTAFF", "Cajado Amaldiçoado", "cajado amaldicado curse"),
                         item("2H_CURSEDSTAFF", "Cajado Amaldiçoado Elevado", "cajado amaldicoado elevado"),
                         item("2H_DEMONICSTAFF", "Cajado Demoníaco", "cajado demoniaco"),
                         item("MAIN_CURSEDSTAFF_UNDEAD", "Cajado Execrado", "cajado execrado"),
@@ -729,7 +729,7 @@ public class BancoDeDadosCraft {
 
                 new Subcategoria("Troncos e Tábuas", Arrays.asList(
                         item("WOOD", "Tronco", "troncos de"),
-                        item("PLANKS", "Tecido", "tábua tabua")
+                        item("PLANKS", "Tábua", "tábua tabua de tabuas de tábuas de")
                 )),
 
                 new Subcategoria("Pelego e Couros", Arrays.asList(

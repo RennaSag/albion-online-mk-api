@@ -109,7 +109,7 @@ public class TelaPesquisaPrecos {
 
     // header
     private HBox criarCabecalho() {
-        Label titulo = new Label("Albion Market");
+        Label titulo = new Label("Pesquisa de Preços");
 
 
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
@@ -371,7 +371,7 @@ public class TelaPesquisaPrecos {
         }
 
         if (item == null) {
-            labelStatus.setText("Selecione ou busque um item.");
+            labelStatus.setText("Selecione ou busque um item");
             return;
         }
 
@@ -381,7 +381,7 @@ public class TelaPesquisaPrecos {
                 .collect(Collectors.toList());
 
         if (cidades.isEmpty()) {
-            labelStatus.setText("Selecione ao menos uma cidade.");
+            labelStatus.setText("Selecione ao menos uma cidade");
             return;
         }
 
@@ -530,7 +530,6 @@ public class TelaPesquisaPrecos {
     }
 
     // utilitarios
-
     private int parseTier(String val) {
         if (val == null || val.equals("Todos")) return -1;
         return Integer.parseInt(val.replace("T", ""));

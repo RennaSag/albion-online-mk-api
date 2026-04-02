@@ -66,7 +66,7 @@ public class TelaCraftSelecao {
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarConteudo());
 
-        palco.setTitle("Albion Market - Craft");
+        palco.setTitle("Albion Online - Analisador de Mercado");
         palco.getScene().setRoot(raiz);
 
         if (estadoAnterior != null) {
@@ -97,7 +97,7 @@ public class TelaCraftSelecao {
     }
 
     private HBox criarCabecalho() {
-        Label titulo = new Label("Albion Online Craft");
+        Label titulo = new Label("Seleção de Item");
         palco.setMinWidth(1280);
         palco.setMinHeight(720);
 
