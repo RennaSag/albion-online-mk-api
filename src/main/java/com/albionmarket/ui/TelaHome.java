@@ -39,10 +39,13 @@ public class TelaHome {
             new TelaCraftSelecao(palco).mostrar();
         });
 
-        btnRefinar.setDisable(true);
+        btnRefinar.setOnAction(e -> {
+            Stage palco = (Stage) btnRefinar.getScene().getWindow();
+            new TelaRefinoSelecao(palco).mostrar();
+        });
 
         btnOperacoes.setOnAction(e -> {
-                        new TelaOperacoesAtivas(palco).mostrar();
+            new TelaOperacoesAtivas(palco).mostrar();
         });
 
         VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnOperacoes);

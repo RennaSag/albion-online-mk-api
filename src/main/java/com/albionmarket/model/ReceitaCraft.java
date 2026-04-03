@@ -20,18 +20,6 @@ public class ReceitaCraft {
         this.materiais = materiais;
     }
 
-    public String getItemId() {
-        return itemId;
-    }
-
-    public double getTempoSegundos() {
-        return tempoSegundos;
-    }
-
-    public int getCraftingFocus() {
-        return craftingFocus;
-    }
-
     public List<MaterialCraft> getMateriais() {
         return materiais;
     }
