@@ -1,6 +1,7 @@
 package com.albionmarket.model;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * receita de craft dos itens retornada pela gameinfo API, api pra receita
@@ -31,15 +32,10 @@ public class ReceitaCraft {
         private final int count;
         private final boolean ehArtefato;
 
-        public MaterialCraft(String uniqueName, int count) {
+        public MaterialCraft(String uniqueName, int count, boolean ehArtefato) {
             this.uniqueName = uniqueName;
             this.count = count;
-            // artefatos têm "ARTEFACT" ou "RUNE"/"SOUL"/"RELIC" no nome
-            this.ehArtefato = uniqueName.contains("ARTEFACT")
-                    || uniqueName.contains("RUNE")
-                    || uniqueName.contains("SOUL")
-                    || uniqueName.contains("RELIC")
-                    || uniqueName.contains("AVALON");
+            this.ehArtefato = ehArtefato;
         }
 
         public String getUniqueName() {
@@ -65,4 +61,6 @@ public class ReceitaCraft {
             return -1;
         }
     }
+
+
 }

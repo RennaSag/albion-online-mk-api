@@ -136,6 +136,18 @@ public class ApiService {
         return lista;
     }
 
+
+    /**
+     * busca preços de um item pelo ID completo (ex: T4_ROCK@1) direto, sem montar combinações.
+     */
+    public List<PriceEntry> buscarPrecosDireto(String itemIdCompleto, List<String> cidades)
+            throws IOException, InterruptedException {
+        String cidadesParam = String.join(",", cidades);
+        String url = API_BASE + "/api/v2/stats/prices/" + itemIdCompleto
+                + ".json?locations=" + cidadesParam;
+        return executarRequisicao(url);
+    }
+
     // utilitarios de leitura segura de JSON, nem sei como isso funciona direito kkkk
     private String getStr(JsonObject obj, String campo) {
         JsonElement el = obj.get(campo);

@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.util.Map;
 
 import java.io.IOException;
 import java.net.URI;
@@ -30,12 +31,51 @@ public class CraftService {
     }
 
     public ReceitaCraft buscarReceita(String itemId) throws IOException, InterruptedException {
+        // recursos refinados não têm receita na API — monta localmente
+        ReceitaCraft local = montarReceitaRefino(itemId);
+        if (local != null) return local;
+
+        // craft normal via API
         ReceitaCraft r = tentarBuscar(BASE + itemId + "/data", itemId);
         if (r == null && itemId.contains("@")) {
             String base = itemId.split("@")[0];
             r = tentarBuscar(BASE + base + "/data", base);
         }
         return r;
+    }
+
+    private static final Map<String, String> BRUTOS = Map.of(
+            "CLOTH",      "FIBER",
+            "LEATHER",    "HIDE",
+            "METALBAR",   "ORE",
+            "PLANKS",     "WOOD",
+            "STONEBLOCK", "ROCK"
+    );
+
+    private static final int[] QTD_BRUTOS = {0, 0, 2, 2, 3, 4, 5, 6, 7};
+
+    private ReceitaCraft montarReceitaRefino(String itemId) {
+        // aceita T4_CLOTH ou T4_CLOTH_LEVEL1
+        String id = itemId.contains("_LEVEL") ? itemId.split("_LEVEL")[0] : itemId;
+        if (id == null || !id.startsWith("T") || id.length() < 3) return null;
+        try {
+            int tier = Character.getNumericValue(id.charAt(1));
+            String tipo = id.split("_", 2)[1];
+            String tipoBruto = BRUTOS.get(tipo);
+            if (tipoBruto == null || tier < 2 || tier > 8) return null;
+
+            int qtd = QTD_BRUTOS[tier];
+            List<ReceitaCraft.MaterialCraft> materiais = new ArrayList<>();
+            // bruto principal (não é artefato)
+            materiais.add(new ReceitaCraft.MaterialCraft("T" + tier + "_" + tipoBruto, qtd, false));
+            // retorno = refinado do tier anterior (marcado como artefato pra aparecer em roxo)
+            if (tier > 2) {
+                materiais.add(new ReceitaCraft.MaterialCraft("T" + (tier - 1) + "_" + tipo, 1, true));
+            }
+            return new ReceitaCraft(itemId, 0, 0, materiais);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 /* Funcao do Valor do item, na api parece q não tem essa informação, mas ta tudo cadastrado em ItemValues.java
@@ -53,6 +93,7 @@ public class CraftService {
     //busca na url da api o id do item que quero
     private ReceitaCraft tentarBuscar(String url, String itemId) throws IOException, InterruptedException {
         HttpResponse<String> resp = executarGet(url);
+        System.out.println("URL: " + url + " | STATUS: " + (resp != null ? resp.statusCode() : "null"));
         if (resp == null || resp.statusCode() != 200) return null;
         return parsearReceita(itemId, resp.body());
     }
@@ -71,8 +112,14 @@ public class CraftService {
     private ReceitaCraft parsearReceita(String itemId, String json) {
         try {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+            System.out.println("CAMPOS ROOT: " + root.keySet());
             JsonElement craftingEl = root.get("craftingRequirements");
-            if (craftingEl == null || craftingEl.isJsonNull()) return null;
+            System.out.println("CRAFTING EL: " + craftingEl);
+            if (craftingEl == null || craftingEl.isJsonNull()) {
+                JsonElement enchEl = root.get("enchantments");
+                System.out.println("ENCHANTMENTS: " + enchEl);
+                return null;
+            }
 
             JsonObject crafting = craftingEl.getAsJsonObject();
             double tempo = getDouble(crafting, "time");
@@ -95,12 +142,13 @@ public class CraftService {
                 JsonObject mat = el.getAsJsonObject();
                 String nome = getStr(mat, "uniqueName");
                 int qtd = getInt(mat, "count");
-                if (nome != null && qtd > 0) materiais.add(new ReceitaCraft.MaterialCraft(nome, qtd));
+                if (nome != null && qtd > 0) materiais.add(new ReceitaCraft.MaterialCraft(nome, qtd, false));
                 /* aqui ele me traz a quantidade de tal material pra receita
 
                  */
             }
             return materiais.isEmpty() ? null : new ReceitaCraft(itemId, tempo, focus, materiais);
+
         } catch (Exception e) {
             return null;
         }

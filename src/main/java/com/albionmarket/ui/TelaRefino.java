@@ -35,7 +35,6 @@ public class TelaRefino {
     private final ItemDefinition item;
     private final int tier;
     private final int enchant;
-    private final String itemIdCompleto;
     private boolean possuiPremium = false;
     private boolean possuiFoco = false;
 
@@ -68,6 +67,9 @@ public class TelaRefino {
 
     // estado dos filtros da tela anterior para restaurar ao clicar voltar
     private final EstadoRefinoSelecao estadoSelecao;
+
+    private final String itemIdApi;
+    private final String itemIdRender;
 
     // modelo da tabela de precos do refinado
     public static class LinhaPreco {
@@ -144,7 +146,8 @@ public class TelaRefino {
         int t = (tier == -1) ? 4 : tier;
         int e = (enchant == -1) ? 0 : enchant;
         String base = "T" + t + "_" + item.getId();
-        this.itemIdCompleto = e > 0 ? base + "@" + e : base;
+        this.itemIdApi = e > 0 ? base + "@" + e : base;
+        this.itemIdRender = e > 0 ? base + "_LEVEL" + e : base;
     }
 
     public void mostrar() {
@@ -204,8 +207,7 @@ public class TelaRefino {
         icone.setFitHeight(100);
         icone.setPreserveRatio(true);
         icone.setSmooth(true);
-        icone.setImage(new Image("https://render.albiononline.com/v1/item/" + itemIdCompleto + ".png", true));
-
+        icone.setImage(new Image("https://render.albiononline.com/v1/item/" + itemIdRender + ".png", true));
         Label nomeItem = new Label(item.getNome());
         nomeItem.setStyle("-fx-text-fill: #e0e0e0; -fx-font-weight: bold; -fx-font-size: 13px;");
         nomeItem.setWrapText(true);
@@ -399,11 +401,13 @@ public class TelaRefino {
         colIcone.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().iconeUrl));
         colIcone.setCellFactory(tc -> new TableCell<>() {
             private final ImageView iv = new ImageView();
+
             {
                 iv.setFitWidth(32);
                 iv.setFitHeight(32);
                 iv.setPreserveRatio(true);
             }
+
             @Override
             protected void updateItem(String url, boolean empty) {
                 super.updateItem(url, empty);
@@ -431,7 +435,10 @@ public class TelaRefino {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); return; }
+                if (empty || v == null) {
+                    setText(null);
+                    return;
+                }
                 setText(v);
                 setStyle(v.equals("Retorno")
                         ? "-fx-text-fill: #9b59b6; -fx-font-weight: bold;"
@@ -579,9 +586,15 @@ public class TelaRefino {
             @Override
             protected Void call() throws Exception {
                 precos = apiService.buscarPrecos(item.getId(), (tier == -1) ? 4 : tier, (enchant == -1) ? 0 : enchant, -1, cidades);
-                // mesma chamada do craft, a api retorna a receita de refino pelo mesmo endpoint
-                receita = craftService.buscarReceita(itemIdCompleto);
-                itemValue = ItemValues.getValor(itemIdCompleto);
+                String itemIdSemEnchant = itemIdApi.contains("@") ? itemIdApi.split("@")[0] : itemIdApi;
+                receita = craftService.buscarReceita(itemIdSemEnchant);
+                itemValue = ItemValues.getValor(itemIdApi);
+
+
+                //outputs de testes
+                System.out.println("RECEITA: " + (receita == null ? "NULL" : receita.getMateriais().size() + " materiais"));
+                System.out.println("ITEM ID API: " + itemIdApi);
+
 
                 if (receita != null && !receita.getMateriais().isEmpty()) {
                     List<String> idsMat = receita.getMateriais().stream()
@@ -590,11 +603,18 @@ public class TelaRefino {
                     precosMateirais = new ArrayList<>();
                     for (String idMat : idsMat) {
                         try {
+
                             String[] partes = idMat.split("_", 2);
                             int tMat = (partes[0].startsWith("T") && partes[0].length() == 2)
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
                             precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidades));
+
+
+                            //mais outputs
+                            precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidades));
+                            System.out.println("MAT: " + idMat + " | sufixo: " + sufixo + " | tMat: " + tMat + " | precos: " + precosMateirais.size());
+
                         } catch (Exception ex) {
                             // ignora material com erro
                         }
@@ -686,9 +706,10 @@ public class TelaRefino {
             boolean ehRetorno = mat.isArtefato();
 
             // icone do bruto com _LEVEL se tiver encantamento
-            String iconeUrl = eAtual > 0
-                    ? "https://render.albiononline.com/v1/item/" + idMat + "_LEVEL" + eAtual + ".png"
-                    : "https://render.albiononline.com/v1/item/" + idMat + ".png";
+            String iconeId = eAtual > 0 && !ehRetorno
+                    ? idMat + "@" + eAtual
+                    : idMat;
+            String iconeUrl = "https://render.albiononline.com/v1/item/" + iconeId + ".png";
 
             String sufixoMat = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
@@ -882,7 +903,7 @@ public class TelaRefino {
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
         }
 
-        double custoMatComTaxa = custoMateriais * qtdProduzir + (qtdProduzir * taxaCompra);
+        double custoMatComTaxa = custoMateriais + (custoMateriais * taxaCompra);
         double custoTotal = custoMatComTaxa + taxaCraftTotal;
 
         double melhorVenda = 0;
@@ -1041,7 +1062,11 @@ public class TelaRefino {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setGraphic(null); setText(null); return; }
+                if (empty || v == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
                 LinhaPreco linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
                 String nome = BancoDeDadosCraft.CIDADES.stream()
@@ -1130,6 +1155,7 @@ public class TelaRefino {
     private Separator separador() {
         return new Separator();
     }
+
 
     private TextField campoCampo(String valor) {
         TextField tf = new TextField(valor);
