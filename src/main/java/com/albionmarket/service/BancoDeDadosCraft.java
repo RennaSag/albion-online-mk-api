@@ -765,7 +765,7 @@ public class BancoDeDadosCraft {
     // retorna nome do recurso refinado pelo sufixo e tier
     // indices: 2=T2, 3=T3 ... 8=T8
 
-    //falta adicionar o nome dos recursos brutos
+
     public static String getNomeRecurso(String sufixo, int tier) {
         int idx = tier - 2; // T2 = índice 0, T3 = índice 1, etc
         String[] nomes = switch (sufixo) {
@@ -779,6 +779,18 @@ public class BancoDeDadosCraft {
                     new String[]{"Tábuas de Bétual", "Tábuas de Castanheira", "Tábuas de Pinho", "Tábuas de Cedro", "Tábuas de Carvalho-Sangue", "Tábuas de Freixo", "Tábuas de Pau-Branco"};
             case "STONEBLOCK" ->
                     new String[]{"Bloco de Calcário", "Bloco de Arenito", "Bloco de Travertino", "Bloco de Granito", "Bloco de Ardósia", "Bloco de Basalto", "Bloco de Mármore"};
+
+            //recursos brutos
+            case "FIBER" ->
+                new String[]{"Algodão", "Linho", "Cânhamo", "Verbena", "Algodão-Dourado", "Linhossol", "Cânhamo-Fantasma"};
+            case "ORE" ->
+                new String[]{"Minério de Cobre","Minério de Estanho","Minério de Ferro","Minério de Titânio", "Minério de Runita","Minério de Meteorito","Minério de Adamante"};
+            case "WOOD" ->
+                new String[]{"Troncos de Bétula","Troncos de Castanheira","Troncos de Pinho", "Troncos de Cedro","Troncos de Carvalho-Sangue","Troncos de Freixo","Troncos de Pau-Branco"};
+            case "HIDE" ->
+                new String[]{"Pelego Rústico", "Pelego Fino", "Pelego Médio", "Pelego Pesado", "Pelego Robusto", "Pelego Resistente"};
+            case "ROCK" ->
+                new String[]{"Calcário","Anerito","Traventino","Granito","Ardósia","Basalto","Mármore"};
             default -> null;
         };
         if (nomes == null || idx < 0 || idx >= nomes.length) return null;
