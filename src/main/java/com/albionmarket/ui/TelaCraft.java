@@ -302,8 +302,8 @@ public class TelaCraft {
         Label btnHome = new Label("Início");
         btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;");
         btnHome.setTooltip(new Tooltip("Voltar para Home"));
-        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 20px; -fx-cursor: hand; -fx-opacity: 0.7;"));
-        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 20px; -fx-cursor: hand;"));
+        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-opacity: 0.7;"));
+        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;"));
         btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
 
         HBox cab = new HBox(textos, espacador, btnHome);
