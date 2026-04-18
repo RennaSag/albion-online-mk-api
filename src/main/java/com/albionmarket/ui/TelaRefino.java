@@ -585,16 +585,17 @@ public class TelaRefino {
 
             @Override
             protected Void call() throws Exception {
-                precos = apiService.buscarPrecos(item.getId(), (tier == -1) ? 4 : tier, (enchant == -1) ? 0 : enchant, -1, cidades);
+                precos = apiService.buscarPrecos(
+                        (enchant > 0 ? item.getId() + "_LEVEL" + enchant : item.getId()),
+                        (tier == -1) ? 4 : tier,
+                        (enchant == -1) ? 0 : enchant,
+                        -1, cidades);
                 String itemIdSemEnchant = itemIdApi.contains("@") ? itemIdApi.split("@")[0] : itemIdApi;
                 receita = craftService.buscarReceita(itemIdSemEnchant);
                 itemValue = ItemValues.getValor(itemIdApi);
 
 
                 //outputs de testes
-                System.out.println("RECEITA: " + (receita == null ? "NULL" : receita.getMateriais().size() + " materiais"));
-                System.out.println("ITEM ID API: " + itemIdApi);
-
 
                 if (receita != null && !receita.getMateriais().isEmpty()) {
                     List<String> idsMat = receita.getMateriais().stream()
@@ -611,9 +612,9 @@ public class TelaRefino {
                             precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidades));
 
 
-                            //mais outputs
-                            precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidades));
-                            System.out.println("MAT: " + idMat + " | sufixo: " + sufixo + " | tMat: " + tMat + " | precos: " + precosMateirais.size());
+
+
+
 
                         } catch (Exception ex) {
                             // ignora material com erro
@@ -737,7 +738,7 @@ public class TelaRefino {
                     (pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001"))
                             ? pe.getBuyDate() : pe.getSellDate()) : "-";
 
-            System.out.println("ICONE URL: " + iconeUrl);
+
             linhas.add(new LinhaMaterial(iconeUrl, nomeExibir, tipo, mat.getCount(), cidade, corCidade, buyMax, data));
         }
 
