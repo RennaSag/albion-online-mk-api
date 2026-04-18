@@ -36,7 +36,7 @@ public class TelaRefino {
     private final int tier;
     private final int enchant;
     private boolean possuiPremium = false;
-    private boolean possuiFoco = false;
+
 
     // servicos
     private final ApiService apiService = new ApiService();
@@ -269,37 +269,6 @@ public class TelaRefino {
         });
         painel.getChildren().add(switchBox);
 
-        // switch foco - taxa de retorno sobe pra 47.9% com foco no refino
-        javafx.scene.canvas.Canvas canvasFoco = new javafx.scene.canvas.Canvas(44, 22);
-        final boolean[] estadoFoco = {false};
-
-        Runnable desenharFoco = () -> {
-            javafx.scene.canvas.GraphicsContext gc = canvasFoco.getGraphicsContext2D();
-            gc.clearRect(0, 0, 44, 22);
-            gc.setFill(estadoFoco[0]
-                    ? javafx.scene.paint.Color.web("#3dba6e")
-                    : javafx.scene.paint.Color.web("#555"));
-            gc.fillRoundRect(0, 0, 44, 22, 22, 22);
-            double bx = estadoFoco[0] ? 24 : 2;
-            gc.setFill(javafx.scene.paint.Color.WHITE);
-            gc.fillOval(bx, 2, 18, 18);
-        };
-        desenharFoco.run();
-
-        Label labelFoco = new Label("Usar foco?");
-        labelFoco.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
-
-        HBox switchFocoBox = new HBox(8, canvasFoco, labelFoco);
-        switchFocoBox.setAlignment(Pos.CENTER_LEFT);
-        switchFocoBox.setCursor(javafx.scene.Cursor.HAND);
-        switchFocoBox.setOnMouseClicked(ev -> {
-            estadoFoco[0] = !estadoFoco[0];
-            desenharFoco.run();
-            possuiFoco = estadoFoco[0];
-            atualizarTabelaCalculo();
-        });
-        painel.getChildren().add(switchFocoBox);
-
         // switch premium
         javafx.scene.canvas.Canvas canvasPremium = new javafx.scene.canvas.Canvas(44, 22);
         final boolean[] estadoPremium = {false};
@@ -317,9 +286,10 @@ public class TelaRefino {
         };
         desenharPremium.run();
 
-        Label labelPremium = new Label("Possui premium ativa?");
-        labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
-
+        //funcao de premium e foco ainda não disponivel
+        //Label labelPremium = new Label("Possui premium ativa?");
+        //labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
+/*
         HBox switchPremiumBox = new HBox(8, canvasPremium, labelPremium);
         switchPremiumBox.setAlignment(Pos.CENTER_LEFT);
         switchPremiumBox.setCursor(javafx.scene.Cursor.HAND);
@@ -330,7 +300,7 @@ public class TelaRefino {
             atualizarTabelaCalculo();
         });
         painel.getChildren().add(switchPremiumBox);
-        painel.getChildren().add(separador());
+        painel.getChildren().add(separador()); */
 
         // status
         progresso = new ProgressIndicator();
@@ -352,12 +322,22 @@ public class TelaRefino {
         Region espaco = new Region();
         VBox.setVgrow(espaco, Priority.ALWAYS);
 
+        Button btnSalvarOperacao = new Button("Salvar Operacao");
+        btnSalvarOperacao.setMaxWidth(Double.MAX_VALUE);
+        btnSalvarOperacao.setStyle("-fx-background-color: #3dba6e; -fx-text-fill: white; "
+                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 0;");
+        btnSalvarOperacao.setOnAction(ev -> {
+            salvarOperacao();
+            btnSalvarOperacao.setDisable(true);
+            btnSalvarOperacao.setText("Operacao Salva");
+        });
+
         Button btnVoltar = new Button("Voltar");
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
         btnVoltar.getStyleClass().add("home-botao");
         btnVoltar.setOnAction(v -> new TelaRefinoSelecao(palco, estadoSelecao).mostrar());
 
-        painel.getChildren().addAll(btnAtualizar, espaco, btnVoltar);
+        painel.getChildren().addAll(btnAtualizar, espaco, btnSalvarOperacao, btnVoltar);
 
         ScrollPane scroll = new ScrollPane(painel);
         scroll.setFitToWidth(true);
@@ -610,10 +590,6 @@ public class TelaRefino {
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
                             precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidades));
-
-
-
-
 
 
                         } catch (Exception ex) {
@@ -882,7 +858,7 @@ public class TelaRefino {
         double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
 
         // foco sobrescreve a taxa de retorno pra 47.9%, que e a taxa maxima de refino com foco
-        double taxaRetorno = possuiFoco ? 0.479 : parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+        double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
         double taxaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
 
         double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
@@ -897,11 +873,11 @@ public class TelaRefino {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
                 // material de retorno nao e comprado, entao nao entra no custo
                 if (!"Retorno".equals(lm.tipo))
-                    custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria;
+                    custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdProduzir;
         } else if (tabelaReceita != null) {
             for (LinhaMaterial lm : tabelaReceita.getItems())
                 if (!"Retorno".equals(lm.tipo))
-                    custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
+                    custoMateriais += parseSilver(lm.buyMax) * lm.qtd * qtdProduzir;
         }
 
         double custoMatComTaxa = custoMateriais + (custoMateriais * taxaCompra);
@@ -967,7 +943,7 @@ public class TelaRefino {
         List<String[]> metricas = new ArrayList<>(Arrays.asList(
                 new String[]{"Qtd a refinar", fmt(qtdProduzir) + " un"},
                 new String[]{"Qtd final refinada", String.format("%.2f un", qtdFinal)},
-                new String[]{"Taxa de retorno", possuiFoco ? "47.9% (foco)" : String.format("%.1f%%", taxaRetorno * 100)},
+                new String[]{"Taxa de retorno", String.format("%.1f%%", taxaRetorno * 100)},
                 new String[]{"Melhor preço de venda", fmtSilver(melhorVenda)},
                 new String[]{"Local de venda", nomeCidadeVenda},
                 new String[]{"Custo dos materiais", fmtSilver(custoMatComTaxa)},
@@ -1168,5 +1144,152 @@ public class TelaRefino {
             atualizarTabelaCalculo();
         });
         return tf;
+    }
+
+
+    private void salvarOperacao() {
+        try {
+            int t = (tier == -1) ? 4 : tier;
+            int e = (enchant == -1) ? 0 : enchant;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\n");
+            sb.append("  \"item\": \"").append(item.getNome().replace("\"", "\\\"")).append("\",\n");
+            sb.append("  \"itemId\": \"").append(itemIdApi).append("\",\n");
+            sb.append("  \"tier\": ").append(t).append(",\n");
+            sb.append("  \"encantamento\": ").append(e).append(",\n");
+            sb.append("  \"parametros\": {\n");
+            sb.append("    \"quantidade\": \"").append(campoQuantidade.getText()).append("\",\n");
+            sb.append("    \"taxaRetorno\": \"").append(campoRetorno.getText()).append("\",\n");
+            sb.append("    \"taxaBarraca\": \"").append(campoSinergiaBarraca.getText()).append("\",\n");
+            sb.append("    \"itemValue\": \"").append(labelItemValue.getText()).append("\"\n");
+            sb.append("  },\n");
+
+
+            double qtdCraftInicial = parseDoubleSafe(campoQuantidade, 1.0);
+            //quantidade q vou craftar
+
+            double sinergiaPercentual = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+            //taxa de retorno bonus, sinergia
+
+            double taxaDeCraftDaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
+            //taxa da barraca
+
+            double qtdFinalCraftada = qtdCraftInicial / (1.0 - sinergiaPercentual);
+            //qtd final q vou ter com o bonus
+
+            double nutricaoTotal = (itemValue * qtdFinalCraftada) * 0.1125;
+            //nutricao de tudo
+
+
+            double taxaDaBarracaDeCraft = (nutricaoTotal * taxaDeCraftDaBarraca) / 100;
+            //taxa q vou pagar pra barraca, regra de 2
+            // taxaBa___100nutri;  taxaBa . nutriTot = 100 x;  x = taxaBa . nutriTot / 100
+            //    x_____nutriTot;
+
+            double taxaMercado = possuiPremium ? 0.03 : 0.05;
+            //taxa do mercado com e sem premium, pra compra e venda
+
+            double custoMateriais = 0;
+            if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
+                for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
+                    custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdCraftInicial;
+
+            } else if (tabelaReceita != null) {
+                for (LinhaMaterial lm : tabelaReceita.getItems())
+                    custoMateriais += parseSilver(lm.buyMax) * lm.qtd * qtdCraftInicial;
+            }
+
+            double custoMateriaisComTaxa = custoMateriais + (custoMateriais * taxaMercado);
+            //calcula o custo dos materiais com as taxas de compra do mercado
+
+            double precoVendaSalvar = tabelaPrecos.getItems().stream()
+                    .mapToDouble(l -> parseSilver(l.sellMin))
+                    .max()
+                    .orElse(0.0);
+
+            double receitaFinalMontante = qtdFinalCraftada * precoVendaSalvar;
+            // meu montante final de prata
+
+            double taxaMercadoVenda = receitaFinalMontante * taxaMercado;
+            //taxa q vou pagar sobre o montante na hora de vender
+
+            //custo total incluindo a taxa na hora de vender sob o montante
+            double custoTotal = custoMateriaisComTaxa + taxaDaBarracaDeCraft + taxaMercadoVenda;
+
+            double lucroSalvar = receitaFinalMontante - custoTotal;
+            // lucro final com tudo ja descontado
+
+
+            String[] melhorCidadeHolder = {"-"};
+            double[] melhorVHolder = {0};
+
+            for (LinhaPreco lp : tabelaPrecos.getItems()) {
+                double v = parseSilver(lp.sellMin);
+                if (v > melhorVHolder[0]) {
+                    melhorVHolder[0] = v;
+                    melhorCidadeHolder[0] = lp.cidade;
+                }
+            }
+            String nomeCidadeVendaSalvar = BancoDeDadosCraft.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(melhorCidadeHolder[0]))
+                    .map(CidadeInfo::getNome)
+                    .findFirst()
+                    .orElse(melhorCidadeHolder[0]);
+
+            sb.append("  \"calculadora\": {\n");
+            sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdCraftInicial)).append(" un\",\n");
+            sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalCraftada)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(precoVendaSalvar)).append("\",\n");
+            sb.append("    \"Local de venda\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
+            sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoMateriaisComTaxa)).append("\",\n");
+            sb.append("    \"Local de compra dos materiais\": ").append(cidadesPorMaterialJson()).append(",\n");
+            sb.append("    \"Custo total\": \"").append(fmtSilver(custoTotal)).append("\",\n");
+            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroSalvar >= 0 ? "+" : "").append(fmtSilver(lucroSalvar)).append("\"\n");
+            sb.append("  }\n");
+            sb.append("}\n");
+
+            String nomeArquivo = "operacao_" + itemIdApi + "_"
+                    + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                    + ".json";
+            java.nio.file.Path caminho = getDiretorioOperacoes().resolve(nomeArquivo);
+            java.nio.file.Files.writeString(caminho, sb.toString());
+
+            labelStatus.setText("Operação salva: " + nomeArquivo);
+
+        } catch (Exception ex) {
+            labelStatus.setText("Erro ao salvar: " + ex.getMessage());
+        }
+    }
+
+    private String cidadesPorMaterialJson() {
+        if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        boolean primeiro = true;
+        for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
+            if (!primeiro) sb.append(", ");
+            primeiro = false;
+            String nomeCidade = BancoDeDadosCraft.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(lm.cidade))
+                    .map(CidadeInfo::getNome)
+                    .findFirst().orElse(lm.cidade != null ? lm.cidade : "-");
+            int qtdReal = lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1);
+            sb.append("{\"material\": \"").append(lm.nome.replace("\"", "\\\""))
+                    .append("\", \"quantidade\": ").append(qtdReal)
+                    .append(", \"cidade\": \"").append(nomeCidade).append("\"}");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private java.nio.file.Path getDiretorioOperacoes() {
+        java.nio.file.Path dir = java.nio.file.Paths.get(
+                System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes"
+        );
+        try {
+            java.nio.file.Files.createDirectories(dir);
+        } catch (Exception ignored) {
+        }
+        return dir;
     }
 }

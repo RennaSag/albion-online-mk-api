@@ -764,6 +764,8 @@ public class BancoDeDadosCraft {
 
     // retorna nome do recurso refinado pelo sufixo e tier
     // indices: 2=T2, 3=T3 ... 8=T8
+
+    //falta adicionar o nome dos recursos brutos
     public static String getNomeRecurso(String sufixo, int tier) {
         int idx = tier - 2; // T2 = índice 0, T3 = índice 1, etc
         String[] nomes = switch (sufixo) {

@@ -138,7 +138,7 @@ public class TelaOperacoesAtivas {
                 "Quantidade a craftar",
                 "Qtd final craftada",
                 "Melhor preco de venda",
-                "Local",
+                "Local de venda",
                 "Custo dos materiais",
                 "Local de compra dos materiais",
                 "Custo total",
@@ -176,8 +176,8 @@ public class TelaOperacoesAtivas {
             else if (campo.equals("Custo dos materiais")) cor = "#e05555";
             else if (campo.equals("Local de compra dos materiais")) cor = "#5a8dee";
             else if (campo.contains("Custo")) cor = "#e05555";
-            else if (campo.contains("venda")) cor = "#e05555";
-            else if (campo.equals("Local")) cor = "#5a8dee";
+            else if (campo.contains("venda")) cor = "#51f600";
+            else if (campo.equals("Local de venda")) cor = "#51f600";
             boxCalc.getChildren().add(miniLabel(campo, valor, cor));
         }
 

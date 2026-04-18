@@ -184,7 +184,7 @@ public class TelaCraft {
             sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdCraftInicial)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalCraftada)).append("\",\n");
             sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(precoVendaSalvar)).append("\",\n");
-            sb.append("    \"Local\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
+            sb.append("    \"Local de venda\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
             sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoMateriaisComTaxa)).append("\",\n");
             sb.append("    \"Local de compra dos materiais\": ").append(cidadesPorMaterialJson()).append(",\n");
             sb.append("    \"Custo total\": \"").append(fmtSilver(custoTotal)).append("\",\n");
@@ -407,6 +407,7 @@ public class TelaCraft {
         };
         desenharPremium.run();
 
+        /* funcao de premium nao disponivel ainda
         Label labelPremium = new Label("Possui premium ativa?");
         labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
 
@@ -421,7 +422,7 @@ public class TelaCraft {
         });
 
         painel.getChildren().add(switchPremiumBox);
-        painel.getChildren().add(separador());
+        painel.getChildren().add(separador());*/
 
 
         // status
@@ -454,7 +455,7 @@ public class TelaCraft {
                 new TelaCraftSelecao(palco, estadoSelecao).mostrar()
         );
 
-        Button btnIniciarOperacao = new Button("Iniciar Operação");
+        Button btnIniciarOperacao = new Button("Salvar Operação");
         btnIniciarOperacao.setMaxWidth(Double.MAX_VALUE);
         btnIniciarOperacao.setStyle("-fx-background-color: #3dba6e; -fx-text-fill: white; "
                 + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 0;");
