@@ -655,8 +655,7 @@ public class TelaRefino {
         tabelaPrecos.setMaxHeight(altPrecos);
     }
 
-    // monta a receita de refino igualzinho ao craft
-    // no refino isArtefato() da api indica o material de retorno (o bonus q se ganha refinando)
+
     private void atualizarTabelaReceita(ReceitaCraft receita, List<PriceEntry> precosMateirais) {
         if (receita == null) {
             tabelaReceita.setPlaceholder(new Label("Receita não disponível para este item."));
@@ -680,15 +679,27 @@ public class TelaRefino {
         List<LinhaMaterial> linhas = new ArrayList<>();
         for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
             String idMat = mat.getUniqueName();
-            boolean ehRetorno = mat.isArtefato();
 
-            // icone do bruto com _LEVEL se tiver encantamento
-            String iconeId = eAtual > 0 && !ehRetorno
-                    ? idMat + "@" + eAtual
-                    : idMat;
+            // identifica o tipo pelo sufixo, nao pelo isArtefato() da api
+            String sufixoVerificacao = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
+            boolean ehRefinado = sufixoVerificacao.equals("CLOTH") || sufixoVerificacao.equals("LEATHER")
+                    || sufixoVerificacao.equals("PLANKS") || sufixoVerificacao.equals("METALBAR")
+                    || sufixoVerificacao.equals("STONEBLOCK");
+            boolean ehBrutoRaw = sufixoVerificacao.equals("FIBER") || sufixoVerificacao.equals("ORE")
+                    || sufixoVerificacao.equals("WOOD") || sufixoVerificacao.equals("HIDE")
+                    || sufixoVerificacao.equals("ROCK");
+            boolean ehRetorno = mat.isArtefato() && !ehRefinado && !ehBrutoRaw;
+
+            String iconeId;
+            if (eAtual > 0 && !ehRetorno) {
+                iconeId = idMat + "_LEVEL" + eAtual;
+            } else {
+                iconeId = idMat;
+            }
+
             String iconeUrl = "https://render.albiononline.com/v1/item/" + iconeId + ".png";
 
-            String sufixoMat = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
+            String sufixoMat = sufixoVerificacao; // já calculado acima
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : tAtual;
 
@@ -700,8 +711,6 @@ public class TelaRefino {
                     .orElse(idMat);
 
             String nomeExibir = (eAtual > 0 && !ehRetorno) ? nomeMat + " ." + eAtual : nomeMat;
-
-            // bruto em amarelo, retorno em roxo
             String tipo = ehRetorno ? "Retorno" : "Bruto";
 
             PriceEntry pe = melhorCompra.get(idMat);
@@ -714,7 +723,6 @@ public class TelaRefino {
                     (pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001"))
                             ? pe.getBuyDate() : pe.getSellDate()) : "-";
 
-
             linhas.add(new LinhaMaterial(iconeUrl, nomeExibir, tipo, mat.getCount(), cidade, corCidade, buyMax, data));
         }
 
@@ -723,6 +731,7 @@ public class TelaRefino {
         tabelaReceita.setPrefHeight(alturaCalculada);
         tabelaReceita.setMaxHeight(alturaCalculada);
     }
+
 
     private void atualizarTabelaMateriais(ReceitaCraft receita, List<PriceEntry> precosMateirais) {
         if (tabelaMateriais == null || receita == null) return;
@@ -744,7 +753,14 @@ public class TelaRefino {
         List<LinhaMaterialPreco> linhas = new ArrayList<>();
         for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
             String idMat = mat.getUniqueName();
-            boolean ehRetorno = mat.isArtefato();
+            String sufixoVerificacao = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
+            boolean ehRefinado = sufixoVerificacao.equals("CLOTH") || sufixoVerificacao.equals("LEATHER")
+                    || sufixoVerificacao.equals("PLANKS") || sufixoVerificacao.equals("METALBAR")
+                    || sufixoVerificacao.equals("STONEBLOCK");
+            boolean ehBrutoRaw = sufixoVerificacao.equals("FIBER") || sufixoVerificacao.equals("ORE")
+                    || sufixoVerificacao.equals("WOOD") || sufixoVerificacao.equals("HIDE")
+                    || sufixoVerificacao.equals("ROCK");
+            boolean ehRetorno = mat.isArtefato() && !ehRefinado && !ehBrutoRaw;
 
             String sufixoMat = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
