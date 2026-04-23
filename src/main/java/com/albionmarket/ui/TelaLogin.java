@@ -99,12 +99,17 @@ public class TelaLogin {
                     javafx.application.Platform.runLater(() -> {
                         btnEntrar.setDisable(false);
                         if (valido) {
+
                             if (lembrar.isSelected()) {
                                 prefs.put("chave_licenca", chave);
                             } else {
                                 prefs.remove("chave_licenca");
                             }
+                            // salva a data de expiracao pra usar na home
+                            String expira = json.has("expira") ? json.get("expira").getAsString() : "";
+                            prefs.put("licenca_expira", expira);
                             new TelaHome(palco).mostrar();
+
                         } else {
                             String motivo = json.has("motivo")
                                     ? json.get("motivo").getAsString()
