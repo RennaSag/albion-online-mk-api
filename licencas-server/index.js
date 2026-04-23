@@ -154,7 +154,7 @@ async function enviarEmailChave(email, chave) {
     const info = await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
-        subject: 'Sua chave de acesso - Albion Market',
+        subject: 'Sua chave de acesso - Analisador de Mercado',
         text: `Obrigado pela compra!\n\nSua chave de acesso: ${chave}\n\nDigite ela no software na tela de login.`
     });
 
