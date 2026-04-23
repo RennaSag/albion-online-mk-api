@@ -6,13 +6,13 @@ require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// cria a tabela se nao existir na primeira execucao /////
 async function inicializarBanco() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS licencas (
@@ -27,7 +27,6 @@ async function inicializarBanco() {
     console.log('banco inicializado');
 }
 
-// webhook chamado pelo hotmart quando alguem compra
 app.post('/webhook/hotmart', async (req, res) => {
     try {
         const evento = req.body;
@@ -36,7 +35,6 @@ app.post('/webhook/hotmart', async (req, res) => {
         if (evento.event === 'PURCHASE_APPROVED') {
             const email = evento.data.buyer.email;
             const chave = uuidv4();
-
             const expiracao = new Date();
             expiracao.setDate(expiracao.getDate() + 30);
 
@@ -68,7 +66,6 @@ app.post('/webhook/hotmart', async (req, res) => {
     }
 });
 
-// endpoint chamado pelo software java na inicializacao
 app.get('/validar', async (req, res) => {
     const chave = req.query.chave;
     if (!chave) return res.json({ valido: false, motivo: 'chave ausente' });
@@ -104,30 +101,48 @@ app.get('/validar', async (req, res) => {
     }
 });
 
-// endpoint pra voce gerar licenca manualmente (pra testar)
 app.post('/admin/gerar', async (req, res) => {
-    const { email, token } = req.body;
-    if (token !== process.env.ADMIN_TOKEN) {
-        return res.status(403).json({ erro: 'token invalido' });
-    }
-    const chave = uuidv4();
-    const expiracao = new Date();
-    expiracao.setDate(expiracao.getDate() + 30);
+    try {
+        const { email, token } = req.body;
+        console.log('admin/gerar chamado, email:', email, 'token recebido:', token ? 'sim' : 'nao');
 
-    await pool.query(
-        `INSERT INTO licencas (email, chave, ativo, expiracao)
-         VALUES ($1, $2, true, $3)
-         ON CONFLICT (email) DO UPDATE
-         SET chave = $2, ativo = true, expiracao = $3`,
-        [email, chave, expiracao]
-    );
-    res.json({ chave, expiracao });
+        if (token !== process.env.ADMIN_TOKEN) {
+            return res.status(403).json({ erro: 'token invalido' });
+        }
+
+        const chave = uuidv4();
+        const expiracao = new Date();
+        expiracao.setDate(expiracao.getDate() + 30);
+
+        await pool.query(
+            `INSERT INTO licencas (email, chave, ativo, expiracao)
+             VALUES ($1, $2, true, $3)
+             ON CONFLICT (email) DO UPDATE
+             SET chave = $2, ativo = true, expiracao = $3`,
+            [email, chave, expiracao]
+        );
+
+        console.log('licenca salva no banco, tentando enviar email...');
+
+        try {
+            await enviarEmailChave(email, chave);
+            console.log('email enviado com sucesso para:', email);
+        } catch (emailErr) {
+            console.error('erro ao enviar email:', emailErr.message);
+        }
+
+        res.json({ chave, expiracao });
+    } catch (err) {
+        console.error('erro em admin/gerar:', err);
+        res.status(500).json({ erro: err.message });
+    }
 });
 
-// endpoint de saude pra evitar o sleep no render
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 async function enviarEmailChave(email, chave) {
+    console.log('configurando email, user:', process.env.EMAIL_USER ? 'definido' : 'nao definido');
+
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -136,12 +151,14 @@ async function enviarEmailChave(email, chave) {
         }
     });
 
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         subject: 'Sua chave de acesso - Albion Market',
         text: `Obrigado pela compra!\n\nSua chave de acesso: ${chave}\n\nDigite ela no software na tela de login.`
     });
+
+    console.log('email enviado, messageId:', info.messageId);
 }
 
 const PORT = process.env.PORT || 10000;
