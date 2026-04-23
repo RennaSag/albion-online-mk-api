@@ -12,7 +12,7 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// cria a tabela se nao existir na primeira execucao
+// cria a tabela se nao existir na primeira execucao /////
 async function inicializarBanco() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS licencas (
