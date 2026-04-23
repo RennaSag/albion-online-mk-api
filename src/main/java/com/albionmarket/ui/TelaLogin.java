@@ -28,7 +28,7 @@ public class TelaLogin {
     }
 
     public void mostrar() {
-        Label titulo = new Label("Albion Online Market");
+        Label titulo = new Label("Analisador de Mercado de Albion Online");
         palco.setMinWidth(1280);
         palco.setMinHeight(720);
         titulo.getStyleClass().add("login-titulo");

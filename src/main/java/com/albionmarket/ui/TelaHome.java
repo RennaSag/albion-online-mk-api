@@ -66,7 +66,11 @@ public class TelaHome {
         btnVoltar.setPrefWidth(180);
         btnVoltar.setOnAction(e -> new TelaLogin(palco).mostrar());
 
-        VBox raiz = new VBox(30, titulo, labelExpiracao, botoes, espaco, btnVoltar);
+        Label labelContato = new Label("Suporte: rennasagcontato@gmail.com");
+        labelContato.setStyle("-fx-text-fill: #555; -fx-font-size: 11px;");
+
+        VBox raiz = new VBox(30, titulo, labelExpiracao, botoes, espaco, btnVoltar, labelContato);
+
         raiz.setAlignment(Pos.CENTER);
         raiz.setPadding(new Insets(80));
         raiz.getStyleClass().add("home-raiz");
