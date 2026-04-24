@@ -18,10 +18,16 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <finalName>albion-market-fat</finalName>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
               <transformers>
                 <transformer>
                   <mainClass>com.albionmarket.MainApp</mainClass>
+                  <manifestEntries>
+                    <Main-Class>com.albionmarket.MainApp</Main-Class>
+                  </manifestEntries>
                 </transformer>
+                <transformer />
               </transformers>
               <outputFile>${project.build.directory}/albion-market-fat.jar</outputFile>
             </configuration>
@@ -45,7 +51,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21.0.2</javafx.version>
-    <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>23</maven.compiler.target>
+    <maven.compiler.source>23</maven.compiler.source>
   </properties>
 </project>

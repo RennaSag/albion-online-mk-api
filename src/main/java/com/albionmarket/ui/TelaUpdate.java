@@ -27,11 +27,11 @@ public class TelaUpdate {
     }
 
     public void mostrar() {
-        Label titulo = new Label("Atualização Disponível");
+        Label titulo = new Label("Atualizacao Disponivel");
         titulo.setFont(Font.font("System", FontWeight.BOLD, 18));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
-        Label info = new Label("Nova versão " + novaVersao + " encontrada.\nBaixando automaticamente...");
+        Label info = new Label("Nova versao " + novaVersao + " encontrada.\nBaixando automaticamente...");
         info.setStyle("-fx-text-fill: #aaa; -fx-font-size: 13px;");
         info.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
@@ -63,16 +63,16 @@ public class TelaUpdate {
                 HttpRequest req = HttpRequest.newBuilder()
                         .uri(URI.create(downloadUrl))
                         .timeout(Duration.ofMinutes(5))
-                        .GET().build();
+                        .GET()
+                        .build();
 
-                // destino: pasta temp do sistema
+                // destino na pasta temp do sistema
                 Path destino = Path.of(
                         System.getProperty("java.io.tmpdir"),
                         "AlbionMarketUpdate.msi");
 
                 Platform.runLater(() -> labelStatus.setText("Baixando..."));
 
-                // streaming com progresso
                 HttpResponse<InputStream> resp =
                         client.send(req, HttpResponse.BodyHandlers.ofInputStream());
 
@@ -107,23 +107,58 @@ public class TelaUpdate {
                 Platform.runLater(() -> {
                     barra.setProgress(1.0);
                     labelPct.setText("100%");
-                    labelStatus.setText("Concluído! Abrindo instalador...");
+                    labelStatus.setText("Download concluido. Instalando...");
                 });
 
-                Thread.sleep(1000);
+                // grava o bat intermediario que:
+                // 1. espera o processo do app fechar (timeout de 10s)
+                // 2. executa o msi silenciosamente
+                // 3. abre o novo exe apos instalar
+                // 4. se deleta
+                Path batPath = Path.of(System.getProperty("java.io.tmpdir"), "albion_update.bat");
 
-                // abre o instalador e fecha o app
+                // pega o caminho do exe atual pra reabrir depois da instalacao
+                String exeAtual = ProcessHandle.current()
+                        .info()
+                        .command()
+                        .orElse("");
+
+                // pasta de instalacao padrao - ajuste se o seu instalador usa outra pasta
+                String pastaInstalacao = System.getenv("ProgramFiles") + "\\AlbionMarket";
+                String exeNovo = pastaInstalacao + "\\AlbionMarket.exe";
+
+                String conteudoBat =
+                        "@echo off\r\n" +
+                                // espera o processo java/javaw fechar - timeout de 10 segundos
+                                "timeout /t 2 /nobreak >nul\r\n" +
+                                // instala silenciosamente sem reiniciar
+                                "msiexec /i \"" + destino.toString() + "\" /quiet /norestart\r\n" +
+                                // aguarda o instalador terminar
+                                "timeout /t 3 /nobreak >nul\r\n" +
+                                // abre o novo exe se existir
+                                "if exist \"" + exeNovo + "\" start \"\" \"" + exeNovo + "\"\r\n" +
+                                // remove o bat e o msi baixado
+                                "del \"" + batPath.toString() + "\"\r\n" +
+                                "del \"" + destino.toString() + "\"\r\n";
+
+                Files.writeString(batPath, conteudoBat);
+
+                // executa o bat em segundo plano e fecha o app
                 Runtime.getRuntime().exec(new String[]{
-                        "msiexec", "/i", destino.toString(), "/quiet", "/norestart"
+                        "cmd.exe", "/c", "start", "/b", batPath.toString()
                 });
 
-                Platform.exit();
+                // pequena pausa pra garantir que o cmd iniciou antes do exit
+                Thread.sleep(500);
+
+                Platform.runLater(Platform::exit);
 
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     labelStatus.setText("Erro no update: " + e.getMessage()
-                            + "\nO programa continuará normalmente.");
-                    // após 3s vai pra tela de login mesmo assim
+                            + "\nO programa continuara normalmente.");
+
+                    // apos 3s vai pra tela de login mesmo com erro
                     new Thread(() -> {
                         try { Thread.sleep(3000); } catch (Exception ignored) {}
                         Platform.runLater(() -> new TelaLogin(palco).mostrar());

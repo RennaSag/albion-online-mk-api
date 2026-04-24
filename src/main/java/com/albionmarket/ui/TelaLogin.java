@@ -11,10 +11,12 @@ import javafx.stage.Stage;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import javax.net.ssl.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.prefs.Preferences;
 
@@ -25,6 +27,22 @@ public class TelaLogin {
 
     public TelaLogin(Stage palco) {
         this.palco = palco;
+    }
+
+    // ignora verificacao de certificado ssl - necessario no jre empacotado pelo jpackage
+    private static SSLContext criarSSLPermissivo() throws Exception {
+        TrustManager[] tm = new TrustManager[]{
+                new X509TrustManager() {
+                    public void checkClientTrusted(X509Certificate[] c, String a) {}
+                    public void checkServerTrusted(X509Certificate[] c, String a) {}
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                }
+        };
+        SSLContext ctx = SSLContext.getInstance("TLS");
+        ctx.init(null, tm, null);
+        return ctx;
     }
 
     public void mostrar() {
@@ -84,6 +102,7 @@ public class TelaLogin {
                 try {
                     HttpClient cliente = HttpClient.newBuilder()
                             .connectTimeout(Duration.ofSeconds(10))
+                            .sslContext(criarSSLPermissivo())
                             .build();
 
                     HttpRequest req = HttpRequest.newBuilder()
@@ -99,17 +118,14 @@ public class TelaLogin {
                     javafx.application.Platform.runLater(() -> {
                         btnEntrar.setDisable(false);
                         if (valido) {
-
                             if (lembrar.isSelected()) {
                                 prefs.put("chave_licenca", chave);
                             } else {
                                 prefs.remove("chave_licenca");
                             }
-                            // salva a data de expiracao pra usar na home
                             String expira = json.has("expira") ? json.get("expira").getAsString() : "";
                             prefs.put("licenca_expira", expira);
                             new TelaHome(palco).mostrar();
-
                         } else {
                             String motivo = json.has("motivo")
                                     ? json.get("motivo").getAsString()
