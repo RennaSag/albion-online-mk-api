@@ -53,11 +53,16 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <finalName>albion-market-fat</finalName>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.albionmarket.MainApp</mainClass>
+                                    <manifestEntries>
+                                        <Main-Class>com.albionmarket.MainApp</Main-Class>
+                                    </manifestEntries>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                             <outputFile>${project.build.directory}/albion-market-fat.jar</outputFile>
                         </configuration>

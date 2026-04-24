@@ -11,7 +11,7 @@ import com.google.gson.*;
 
 public class AutoUpdater {
 
-    private static final String VERSAO_ATUAL = "1.0.1";
+    private static final String VERSAO_ATUAL = "1.0.0";
     private static final String URL_VERSION  =
             "https://albion-licencas-api.onrender.com/version";
 
