@@ -10,7 +10,7 @@ import com.google.gson.*;
 public class AutoUpdater {
 
     // versao embutida no build
-    private static final String VERSAO_ATUAL = "1.0.1";
+    private static final String VERSAO_ATUAL = "1.0.19";
 
     // endpoint da api do github releases - troque pelo seu usuario e repositorio
     private static final String URL_GITHUB_API =
