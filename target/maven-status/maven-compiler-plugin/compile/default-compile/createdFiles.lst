@@ -14,6 +14,7 @@ com\albionmarket\ui\TelaCraft$11.class
 com\albionmarket\ui\TelaRefino$LinhaMaterialPreco.class
 com\albionmarket\ui\TelaCraft$6.class
 com\albionmarket\ui\TelaRefino$1.class
+com\albionmarket\ui\AutoUpdater.class
 com\albionmarket\ui\TelaRefino$4.class
 com\albionmarket\ui\TelaPesquisaPrecos$1.class
 com\albionmarket\ui\TelaRefinoSelecao.class
@@ -21,6 +22,7 @@ com\albionmarket\ui\TelaRefino$LinhaMaterial.class
 com\albionmarket\service\ApiService.class
 com\albionmarket\service\ItemValues$ValorBase.class
 com\albionmarket\ui\TelaRefino$8.class
+com\albionmarket\ui\TelaUpdate.class
 com\albionmarket\service\BuscaService$ResultadoInterno.class
 com\albionmarket\ui\TelaOperacoesAtivas.class
 com\albionmarket\ui\TelaCraft$5.class
