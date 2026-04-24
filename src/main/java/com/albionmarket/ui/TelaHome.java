@@ -35,7 +35,7 @@ public class TelaHome {
         Button btnOperacoes = criarBotao("Operacoes Ativas", "home-botao");
 
         btnPesquisar.setOnAction(e -> {
-            palco.setTitle("Albion Online - Analisador de Mercado");
+            palco.setTitle("Analisador de Mercado de Albion Online");
             palco.setMinWidth(1280);
             palco.setMinHeight(720);
             palco.getScene().setRoot(new TelaPesquisaPrecos().getCriarLayout());
@@ -75,7 +75,7 @@ public class TelaHome {
         raiz.setPadding(new Insets(80));
         raiz.getStyleClass().add("home-raiz");
 
-        palco.setTitle("Albion Online - Analisador de Mercado");
+        palco.setTitle("Analisador de Mercado de Albion Online");
         palco.getScene().setRoot(raiz);
     }
 

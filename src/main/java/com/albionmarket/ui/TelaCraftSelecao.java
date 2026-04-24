@@ -70,7 +70,7 @@ public class TelaCraftSelecao {
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarConteudo());
 
-        palco.setTitle("Albion Online - Analisador de Mercado");
+        palco.setTitle("Seleção de Craft");
         palco.getScene().setRoot(raiz);
 
         if (estadoAnterior != null) {

@@ -92,7 +92,7 @@ public class TelaRefinoSelecao {
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarConteudo());
 
-        palco.setTitle("Albion Online - Seleção de Refino");
+        palco.setTitle("Seleção de Refino");
         palco.getScene().setRoot(raiz);
         palco.setMinWidth(1280);
         palco.setMinHeight(720);

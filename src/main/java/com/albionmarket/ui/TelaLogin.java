@@ -168,7 +168,7 @@ public class TelaLogin {
         raiz.setPadding(new Insets(60));
         raiz.getStyleClass().add("login-raiz");
 
-        palco.setTitle("Albion Online - Analisador de Mercado");
+        palco.setTitle("Analisador de Mercado de Albion Online");
 
         if (!palco.isShowing()) {
             Scene cena = new Scene(raiz);
