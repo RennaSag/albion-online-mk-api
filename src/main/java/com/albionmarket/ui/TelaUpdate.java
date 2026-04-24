@@ -110,6 +110,14 @@ public class TelaUpdate {
                     labelStatus.setText("Instalando...");
                 });
 
+                // grava a nova versão localmente ANTES de lançar o instalador
+                try {
+                    Path versionFile = Path.of(System.getenv("LOCALAPPDATA"),
+                            "AlbionMarket", "version.txt");
+                    Files.createDirectories(versionFile.getParent());
+                    Files.writeString(versionFile, novaVersao);
+                } catch (Exception ignored) {
+                }
 
                 new ProcessBuilder(
                         "powershell.exe",
@@ -118,7 +126,7 @@ public class TelaUpdate {
                                 + destino.toString() + "' -Verb RunAs"
                 ).start();
 
-                Thread.sleep(1000);
+                Thread.sleep(3000);
                 Platform.runLater(Platform::exit);
 
 
