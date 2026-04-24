@@ -177,10 +177,3 @@ app.listen(PORT, '0.0.0.0', async () => {
     await inicializarBanco();
     console.log('servidor rodando na porta', PORT);
 });
-
-app.get('/version', (req, res) => {
-  res.json({
-    version: "1.0.1",
-    downloadUrl: "https://raw.githubusercontent.com/RennaSag/albion-online-mk-api/main/instalador/Analisador de Mercado do Albion Online-1.0.0.msi"
-  });
-});
