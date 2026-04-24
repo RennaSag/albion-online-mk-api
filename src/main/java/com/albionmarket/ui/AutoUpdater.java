@@ -2,17 +2,19 @@ package com.albionmarket.ui;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
+
 import java.net.URI;
 import java.net.http.*;
 import java.time.Duration;
+
 import com.google.gson.*;
 
 public class AutoUpdater {
 
     // versao embutida no build
-    private static final String VERSAO_ATUAL = "1.0.19";
+    private static final String VERSAO_ATUAL = "1.0.0";
 
-    // endpoint da api do github releases - troque pelo seu usuario e repositorio
+    // endpoint da api do github releases
     private static final String URL_GITHUB_API =
             "https://api.github.com/repos/RennaSag/albion-online-mk-api/releases/latest";
 

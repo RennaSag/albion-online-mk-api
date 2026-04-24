@@ -20,11 +20,8 @@ public class MainApp extends Application {
                 new javafx.scene.image.Image(getClass().getResourceAsStream("/icons/icone.png"), 256, 256, true, true)
         );
 
-        // palco.setMaximized(true);
-        // palco.setResizable(true);
-
-        AutoUpdater.verificar(palco);
         new TelaLogin(palco).mostrar();
+        AutoUpdater.verificar(palco);
 
     }
 
