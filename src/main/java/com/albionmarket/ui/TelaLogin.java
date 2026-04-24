@@ -144,7 +144,10 @@ public class TelaLogin {
         form.setAlignment(Pos.CENTER_LEFT);
         form.setMaxWidth(360);
 
-        VBox raiz = new VBox(20, titulo, subtitulo, form);
+        Label labelContato = new Label("Suporte: rennasagcontato@gmail.com");
+        labelContato.setStyle("-fx-text-fill: #555; -fx-font-size: 11px;");
+
+        VBox raiz = new VBox(20, titulo, subtitulo, form, labelContato);
         raiz.setAlignment(Pos.CENTER);
         raiz.setPadding(new Insets(60));
         raiz.getStyleClass().add("login-raiz");
