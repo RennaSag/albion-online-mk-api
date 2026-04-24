@@ -146,8 +146,8 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.get('/version', (req, res) => {
   res.json({
-    version: "1.0.1",
-    downloadUrl: "https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/AnalisadorMercadoAlbion-1.0.0.msi"
+    version: "1.0.0",
+    downloadUrl: "https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/Analisador.de.Mercado.do.Albion.Online-1.0.0.msi"
   });
 });
 
