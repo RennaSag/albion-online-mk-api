@@ -3,6 +3,7 @@ package com.albionmarket;
 import com.albionmarket.ui.TelaLogin;
 import javafx.application.Application;
 import javafx.stage.Stage;
+import com.albionmarket.ui.AutoUpdater;
 
 public class MainApp extends Application {
 
@@ -21,6 +22,8 @@ public class MainApp extends Application {
 
         // palco.setMaximized(true);
         // palco.setResizable(true);
+
+        AutoUpdater.verificar(palco);
         new TelaLogin(palco).mostrar();
 
     }

@@ -144,6 +144,13 @@ app.post('/admin/gerar', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+app.get('/version', (req, res) => {
+  res.json({
+    version: "1.0.1",
+    downloadUrl: "https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/AnalisadorMercadoAlbion-1.0.0.msi"
+  });
+});
+
 async function enviarEmailChave(email, chave) {
     console.log('configurando email, user:', process.env.EMAIL_USER ? 'definido' : 'nao definido');
 
@@ -169,4 +176,11 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', async () => {
     await inicializarBanco();
     console.log('servidor rodando na porta', PORT);
+});
+
+app.get('/version', (req, res) => {
+  res.json({
+    version: "1.0.1",
+    downloadUrl: "https://raw.githubusercontent.com/RennaSag/albion-online-mk-api/main/instalador/Analisador de Mercado do Albion Online-1.0.0.msi"
+  });
 });
