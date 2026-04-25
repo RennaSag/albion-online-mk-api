@@ -866,7 +866,6 @@ public class TelaCraft {
             String tipo = mat.isArtefato() ? "Artefato" : "Recurso";
 
 
-
             // recurso encantado retorna com @ no id, ex: T5_METALBAR@1
             String chaveCompra = (!ehArtefato && enchantAtualR > 0)
                     ? idMat + "_LEVEL" + enchantAtualR + "@" + enchantAtualR
