@@ -524,9 +524,7 @@ public class TelaCraft {
                     return;
                 }
                 Image img = new Image(url, 32, 32, true, true, true);
-                img.errorProperty().addListener((obs, ant, erro) -> {
-                    if (erro) System.out.println("ERRO ao carregar: " + url + " | " + img.getException());
-                });
+
                 iv.setImage(img);
                 setGraphic(iv);
             }
@@ -732,11 +730,7 @@ public class TelaCraft {
                         }
                     }
                 }
-                if (precosMateirais != null) {
-                    for (PriceEntry pe : precosMateirais) {
-                        System.out.println("MAT RETORNADO: " + pe.getItemId() + " | cidade: " + pe.getCidade() + " | buyMax: " + pe.getBuyMax() + " | sellMin: " + pe.getSellMin());
-                    }
-                }
+
                 return null;
             }
 

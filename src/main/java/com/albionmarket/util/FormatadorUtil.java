@@ -5,9 +5,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
-/**
- * formatacao e normalizacao para exibicao na interface.
- */
 public class FormatadorUtil {
 
     private static final NumberFormat FMT_NUMERO =
