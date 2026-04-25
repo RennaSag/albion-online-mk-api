@@ -1013,9 +1013,10 @@ public class TelaRefino {
 
     // utilitarios
     private double parseSilver(String val) {
-        if (val == null || val.equals("-")) return 0;
+        if (val == null || val.equals("-") || val.equals("—")) return 0;
         try {
-            return Double.parseDouble(val.replace(".", "").replace(",", "."));
+            java.text.NumberFormat fmt = java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR"));
+            return fmt.parse(val).doubleValue();
         } catch (Exception ex) {
             return 0;
         }
