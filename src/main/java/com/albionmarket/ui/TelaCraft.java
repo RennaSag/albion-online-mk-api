@@ -65,6 +65,11 @@ public class TelaCraft {
     private ReceitaCraft receitaAtual;
     private long itemValue = 0;
 
+
+    private double lucroAtual = 0;
+    private double custoAtual = 0;
+    private double receitaAtual2 = 0;
+
     // toggle de edição manual de preços
     private boolean modoEdicaoManual = false;
 
@@ -130,38 +135,16 @@ public class TelaCraft {
             // taxaBa___100nutri;  taxaBa . nutriTot = 100 x;  x = taxaBa . nutriTot / 100
             //    x_____nutriTot;
 
-            double taxaMercado = possuiPremium ? 0.03 : 0.05;
+            double taxaCompra = possuiPremium ? 0.03 : 0.05;
+            double taxaVenda = possuiPremium ? 0.025 : 0.05;
             //taxa do mercado com e sem premium, pra compra e venda
 
-            double custoMateriais = 0;
-            if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
-                for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
-                    custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdCraftInicial;
-                //custo dos materiais já multiplicado pela quantidade a craftar
-            } else if (tabelaReceita != null) {
-                for (LinhaMaterial lm : tabelaReceita.getItems())
-                    custoMateriais += parseSilver(lm.buyMax) * lm.qtd * qtdCraftInicial;
-            }
 
-            double custoMateriaisComTaxa = custoMateriais + (custoMateriais * taxaMercado);
-            //calcula o custo dos materiais com as taxas de compra do mercado
 
-            double precoVendaSalvar = tabelaPrecos.getItems().stream()
-                    .mapToDouble(l -> parseSilver(l.sellMin))
-                    .max()
-                    .orElse(0.0);
 
-            double receitaFinalMontante = qtdFinalCraftada * precoVendaSalvar;
-            // meu montante final de prata
-
-            double taxaMercadoVenda = receitaFinalMontante * taxaMercado;
-            //taxa q vou pagar sobre o montante na hora de vender
-
-            //custo total incluindo a taxa na hora de vender sob o montante
-            double custoTotal = custoMateriaisComTaxa + taxaDaBarracaDeCraft + taxaMercadoVenda;
-
-            double lucroSalvar = receitaFinalMontante - custoTotal;
-            // lucro final com tudo ja descontado
+            double lucroSalvar = lucroAtual;
+            double custoTotal = custoAtual;
+            double receitaFinalMontante = receitaAtual2;
 
 
             String[] melhorCidadeHolder = {"-"};
@@ -183,9 +166,9 @@ public class TelaCraft {
             sb.append("  \"calculadora\": {\n");
             sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdCraftInicial)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalCraftada)).append("\",\n");
-            sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(precoVendaSalvar)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(receitaFinalMontante)).append("\",\n");
             sb.append("    \"Local de venda\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
-            sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoMateriaisComTaxa)).append("\",\n");
+            sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoAtual)).append("\",\n");
             sb.append("    \"Local de compra dos materiais\": ").append(cidadesPorMaterialJson()).append(",\n");
             sb.append("    \"Custo total\": \"").append(fmtSilver(custoTotal)).append("\",\n");
             sb.append("    \"Lucro/Prejuizo\": \"").append(lucroSalvar >= 0 ? "+" : "").append(fmtSilver(lucroSalvar)).append("\"\n");
@@ -1089,6 +1072,10 @@ public class TelaCraft {
         double receitaTotal = qtdFinal * melhorVenda;
         double taxaMercadoValor = receitaTotal * taxaVenda;
         double lucro = receitaTotal - custoTotal - taxaMercadoValor;
+
+        lucroAtual = lucro;
+        custoAtual = custoTotal;
+        receitaAtual2 = receitaTotal;
 
         // cards pequenos (métricas auxiliares)
         java.util.function.Function<ReceitaCraft.MaterialCraft, String> getNomeExibir = mat -> {
