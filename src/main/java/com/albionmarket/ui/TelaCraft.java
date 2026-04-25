@@ -184,7 +184,7 @@ public class TelaCraft {
             sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdCraftInicial)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalCraftada)).append("\",\n");
             sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(precoVendaSalvar)).append("\",\n");
-            sb.append("    \"Local de venda\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
+            sb.append("    \"Local\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
             sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoMateriaisComTaxa)).append("\",\n");
             sb.append("    \"Local de compra dos materiais\": ").append(cidadesPorMaterialJson()).append(",\n");
             sb.append("    \"Custo total\": \"").append(fmtSilver(custoTotal)).append("\",\n");
@@ -302,8 +302,8 @@ public class TelaCraft {
         Label btnHome = new Label("Início");
         btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;");
         btnHome.setTooltip(new Tooltip("Voltar para Home"));
-        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-opacity: 0.7;"));
-        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;"));
+        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 20px; -fx-cursor: hand; -fx-opacity: 0.7;"));
+        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 20px; -fx-cursor: hand;"));
         btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
 
         HBox cab = new HBox(textos, espacador, btnHome);
@@ -407,7 +407,6 @@ public class TelaCraft {
         };
         desenharPremium.run();
 
-        /* funcao de premium nao disponivel ainda
         Label labelPremium = new Label("Possui premium ativa?");
         labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
 
@@ -422,7 +421,7 @@ public class TelaCraft {
         });
 
         painel.getChildren().add(switchPremiumBox);
-        painel.getChildren().add(separador());*/
+        painel.getChildren().add(separador());
 
 
         // status
@@ -455,7 +454,7 @@ public class TelaCraft {
                 new TelaCraftSelecao(palco, estadoSelecao).mostrar()
         );
 
-        Button btnIniciarOperacao = new Button("Salvar Operação");
+        Button btnIniciarOperacao = new Button("Iniciar Operação");
         btnIniciarOperacao.setMaxWidth(Double.MAX_VALUE);
         btnIniciarOperacao.setStyle("-fx-background-color: #3dba6e; -fx-text-fill: white; "
                 + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 0;");
@@ -703,20 +702,39 @@ public class TelaCraft {
                 itemValue = ItemValues.getValor(itemIdCompleto);
 
                 if (receita != null && !receita.getMateriais().isEmpty()) {
-                    List<String> idsMat = receita.getMateriais().stream()
-                            .map(ReceitaCraft.MaterialCraft::getUniqueName)
-                            .collect(Collectors.toList());
                     precosMateirais = new ArrayList<>();
-                    for (String idMat : idsMat) {
+
+
+                    int enchantItem = (enchant == -1) ? 0 : enchant;
+                    List<String> cidadesSemBM = cidades.stream()
+                            .filter(c -> !c.equals("BlackMarket"))
+                            .collect(Collectors.toList());
+
+                    for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
                         try {
+                            String idMat = mat.getUniqueName();
                             String[] partes = idMat.split("_", 2);
                             int tMat = (partes[0].startsWith("T") && partes[0].length() == 2)
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
-                            precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidades));
+
+                            if (mat.isArtefato() || enchantItem == 0) {
+                                precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM));
+                            } else {
+                                // recurso encantado: sufixo com _LEVEL igual TelaPesquisaPrecos faz
+                                String sufixoLevel = sufixo + "_LEVEL" + enchantItem;
+                                precosMateirais.addAll(apiService.buscarPrecos(sufixoLevel, tMat, enchantItem, -1, cidadesSemBM));
+                            }
+
+
                         } catch (Exception ex) {
                             // ignora material com erro
                         }
+                    }
+                }
+                if (precosMateirais != null) {
+                    for (PriceEntry pe : precosMateirais) {
+                        System.out.println("MAT RETORNADO: " + pe.getItemId() + " | cidade: " + pe.getCidade() + " | buyMax: " + pe.getBuyMax() + " | sellMin: " + pe.getSellMin());
                     }
                 }
                 return null;
@@ -804,7 +822,9 @@ public class TelaCraft {
             for (PriceEntry pe : precosMateirais) {
                 String chave = pe.getItemId();
                 PriceEntry atual = melhorCompra.get(chave);
-                if (atual == null || (pe.getBuyMax() > 0 && (atual.getBuyMax() == 0 || pe.getBuyMax() > atual.getBuyMax()))) {
+                long precoAtual = atual != null ? (atual.getBuyMax() > 0 ? atual.getBuyMax() : atual.getSellMin()) : 0;
+                long precoNovo = pe.getBuyMax() > 0 ? pe.getBuyMax() : pe.getSellMin();
+                if (atual == null || (precoNovo > 0 && precoNovo > precoAtual)) {
                     melhorCompra.put(chave, pe);
                 }
             }
@@ -851,8 +871,17 @@ public class TelaCraft {
             String nomeMat2 = (enchantAtualR > 0 && !ehArtefato) ? nomeMat + " ." + enchantAtualR : nomeMat;
             String tipo = mat.isArtefato() ? "Artefato" : "Recurso";
 
-            PriceEntry pe = melhorCompra.get(idMat);
-            String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
+
+
+            // recurso encantado retorna com @ no id, ex: T5_METALBAR@1
+            String chaveCompra = (!ehArtefato && enchantAtualR > 0)
+                    ? idMat + "_LEVEL" + enchantAtualR + "@" + enchantAtualR
+                    : idMat;
+            PriceEntry pe = melhorCompra.get(chaveCompra);
+
+
+            long precoMat = pe != null && pe.getBuyMax() > 0 ? pe.getBuyMax() : (pe != null ? pe.getSellMin() : 0);
+            String buyMax = precoMat > 0 ? FormatadorUtil.formatarPreco(precoMat) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
                     ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
@@ -860,8 +889,6 @@ public class TelaCraft {
             String data = pe != null ? FormatadorUtil.formatarData(
                     (pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001")) ? pe.getBuyDate() : pe.getSellDate()) : "-";
 
-
-            System.out.println("ICONE URL: " + iconeUrl);
             linhas.add(new LinhaMaterial(iconeUrl, nomeMat2, tipo, mat.getCount(), cidade, corCidade, buyMax, data));
         }
 
@@ -883,7 +910,9 @@ public class TelaCraft {
             for (PriceEntry pe : precosMateirais) {
                 String chave = pe.getItemId();
                 PriceEntry atual = melhorCompra.get(chave);
-                if (atual == null || (pe.getBuyMax() > 0 && (atual.getBuyMax() == 0 || pe.getBuyMax() > atual.getBuyMax()))) {
+                long precoAtual = atual != null ? (atual.getBuyMax() > 0 ? atual.getBuyMax() : atual.getSellMin()) : 0;
+                long precoNovo = pe.getBuyMax() > 0 ? pe.getBuyMax() : pe.getSellMin();
+                if (atual == null || (precoNovo > 0 && precoNovo > precoAtual)) {
                     melhorCompra.put(chave, pe);
                 }
             }
@@ -916,8 +945,15 @@ public class TelaCraft {
             String nomeExibir = (enchantAtual > 0 && !ehArtefato) ? nomeMat + " ." + enchantAtual : nomeMat;
 
 
-            PriceEntry pe = melhorCompra.get(idMat);
-            String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
+            // recurso encantado retorna com @ no id, ex: T5_METALBAR@1
+            String chaveCompra = (!ehArtefato && enchantAtual > 0)
+                    ? idMat + "_LEVEL" + enchantAtual + "@" + enchantAtual
+                    : idMat;
+            PriceEntry pe = melhorCompra.get(chaveCompra);
+
+
+            long precoMat = pe != null && pe.getBuyMax() > 0 ? pe.getBuyMax() : (pe != null ? pe.getSellMin() : 0);
+            String buyMax = precoMat > 0 ? FormatadorUtil.formatarPreco(precoMat) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
                     ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
