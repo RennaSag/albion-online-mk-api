@@ -1202,7 +1202,12 @@ public class TelaCraft {
     private double parseSilver(String val) {
         if (val == null || val.equals("-")) return 0;
         try {
-            return Double.parseDouble(val.replace(".", "").replace(",", "."));
+            try {
+                java.text.NumberFormat fmt = java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR"));
+                return fmt.parse(val).doubleValue();
+            } catch (Exception e2) {
+                return 0;
+            }
         } catch (Exception e) {
             return 0;
         }
