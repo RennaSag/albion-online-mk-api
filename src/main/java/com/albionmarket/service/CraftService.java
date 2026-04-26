@@ -52,7 +52,7 @@ public class CraftService {
             "STONEBLOCK", "ROCK"
     );
 
-    private static final int[] QTD_BRUTOS = {0, 0, 2, 2, 3, 4, 5, 6, 7};
+    private static final int[] QTD_BRUTOS = {0, 0, 1, 2, 2, 3, 4, 5, 6};
 
     private ReceitaCraft montarReceitaRefino(String itemId) {
         // aceita T4_CLOTH ou T4_CLOTH_LEVEL1
