@@ -1,5 +1,6 @@
 package com.albionmarket;
 
+import com.albionmarket.ui.TelaChangelog;
 import com.albionmarket.ui.TelaLogin;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -22,6 +23,11 @@ public class MainApp extends Application {
 
         new TelaLogin(palco).mostrar();
         AutoUpdater.verificar(palco);
+
+
+        if (TelaChangelog.deveExibir()) {
+            new TelaChangelog(palco).mostrar();
+        }
 
     }
 

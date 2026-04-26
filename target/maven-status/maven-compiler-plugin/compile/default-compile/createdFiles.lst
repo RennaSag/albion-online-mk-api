@@ -3,6 +3,7 @@ com\albionmarket\ui\TelaCraft$10.class
 com\albionmarket\model\EstadoRefinoSelecao.class
 com\albionmarket\ui\TelaRefino$5.class
 com\albionmarket\model\Subcategoria.class
+com\albionmarket\ui\TelaChangelog$1.class
 com\albionmarket\ui\TelaCraft$3.class
 com\albionmarket\ui\TelaPesquisaPrecos.class
 com\albionmarket\ui\TelaLogin$1.class
@@ -32,8 +33,10 @@ com\albionmarket\service\ItemValues.class
 com\albionmarket\ui\TelaPesquisaPrecos$2.class
 com\albionmarket\service\BancoDeDadosCraft.class
 com\albionmarket\model\CidadeInfo.class
+com\albionmarket\service\BancoDeDadosChangelog.class
 com\albionmarket\ui\TelaCraft$LinhaMaterialPreco.class
 com\albionmarket\model\ReceitaCraft$MaterialCraft.class
+com\albionmarket\ui\TelaChangelog.class
 com\albionmarket\ui\TelaLogin.class
 com\albionmarket\ui\TelaRefino$10.class
 com\albionmarket\ui\TelaCraft.class
@@ -44,11 +47,14 @@ com\albionmarket\ui\TelaPesquisaPrecos$LinhaPreco.class
 com\albionmarket\ui\TelaRefino$7.class
 com\albionmarket\model\PriceEntry.class
 com\albionmarket\model\Categoria.class
+com\albionmarket\model\VersaoInfo.class
+com\albionmarket\model\VersaoInfo$Mudanca.class
 com\albionmarket\ui\TelaRefino$6.class
 com\albionmarket\MainApp.class
 com\albionmarket\service\BuscaService.class
 com\albionmarket\util\FormatadorUtil.class
 com\albionmarket\ui\TelaHome.class
+com\albionmarket\model\VersaoInfo$TipoMudanca.class
 com\albionmarket\ui\TelaRefino$11.class
 com\albionmarket\ui\TelaRefino$3.class
 com\albionmarket\ui\TelaCraft$LinhaPreco.class
