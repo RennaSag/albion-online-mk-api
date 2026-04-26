@@ -9,6 +9,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.util.prefs.Preferences;
+
 import java.io.*;
 import java.net.URI;
 import java.net.http.*;
@@ -127,6 +129,12 @@ public class TelaUpdate {
                 ).start();
 
                 Thread.sleep(3000);
+
+                Platform.runLater(() -> {
+                    java.util.prefs.Preferences.userNodeForPackage(TelaChangelog.class)
+                            .remove("changelog_ultima_versao_vista");
+                });
+
                 Platform.runLater(Platform::exit);
 
 

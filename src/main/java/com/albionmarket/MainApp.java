@@ -22,12 +22,13 @@ public class MainApp extends Application {
         );
 
         new TelaLogin(palco).mostrar();
-        AutoUpdater.verificar(palco);
-
 
         if (TelaChangelog.deveExibir()) {
             new TelaChangelog(palco).mostrar();
         }
+
+        AutoUpdater.verificar(palco);
+
 
     }
 

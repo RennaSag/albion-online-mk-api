@@ -19,20 +19,20 @@ import java.util.List;
 public class BancoDeDadosChangelog {
 
 
-    public static final String APP_VERSAO_ATUAL = "1.0.3";
+    public static final String APP_VERSAO_ATUAL = "1.0.4";
 
 
     public static final List<VersaoInfo> VERSOES = Arrays.asList(
 
 
             new VersaoInfo(
-                    "1.0.3",
-                    "Abril 2026",
+                    "1.0.4",
+                    "26 de Abril, 2026",
                     "Lançamento Inicial",
                     Arrays.asList(
                             new Mudanca(TipoMudanca.NOVIDADE, "Caro usuário, obrigado por comprar o programa Analisador de Mercado de Albion Online."),
-                            new Mudanca(TipoMudanca.NOVIDADE, "Como agradecimento pela compra, foi adiconado +5 dias de acesso à sua licença.")
-                            //  new Mudanca(TipoMudanca.NOVIDADE, "Calculadora de refino com lucro estimado"),
+                            new Mudanca(TipoMudanca.NOVIDADE, "Como agradecimento pela compra, foi adiconado +5 dias de acesso à sua licença."),
+                            new Mudanca(TipoMudanca.MELHORIA, "Foi adicionado nessa nova versão esta tela de changelog para você acompanhar as atualizações do projeto.")
                             //  new Mudanca(TipoMudanca.NOVIDADE, "Suporte a todos os tiers (T2–T8) e encantamentos"),
                             //  new Mudanca(TipoMudanca.NOVIDADE, "Filtro de cidades para comparar mercados")
                     )
