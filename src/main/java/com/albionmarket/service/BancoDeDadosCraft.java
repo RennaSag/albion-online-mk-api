@@ -747,6 +747,68 @@ public class BancoDeDadosCraft {
         return lista;
     }
 
+
+
+
+    // retorna o sufixo do diario de craft correspondente ao item
+    // ex: "JOURNAL_WARRIOR", "JOURNAL_MAGE", "JOURNAL_HUNTER"
+    public static String getDiarioSufixo(String itemId) {
+        if (itemId == null) return null;
+        String base = itemId.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");
+
+        // armaduras de tecido e cajados: mago
+        if (base.startsWith("HEAD_CLOTH") || base.startsWith("ARMOR_CLOTH") || base.startsWith("SHOES_CLOTH")
+                || base.startsWith("MAIN_ARCANESTAFF") || base.startsWith("2H_ARCANE")
+                || base.startsWith("MAIN_FIRESTAFF") || base.startsWith("2H_FIRESTAFF") || base.startsWith("2H_INFERNOSTAFF")
+                || base.startsWith("MAIN_FROSTSTAFF") || base.startsWith("2H_FROSTSTAFF") || base.startsWith("2H_GLACIALSTAFF")
+                || base.startsWith("MAIN_CURSEDSTAFF") || base.startsWith("2H_CURSEDSTAFF") || base.startsWith("2H_DEMONIC")
+                || base.startsWith("MAIN_HOLYSTAFF") || base.startsWith("2H_HOLYSTAFF") || base.startsWith("2H_DIVINE")
+                || base.startsWith("MAIN_NATURESTAFF") || base.startsWith("2H_NATURESTAFF") || base.startsWith("2H_WILD")
+                || base.startsWith("2H_ENIGMATIC") || base.startsWith("OFF_BOOK") || base.startsWith("OFF_ORB")
+                || base.startsWith("OFF_DEMONSKULL") || base.startsWith("OFF_TOTEM") || base.startsWith("OFF_CENSER")
+                || base.startsWith("OFF_TOME") || base.startsWith("2H_SKULLORB") || base.startsWith("2H_ICECRYSTAL")
+                || base.startsWith("2H_ICEGAUNTLETS") || base.startsWith("2H_FIRE_RING") || base.startsWith("2H_ARCANE_RING")
+                || base.startsWith("2H_SHAPESHIFTER")) {
+            return "JOURNAL_MAGE";
+        }
+
+        // armaduras de couro, arcos, bestas, adagas, lanças, cajados de combate: cacador
+        if (base.startsWith("HEAD_LEATHER") || base.startsWith("ARMOR_LEATHER") || base.startsWith("SHOES_LEATHER")
+                || base.startsWith("2H_BOW") || base.startsWith("2H_WARBOW") || base.startsWith("2H_LONGBOW")
+                || base.startsWith("2H_CROSSBOW") || base.startsWith("MAIN_1HCROSSBOW")
+                || base.startsWith("MAIN_DAGGER") || base.startsWith("2H_DAGGER") || base.startsWith("2H_CLAWS")
+                || base.startsWith("2H_DUALSICKLE") || base.startsWith("MAIN_RAPIER")
+                || base.startsWith("2H_QUARTERSTAFF") || base.startsWith("2H_IRONCLADEDSTAFF")
+                || base.startsWith("2H_DOUBLEBLADEDSTAFF") || base.startsWith("2H_COMBATSTAFF")
+                || base.startsWith("2H_TWINSCYTHE") || base.startsWith("2H_ROCKSTAFF")
+                || base.startsWith("2H_KNUCKLES") || base.startsWith("MAIN_SPEAR") || base.startsWith("2H_SPEAR")
+                || base.startsWith("2H_GLAIVE") || base.startsWith("2H_HARPOON") || base.startsWith("2H_TRIDENT")
+                || base.startsWith("OFF_TORCH") || base.startsWith("OFF_HORN") || base.startsWith("OFF_TALISMAN")
+                || base.startsWith("OFF_LAMP") || base.startsWith("OFF_JESTERCANE")
+                || base.startsWith("CAPE") || base.startsWith("CAPEITEM") || base.startsWith("BAG")) {
+            return "JOURNAL_HUNTER";
+        }
+
+        // armaduras de placa, armas corpo a corpo: guerreiro
+        if (base.startsWith("HEAD_PLATE") || base.startsWith("ARMOR_PLATE") || base.startsWith("SHOES_PLATE")
+                || base.startsWith("MAIN_SWORD") || base.startsWith("2H_DUAL") || base.startsWith("2H_CLAYMORE")
+                || base.startsWith("2H_CLEAVER") || base.startsWith("2H_KINGMAKER") || base.startsWith("MAIN_AXE")
+                || base.startsWith("2H_AXE") || base.startsWith("2H_HALBERD") || base.startsWith("2H_SCYTHE")
+                || base.startsWith("2H_BEARCLAW") || base.startsWith("2H_REALMBREAKER")
+                || base.startsWith("MAIN_MACE") || base.startsWith("2H_MACE") || base.startsWith("2H_FLAIL")
+                || base.startsWith("MAIN_ROCKMACE") || base.startsWith("MAIN_HAMMER") || base.startsWith("2H_HAMMER")
+                || base.startsWith("2H_POLEHAMMER") || base.startsWith("2H_RAM")
+                || base.startsWith("OFF_SHIELD") || base.startsWith("OFF_TOWERSHIELD") || base.startsWith("OFF_SPIKED")
+                || base.startsWith("MAIN_ENIGMATICORB") || base.startsWith("MAIN_SCIMITAR")) {
+            return "JOURNAL_WARRIOR";
+        }
+
+        return null;
+    }
+
+
+
+
     private static ItemDefinition item(String id, String nome, String keywords) {
         return new ItemDefinition(id, nome, keywords);
     }

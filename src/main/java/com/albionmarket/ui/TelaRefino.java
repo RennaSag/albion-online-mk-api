@@ -286,10 +286,10 @@ public class TelaRefino {
         };
         desenharPremium.run();
 
-        //funcao de premium e foco ainda não disponivel
-        //Label labelPremium = new Label("Possui premium ativa?");
-        //labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
-/*
+
+        Label labelPremium = new Label("Possui premium ativa?");
+        labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
+
         HBox switchPremiumBox = new HBox(8, canvasPremium, labelPremium);
         switchPremiumBox.setAlignment(Pos.CENTER_LEFT);
         switchPremiumBox.setCursor(javafx.scene.Cursor.HAND);
@@ -300,7 +300,7 @@ public class TelaRefino {
             atualizarTabelaCalculo();
         });
         painel.getChildren().add(switchPremiumBox);
-        painel.getChildren().add(separador()); */
+        painel.getChildren().add(separador());
 
         // status
         progresso = new ProgressIndicator();

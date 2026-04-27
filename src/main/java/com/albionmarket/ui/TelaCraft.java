@@ -53,6 +53,8 @@ public class TelaCraft {
     private TextField campoRetorno;
     private TextField campoTaxaMercado;
     private TextField campoSinergiaBarraca;
+    private TextField campoDiarioVazio;
+    private TextField campoDiarioCheio;
     private Label labelItemValue;
 
     // tabelas
@@ -64,6 +66,10 @@ public class TelaCraft {
     // dados
     private ReceitaCraft receitaAtual;
     private long itemValue = 0;
+
+
+    private long precoDiarioVazioApi = 0;
+    private long precoDiarioCheioApi = 0;
 
 
     private double lucroAtual = 0;
@@ -138,8 +144,6 @@ public class TelaCraft {
             double taxaCompra = possuiPremium ? 0.03 : 0.05;
             double taxaVenda = possuiPremium ? 0.025 : 0.05;
             //taxa do mercado com e sem premium, pra compra e venda
-
-
 
 
             double lucroSalvar = lucroAtual;
@@ -327,10 +331,14 @@ public class TelaCraft {
 
         // parâmetros
         painel.getChildren().add(secao("Parâmetros de Craft"));
+
         campoQuantidade = campoCraft("1");
         campoRetorno = campoCraft("15.2");
         campoTaxaMercado = campoCraft("3.0");
         campoSinergiaBarraca = campoCraft("3.0");
+        campoDiarioVazio = campoCraft("0");
+        campoDiarioCheio = campoCraft("0");
+
         labelItemValue = new Label("-");
         labelItemValue.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 12px; -fx-font-weight: bold;");
 
@@ -340,9 +348,11 @@ public class TelaCraft {
                 label("Taxa da barraca (%)"), campoSinergiaBarraca
         );
 
+
         painel.getChildren().add(separador());
 
         // switch inserir preços manualmente
+
         javafx.scene.canvas.Canvas canvasSwitch = new javafx.scene.canvas.Canvas(44, 22);
         final boolean[] estadoSwitch = {false};
 
@@ -390,7 +400,6 @@ public class TelaCraft {
         };
         desenharPremium.run();
 
-        /* funcao de premium nao disponivel ainda
         Label labelPremium = new Label("Possui premium ativa?");
         labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
 
@@ -405,7 +414,7 @@ public class TelaCraft {
         });
 
         painel.getChildren().add(switchPremiumBox);
-        painel.getChildren().add(separador());*/
+        painel.getChildren().add(separador());
 
 
         // status
@@ -509,7 +518,7 @@ public class TelaCraft {
                 }
                 Image img = new Image(url, 32, 32, true, true, true);
                 img.errorProperty().addListener((obs, ant, erro) -> {
-                    if (erro) System.out.println("ERRO ao carregar: " + url + " | " + img.getException());
+
                 });
                 iv.setImage(img);
                 setGraphic(iv);
@@ -533,6 +542,8 @@ public class TelaCraft {
                 setText(v);
                 setStyle(v.equals("Artefato")
                         ? "-fx-text-fill: #9b59b6; -fx-font-weight: bold;"
+                        : v.equals("Diario")
+                        ? "-fx-text-fill: #16a085; -fx-font-weight: bold;"
                         : "-fx-text-fill: #e0b84a;");
             }
         });
@@ -678,6 +689,9 @@ public class TelaCraft {
             private List<PriceEntry> precos;
             private ReceitaCraft receita;
             private List<PriceEntry> precosMateirais;
+            private PriceEntry precoDiarioVazioEntry;
+            private PriceEntry precoDiarioCheioEntry;
+            private List<PriceEntry> precosDiarioCheioTodos;
 
             @Override
             protected Void call() throws Exception {
@@ -701,15 +715,49 @@ public class TelaCraft {
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
 
                             if (mat.isArtefato() || enchantItem == 0) {
-                                // artefato ou item sem encantamento: busca normal sem enchant
                                 precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM));
                             } else {
-                                // recurso encantado: sufixo com _LEVEL, ex: METALBAR_LEVEL2
                                 String sufixoLevel = sufixo + "_LEVEL" + enchantItem;
                                 precosMateirais.addAll(apiService.buscarPrecos(sufixoLevel, tMat, enchantItem, -1, cidadesSemBM));
                             }
                         } catch (Exception ex) {
                             // ignora material com erro
+                        }
+                    }
+
+                    // busca precos dos diarios automaticamente
+                    int tierItem = (tier == -1) ? 4 : tier;
+                    String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+                    if (sufixoDiario != null && tierItem >= 2) {
+                        try {
+                            String idVazio = "T" + tierItem + "_" + sufixoDiario + "_EMPTY";
+                            String idCheio = "T" + tierItem + "_" + sufixoDiario + "_FULL";
+                            List<String> cidadesSemBMDiario = cidades.stream()
+                                    .filter(c -> !c.equals("BlackMarket"))
+                                    .collect(Collectors.toList());
+
+
+                            //diarios so tem qualidade Normal(1), passa sufixo sem tier pra buscarPrecos montar correto
+                            String sufixoDiarioVazio = sufixoDiario + "_EMPTY";
+                            String sufixoDiarioCheio = sufixoDiario + "_FULL";
+                            List<PriceEntry> precosDiarioVazio = apiService.buscarPrecos(sufixoDiarioVazio, tierItem, 0, 1, cidadesSemBMDiario);
+                            List<PriceEntry> precosDiarioCheio = apiService.buscarPrecos(sufixoDiarioCheio, tierItem, 0, 1, cidadesSemBMDiario);
+
+
+                            precosDiarioCheioTodos = precosDiarioCheio;
+                            precoDiarioVazioEntry = precosDiarioVazio.stream()
+                                    .filter(p -> p.getSellMin() > 0)
+                                    .min(java.util.Comparator.comparingLong(PriceEntry::getSellMin))
+                                    .orElse(null);
+                            precoDiarioCheioEntry = precosDiarioCheio.stream()
+                                    .filter(p -> p.getBuyMax() > 0)
+                                    .max(java.util.Comparator.comparingLong(PriceEntry::getBuyMax))
+                                    .orElse(null);
+
+
+                        } catch (Exception ex) {
+                            // ignora erro de diario
+
                         }
                     }
                 }
@@ -719,10 +767,15 @@ public class TelaCraft {
 
             @Override
             protected void succeeded() {
+
                 receitaAtual = receita;
-                atualizarTabelaPrecos(precos);
-                atualizarTabelaReceita(receita, precosMateirais);
-                atualizarTabelaMateriais(receita, precosMateirais);
+
+                precoDiarioVazioApi = precoDiarioVazioEntry != null ? precoDiarioVazioEntry.getSellMin() : 0;
+                precoDiarioCheioApi = precoDiarioCheioEntry != null ? precoDiarioCheioEntry.getBuyMax() : 0;
+
+                atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
+                atualizarTabelaReceita(receita, precosMateirais, precoDiarioVazioEntry, precoDiarioCheioEntry);
+                atualizarTabelaMateriais(receita, precosMateirais, precoDiarioVazioEntry);
                 atualizarTabelaCalculo();
                 labelItemValue.setText(itemValue > 0 ? String.format("%,d", itemValue) : "nao cadastrado");
                 progresso.setVisible(false);
@@ -739,7 +792,7 @@ public class TelaCraft {
     }
 
 
-    private void atualizarTabelaPrecos(List<PriceEntry> entradas) {
+    private void atualizarTabelaPrecos(List<PriceEntry> entradas, List<PriceEntry> precosDiarioCheio) {
         int r1 = 0, r2 = 0, r3 = 0, art = 0;
         if (receitaAtual != null) {
             List<ReceitaCraft.MaterialCraft> recursos = receitaAtual.getMateriais().stream()
@@ -781,13 +834,36 @@ public class TelaCraft {
         }
         linhas.sort(Comparator.comparing(l -> l.cidade));
 
+
+        // adiciona preços do diário cheio por cidade
+        int tierDiario = (tier == -1) ? 4 : tier;
+        String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+        if (sufixoDiario != null && tierDiario >= 2 && precosDiarioCheio != null) {
+            for (PriceEntry pd : precosDiarioCheio) {
+                if (pd.getBuyMax() <= 0) continue;
+                String corCidade = BancoDeDadosCraft.CIDADES.stream()
+                        .filter(c -> c.getApiId().equals(pd.getCidade()))
+                        .map(CidadeInfo::getCor).findFirst().orElse("#888");
+                linhas.add(new LinhaPreco(
+                        "Diário Cheio",
+                        "Diário de trabalhador (cheio)",
+                        pd.getCidade(),
+                        corCidade,
+                        FormatadorUtil.formatarPreco(pd.getBuyMax()),
+                        FormatadorUtil.formatarData(pd.getBuyDate()),
+                        0, 0, 0, 0));
+            }
+        }
+
+
         tabelaPrecos.setItems(FXCollections.observableArrayList(linhas));
         double altPrecos = 28.0 + (linhas.size() * 40.0);
         tabelaPrecos.setPrefHeight(altPrecos);
         tabelaPrecos.setMaxHeight(altPrecos);
     }
 
-    private void atualizarTabelaReceita(ReceitaCraft receita, List<PriceEntry> precosMateirais) {
+    private void atualizarTabelaReceita(ReceitaCraft receita, List<PriceEntry> precosMateirais,
+                                        PriceEntry diarioVazio, PriceEntry diarioCheio) {
         if (receita == null) {
             tabelaReceita.setPlaceholder(new Label("Receita não disponível para este item."));
             return;
@@ -872,7 +948,36 @@ public class TelaCraft {
             linhas.add(new LinhaMaterial(iconeUrl, nomeMat2, tipo, mat.getCount(), cidade, corCidade, precoExibir, data));
         }
 
+        // adiciona linha do diario vazio e cheio se disponivel
+        int tierItem = (tier == -1) ? 4 : tier;
+        String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+        if (sufixoDiario != null && tierItem >= 2) {
+            String idVazio = "T" + tierItem + "_" + sufixoDiario + "_EMPTY";
+            String idCheio = "T" + tierItem + "_" + sufixoDiario + "_FULL";
+            String iconeVazio = "https://render.albiononline.com/v1/item/" + idVazio + ".png";
+            String iconeCheio = "https://render.albiononline.com/v1/item/" + idCheio + ".png";
+
+            String precoVazioStr = diarioVazio != null ? FormatadorUtil.formatarPreco(diarioVazio.getSellMin()) : "-";
+            String cidadeVazio = diarioVazio != null ? diarioVazio.getCidade() : "-";
+            String corVazio = diarioVazio != null
+                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeVazio))
+                    .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
+            String dataVazio = diarioVazio != null ? FormatadorUtil.formatarData(diarioVazio.getSellDate()) : "-";
+
+            String precoCheioStr = diarioCheio != null ? FormatadorUtil.formatarPreco(diarioCheio.getBuyMax()) : "-";
+            String cidadeCheio = diarioCheio != null ? diarioCheio.getCidade() : "-";
+            String corCheio = diarioCheio != null
+                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeCheio))
+                    .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
+            String dataCheio = diarioCheio != null ? FormatadorUtil.formatarData(diarioCheio.getBuyMax() > 0 ? diarioCheio.getBuyDate() : "-") : "-";
+
+            linhas.add(new LinhaMaterial(iconeVazio, "Diario Vazio", "Diario", 1, cidadeVazio, corVazio, precoVazioStr, dataVazio));
+
+        }
+
         tabelaReceita.setItems(FXCollections.observableArrayList(linhas));
+
+
         double alturaLinha = 40.0;
         double alturaHeader = 28.0;
         double alturaCalculada = alturaHeader + (linhas.size() * alturaLinha);
@@ -882,7 +987,8 @@ public class TelaCraft {
 
     }
 
-    private void atualizarTabelaMateriais(ReceitaCraft receita, List<PriceEntry> precosMateirais) {
+    private void atualizarTabelaMateriais(ReceitaCraft receita,
+                                          List<PriceEntry> precosMateirais, PriceEntry precoDiarioVazio) {
         if (tabelaMateriais == null || receita == null) return;
 
         // agrupa por itemId+cidade, mantendo o menor sellMin (igual TelaPesquisaPrecos)
@@ -949,6 +1055,40 @@ public class TelaCraft {
             String tipoMat = mat.isArtefato() ? "Artefato" : "Recurso";
             linhas.add(new LinhaMaterialPreco(nomeExibir, tipoMat, mat.getCount(), cidade, corCidade, precoExibir, data));
         }
+
+
+        int tierItem2 = (tier == -1) ? 4 : tier;
+        String sufixoDiario2 = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+        if (sufixoDiario2 != null && tierItem2 >= 2 && precoDiarioVazio != null) {
+
+            // calcula qtd de diários vazios necessários
+            double[] famaBasePorTier = {0, 0, 12, 60, 180, 720, 2160, 5160, 11160};
+            double famaBase = (tierItem2 >= 2 && tierItem2 <= 8) ? famaBasePorTier[tierItem2] : 0;
+            int enchantItem2 = (enchant == -1) ? 0 : enchant;
+
+            double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
+            double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+            double qtdFinalDiario = qtdProduzir / (1.0 - taxaRetorno);
+
+            double famaNecessaria = 900.0 * Math.pow(2, tierItem2 - 2);
+            double famaPorCraft = famaBase * Math.pow(2, enchantItem2);
+
+            int qtdDiarios = (famaNecessaria > 0 && famaPorCraft > 0)
+                    ? (int) Math.ceil((famaPorCraft * qtdFinalDiario) / famaNecessaria)
+                    : 1;
+
+            String precoVazioStr = FormatadorUtil.formatarPreco(precoDiarioVazio.getSellMin());
+            String cidadeVazio = precoDiarioVazio.getCidade();
+            String corVazio = BancoDeDadosCraft.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(cidadeVazio))
+                    .map(CidadeInfo::getCor).findFirst().orElse("#888");
+            String dataVazio = FormatadorUtil.formatarData(precoDiarioVazio.getSellDate());
+
+            linhas.add(new LinhaMaterialPreco(
+                    "Diario Vazio", "Diario", qtdDiarios,
+                    cidadeVazio, corVazio, precoVazioStr, dataVazio));
+        }
+
 
         tabelaMateriais.setItems(FXCollections.observableArrayList(linhas));
         double alt = 28.0 + (linhas.size() * 40.0);
@@ -1073,7 +1213,32 @@ public class TelaCraft {
         double taxaMercadoValor = receitaTotal * taxaVenda;
         double lucro = receitaTotal - custoTotal - taxaMercadoValor;
 
-        lucroAtual = lucro;
+        // calculo dos diarios
+        int tierItem = (tier == -1) ? 4 : tier;
+        int enchantItem = (enchant == -1) ? 0 : enchant;
+
+        // fama base por tier (tabela levantada empiricamente)
+        double[] famaBasePorTier = {0, 0, 12, 60, 180, 720, 2160, 5160, 11160};
+        double famaBase = (tierItem >= 2 && tierItem <= 8) ? famaBasePorTier[tierItem] : 0;
+
+        // encantamento dobra a fama a cada nivel
+        double famaPorCraft = famaBase * Math.pow(2, enchantItem);
+
+        // fama necessaria pra encher um diario do tier do item: 900 * 2^(tier-2)
+        double famaNecessaria = 900 * Math.pow(2, tierItem - 2);
+
+        // quantidade real de crafts inclui o retorno geometrico
+        double diariosCompletos = famaNecessaria > 0 ? (famaPorCraft * qtdFinal) / famaNecessaria : 0;
+
+        double precoDiarioVazio = precoDiarioVazioApi;
+        double precoDiarioCheio = precoDiarioCheioApi;
+
+
+        double lucroDiarios = diariosCompletos * (precoDiarioCheio - precoDiarioVazio);
+
+        double lucroComDiarios = lucro + lucroDiarios;
+
+        lucroAtual = lucroComDiarios;
         custoAtual = custoTotal;
         receitaAtual2 = receitaTotal;
 
@@ -1123,7 +1288,9 @@ public class TelaCraft {
                 new String[]{"Melhor preço de venda", fmtSilver(melhorVenda)},
                 new String[]{"Local de venda", nomeCidadeVenda},
                 new String[]{"Custo dos materiais", fmtSilver(custoMatComTaxa)},
-                new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)}
+                new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)},
+                new String[]{"Diarios completos", String.format("%.2f un", diariosCompletos)},
+                new String[]{"Lucro c/ diarios", fmtSilver(lucroDiarios)}
         ));
 
         // adiciona qtd e local de cada recurso
@@ -1172,9 +1339,9 @@ public class TelaCraft {
         VBox cardCusto = criarCardDestaque("Custo Total", fmtSilver(custoTotal), "#e05555");
         VBox cardReceita = criarCardDestaque("Receita Total", fmtSilver(receitaTotal), "#3dba6e");
         VBox cardLucro = criarCardDestaque(
-                lucro >= 0 ? "Lucro" : "Prejuízo",
-                (lucro >= 0 ? "+" : "") + fmtSilver(lucro),
-                lucro >= 0 ? "#5a8dee" : "#e05555");
+                lucroComDiarios >= 0 ? "Lucro" : "Prejuízo",
+                (lucroComDiarios >= 0 ? "+" : "") + fmtSilver(lucroComDiarios),
+                lucroComDiarios >= 0 ? "#5a8dee" : "#e05555");
 
         HBox.setHgrow(cardCusto, Priority.ALWAYS);
         HBox.setHgrow(cardReceita, Priority.ALWAYS);
