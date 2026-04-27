@@ -21,11 +21,21 @@ async function inicializarBanco() {
             chave TEXT NOT NULL UNIQUE,
             ativo BOOLEAN DEFAULT TRUE,
             expiracao TIMESTAMP,
+            email_enviado BOOLEAN DEFAULT FALSE,
             criado_em TIMESTAMP DEFAULT NOW()
         )
     `);
+
+
+    await pool.query(`
+        ALTER TABLE licencas
+        ADD COLUMN IF NOT EXISTS email_enviado BOOLEAN DEFAULT FALSE
+    `);
+
     console.log('banco inicializado');
 }
+
+
 
 app.post('/webhook/hotmart', async (req, res) => {
     try {
@@ -33,27 +43,49 @@ app.post('/webhook/hotmart', async (req, res) => {
         console.log('webhook recebido:', evento.event);
 
         if (evento.event === 'PURCHASE_APPROVED') {
-            const email = evento.data.buyer.email;
+
+            // validação do payload antes de tudo
+            const email = evento?.data?.buyer?.email;
+            if (!email) {
+                console.error('webhook PURCHASE_APPROVED sem email no payload:', JSON.stringify(evento));
+                return res.sendStatus(200); // 200 pra Hotmart não ficar tentando reenviar
+            }
+
             const chave = uuidv4();
             const expiracao = new Date();
-
-            //tempo de duracao da key inicial, 5 dias
             expiracao.setDate(expiracao.getDate() + 5);
 
+
             await pool.query(
-                `INSERT INTO licencas (email, chave, ativo, expiracao)
-                 VALUES ($1, $2, true, $3)
+                `INSERT INTO licencas (email, chave, ativo, expiracao, email_enviado)
+                 VALUES ($1, $2, true, $3, false)
                  ON CONFLICT (email) DO UPDATE
-                 SET chave = $2, ativo = true, expiracao = $3`,
+                 SET chave = $2, ativo = true, expiracao = $3, email_enviado = false`,
                 [email, chave, expiracao]
             );
-
-            await enviarEmailChave(email, chave);
             console.log('licenca criada para:', email);
+
+
+            try {
+                await enviarEmailChave(email, chave);
+                await pool.query(
+                    'UPDATE licencas SET email_enviado = true WHERE email = $1',
+                    [email]
+                );
+                console.log('email enviado para:', email);
+            } catch (emailErr) {
+
+                console.error('ERRO ao enviar email para', email, ':', emailErr.message);
+            }
         }
 
         if (evento.event === 'SUBSCRIPTION_CANCELLATION') {
-            const email = evento.data.buyer.email;
+            const email = evento?.data?.buyer?.email;
+            if (!email) {
+                console.error('webhook SUBSCRIPTION_CANCELLATION sem email:', JSON.stringify(evento));
+                return res.sendStatus(200);
+            }
+
             await pool.query(
                 'UPDATE licencas SET ativo = false WHERE email = $1',
                 [email]
@@ -67,6 +99,8 @@ app.post('/webhook/hotmart', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
+
 
 app.get('/validar', async (req, res) => {
     const chave = req.query.chave;
@@ -103,6 +137,8 @@ app.get('/validar', async (req, res) => {
     }
 });
 
+
+
 app.post('/admin/gerar', async (req, res) => {
     try {
         const { email, token } = req.body;
@@ -112,24 +148,29 @@ app.post('/admin/gerar', async (req, res) => {
             return res.status(403).json({ erro: 'token invalido' });
         }
 
+        if (!email) {
+            return res.status(400).json({ erro: 'email obrigatorio' });
+        }
+
         const chave = uuidv4();
         const expiracao = new Date();
-
-
         expiracao.setDate(expiracao.getDate() + 5);
 
         await pool.query(
-            `INSERT INTO licencas (email, chave, ativo, expiracao)
-             VALUES ($1, $2, true, $3)
+            `INSERT INTO licencas (email, chave, ativo, expiracao, email_enviado)
+             VALUES ($1, $2, true, $3, false)
              ON CONFLICT (email) DO UPDATE
-             SET chave = $2, ativo = true, expiracao = $3`,
+             SET chave = $2, ativo = true, expiracao = $3, email_enviado = false`,
             [email, chave, expiracao]
         );
-
-        console.log('licenca salva no banco, tentando enviar email...');
+        console.log('licenca salva no banco para:', email);
 
         try {
             await enviarEmailChave(email, chave);
+            await pool.query(
+                'UPDATE licencas SET email_enviado = true WHERE email = $1',
+                [email]
+            );
             console.log('email enviado com sucesso para:', email);
         } catch (emailErr) {
             console.error('erro ao enviar email:', emailErr.message);
@@ -142,14 +183,80 @@ app.post('/admin/gerar', async (req, res) => {
     }
 });
 
+
+app.post('/admin/reenviar-pendentes', async (req, res) => {
+    const { token } = req.body;
+
+    if (token !== process.env.ADMIN_TOKEN) {
+        return res.status(403).json({ erro: 'token invalido' });
+    }
+
+    try {
+        const pendentes = await pool.query(
+            `SELECT email, chave FROM licencas
+             WHERE email_enviado = false AND ativo = true`
+        );
+
+        console.log('reenvio: encontrados', pendentes.rows.length, 'pendentes');
+
+        const resultados = { enviados: 0, falhos: 0, detalhes: [] };
+
+        for (const row of pendentes.rows) {
+            try {
+                await enviarEmailChave(row.email, row.chave);
+                await pool.query(
+                    'UPDATE licencas SET email_enviado = true WHERE email = $1',
+                    [row.email]
+                );
+                resultados.enviados++;
+                resultados.detalhes.push({ email: row.email, status: 'ok' });
+                console.log('reenvio ok:', row.email);
+            } catch (e) {
+                resultados.falhos++;
+                resultados.detalhes.push({ email: row.email, status: 'falhou', erro: e.message });
+                console.error('reenvio falhou para:', row.email, e.message);
+            }
+        }
+
+        res.json(resultados);
+    } catch (err) {
+        console.error('erro em reenviar-pendentes:', err);
+        res.status(500).json({ erro: err.message });
+    }
+});
+
+
+
+app.get('/admin/pendentes', async (req, res) => {
+    const token = req.query.token;
+
+    if (token !== process.env.ADMIN_TOKEN) {
+        return res.status(403).json({ erro: 'token invalido' });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT email, criado_em, expiracao FROM licencas
+             WHERE email_enviado = false AND ativo = true
+             ORDER BY criado_em DESC`
+        );
+        res.json({ total: result.rows.length, pendentes: result.rows });
+    } catch (err) {
+        console.error('erro em /admin/pendentes:', err);
+        res.status(500).json({ erro: err.message });
+    }
+});
+
+
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.get('/version', (req, res) => {
-  res.json({
-    version: "1.0.0",
-    downloadUrl: "https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/Analisador.de.Mercado.do.Albion.Online-1.0.0.msi"
-  });
+    res.json({
+        version: "1.0.0",
+        downloadUrl: "https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/Analisador.de.Mercado.do.Albion.Online-1.0.0.msi"
+    });
 });
+
 
 async function enviarEmailChave(email, chave) {
     console.log('configurando email, user:', process.env.EMAIL_USER ? 'definido' : 'nao definido');
@@ -171,6 +278,7 @@ async function enviarEmailChave(email, chave) {
 
     console.log('email enviado, messageId:', info.messageId);
 }
+
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', async () => {
