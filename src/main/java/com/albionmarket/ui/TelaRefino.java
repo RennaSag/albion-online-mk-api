@@ -581,19 +581,32 @@ public class TelaRefino {
                     List<String> idsMat = receita.getMateriais().stream()
                             .map(ReceitaCraft.MaterialCraft::getUniqueName)
                             .collect(Collectors.toList());
-                    precosMateirais = new ArrayList<>();
-                    for (String idMat : idsMat) {
-                        try {
 
+
+                    precosMateirais = new ArrayList<>();
+                    precosMateirais = new ArrayList<>();
+                    int enchantItem = (enchant == -1) ? 0 : enchant;
+                    List<String> cidadesSemBM = cidades.stream()
+                            .filter(c -> !c.equals("BlackMarket"))
+                            .collect(Collectors.toList());
+
+                    for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
+                        try {
+                            String idMat = mat.getUniqueName();
                             String[] partes = idMat.split("_", 2);
                             int tMat = (partes[0].startsWith("T") && partes[0].length() == 2)
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
-                            precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidades));
 
+                            if (enchantItem == 0) {
+                                precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM));
+                            } else {
 
+                                String sufixoLevel = sufixo + "_LEVEL" + enchantItem;
+                                precosMateirais.addAll(apiService.buscarPrecos(sufixoLevel, tMat, enchantItem, -1, cidadesSemBM));
+                            }
                         } catch (Exception ex) {
-                            // ignora material com erro
+
                         }
                     }
                 }
@@ -713,7 +726,11 @@ public class TelaRefino {
             String nomeExibir = (eAtual > 0 && !ehRetorno) ? nomeMat + " ." + eAtual : nomeMat;
             String tipo = ehRetorno ? "Retorno" : "Bruto";
 
-            PriceEntry pe = melhorCompra.get(idMat);
+            String chaveCompra = (eAtual > 0)
+                    ? idMat + "_LEVEL" + eAtual + "@" + eAtual
+                    : idMat;
+            PriceEntry pe = melhorCompra.get(chaveCompra);
+
             String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
@@ -776,7 +793,10 @@ public class TelaRefino {
 
             String tipo = ehRetorno ? "Retorno" : "Bruto";
 
-            PriceEntry pe = melhorCompra.get(idMat);
+            String chaveCompra = (eAtual > 0)
+                    ? idMat + "_LEVEL" + eAtual + "@" + eAtual
+                    : idMat;
+            PriceEntry pe = melhorCompra.get(chaveCompra);
             String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
