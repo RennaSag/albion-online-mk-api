@@ -585,22 +585,45 @@ public class TelaCraft {
 
         TableColumn<LinhaMaterialPreco, String> colMatQtd = new TableColumn<>("Qtd necessaria");
         colMatQtd.setPrefWidth(120);
+
         colMatQtd.setCellValueFactory(r -> {
+            // retorna string unica por linha para forcar o updateItem sempre rodar no refresh
             LinhaMaterialPreco lm = r.getValue();
-            if (lm.tipo != null && lm.tipo.equals("Artefato")) {
-                double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
-                double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
-                double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
-                return new javafx.beans.property.SimpleStringProperty(String.format("%.2f", qtdFinal));
-            }
-            int q = parseIntSafe(campoQuantidade, 1);
-            return new javafx.beans.property.SimpleStringProperty(String.valueOf(lm.qtdNecessaria * q));
+            return new javafx.beans.property.SimpleStringProperty(lm.nome + "|" + lm.tipo);
         });
+
+
         colMatQtd.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                setText(empty || v == null ? null : v);
+                if (empty || v == null) { setText(null); return; }
+                LinhaMaterialPreco lm = getTableView().getItems().get(getIndex());
+                String exibir;
+                if ("Diario".equals(lm.tipo)) {
+                    double[] fameMultiplierPorTier = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
+                    double[] famaNecessariaPorTier = {0, 0, 400, 2400, 9600, 38400, 153600, 614400, 2457600};
+                    int tierItem = (tier == -1) ? 4 : tier;
+                    int enchantItem = (enchant == -1) ? 0 : enchant;
+                    double fameMultiplier = (tierItem >= 2 && tierItem <= 8) ? fameMultiplierPorTier[tierItem] : 0;
+                    double famaNecessaria = (tierItem >= 2 && tierItem <= 8) ? famaNecessariaPorTier[tierItem] : 0;
+                    int qtdMatReceita = receitaAtual == null ? 0 : receitaAtual.getMateriais().stream()
+                            .filter(m -> !m.isArtefato()).mapToInt(ReceitaCraft.MaterialCraft::getCount).sum();
+                    double qtdP = parseDoubleSafe(campoQuantidade, 1.0);
+                    double taxaR = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+                    double qtdFinal = qtdP / (1.0 - taxaR);
+                    double famaPorCraft = qtdMatReceita * fameMultiplier * Math.pow(2, enchantItem);
+                    int qtdDiarios = (famaNecessaria > 0 && famaPorCraft > 0)
+                            ? (int) Math.ceil((famaPorCraft * qtdFinal) / famaNecessaria) : 1;
+                    exibir = String.valueOf(qtdDiarios);
+                } else if ("Artefato".equals(lm.tipo)) {
+                    double qtdP = parseDoubleSafe(campoQuantidade, 1.0);
+                    double taxaR = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+                    exibir = String.format("%.2f", qtdP / (1.0 - taxaR));
+                } else {
+                    exibir = String.valueOf(lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1));
+                }
+                setText(exibir);
                 setStyle("-fx-text-fill: #e0b84a; -fx-font-weight: bold; -fx-alignment: CENTER;");
             }
         });
@@ -1061,20 +1084,32 @@ public class TelaCraft {
         String sufixoDiario2 = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
         if (sufixoDiario2 != null && tierItem2 >= 2 && precoDiarioVazio != null) {
 
-            // calcula qtd de diários vazios necessários
-            double[] famaBasePorTier = {0, 0, 12, 60, 180, 720, 2160, 5160, 11160};
-            double famaBase = (tierItem2 >= 2 && tierItem2 <= 8) ? famaBasePorTier[tierItem2] : 0;
+
+            // mesma logica do atualizarTabelaCalculo
+            double[] fameMultiplierPorTier2 = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
+            double[] famaNecessariaPorTier2 = {0, 0, 400, 2400, 9600, 38400, 153600, 614400, 2457600};
+
+            double fameMultiplier2 = (tierItem2 >= 2 && tierItem2 <= 8) ? fameMultiplierPorTier2[tierItem2] : 0;
+            double famaNecessaria2 = (tierItem2 >= 2 && tierItem2 <= 8) ? famaNecessariaPorTier2[tierItem2] : 0;
+
             int enchantItem2 = (enchant == -1) ? 0 : enchant;
+
+            int qtdMatReceita = 0;
+            if (receita != null) {
+                qtdMatReceita = receita.getMateriais().stream()
+                        .filter(m -> !m.isArtefato())
+                        .mapToInt(ReceitaCraft.MaterialCraft::getCount)
+                        .sum();
+            }
 
             double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
             double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
             double qtdFinalDiario = qtdProduzir / (1.0 - taxaRetorno);
 
-            double famaNecessaria = 900.0 * Math.pow(2, tierItem2 - 2);
-            double famaPorCraft = famaBase * Math.pow(2, enchantItem2);
+            double famaPorCraft2 = qtdMatReceita * fameMultiplier2 * Math.pow(2, enchantItem2);
 
-            int qtdDiarios = (famaNecessaria > 0 && famaPorCraft > 0)
-                    ? (int) Math.ceil((famaPorCraft * qtdFinalDiario) / famaNecessaria)
+            int qtdDiarios = (famaNecessaria2 > 0 && famaPorCraft2 > 0)
+                    ? (int) Math.ceil((famaPorCraft2 * qtdFinalDiario) / famaNecessaria2)
                     : 1;
 
             String precoVazioStr = FormatadorUtil.formatarPreco(precoDiarioVazio.getSellMin());
@@ -1186,10 +1221,12 @@ public class TelaCraft {
         double custoMateriais = 0;
         if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
-                custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria;
+                if (!"Diario".equals(lm.tipo))
+                    custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria;
         } else if (tabelaReceita != null) {
             for (LinhaMaterial lm : tabelaReceita.getItems())
-                custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
+                if (!"Diario".equals(lm.tipo))
+                    custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
         }
 
         double custoMatComTaxa = custoMateriais * qtdProduzir + (qtdProduzir * taxaCompra);
@@ -1213,22 +1250,43 @@ public class TelaCraft {
         double taxaMercadoValor = receitaTotal * taxaVenda;
         double lucro = receitaTotal - custoTotal - taxaMercadoValor;
 
+
         // calculo dos diarios
+        // calculo dos diarios - formula correta conforme wiki + forum oficial
+        // Fonte: wiki.albiononline.com/wiki/Fame
+        // Journal Fame por craft = qtdMateriais * fameMultiplierDoTier * 2^encantamento
+        // Fama necessaria por diario por tier (confirmado no forum):
+        // T2=400, T3=2400, T4=9600, T5=38400, T6=153600, T7=614400, T8=2457600
         int tierItem = (tier == -1) ? 4 : tier;
         int enchantItem = (enchant == -1) ? 0 : enchant;
 
-        // fama base por tier (tabela levantada empiricamente)
-        double[] famaBasePorTier = {0, 0, 12, 60, 180, 720, 2160, 5160, 11160};
-        double famaBase = (tierItem >= 2 && tierItem <= 8) ? famaBasePorTier[tierItem] : 0;
+        // multiplicador de fama base por tier (da wiki oficial)
+        double[] fameMultiplierPorTier = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
+        double fameMultiplier = (tierItem >= 2 && tierItem <= 8) ? fameMultiplierPorTier[tierItem] : 0;
 
-        // encantamento dobra a fama a cada nivel
-        double famaPorCraft = famaBase * Math.pow(2, enchantItem);
+        // fama necessaria para encher 1 diario de craft por tier
+        // T2=400, T3=2400, T4=9600, T5=38400, T6=153600, T7=614400, T8=2457600
+        // padrao: cada tier multiplica por 4 a partir do T3
+        double[] famaNecessariaPorTier = {0, 0, 400, 2400, 9600, 38400, 153600, 614400, 2457600};
+        double famaNecessaria = (tierItem >= 2 && tierItem <= 8) ? famaNecessariaPorTier[tierItem] : 0;
 
-        // fama necessaria pra encher um diario do tier do item: 900 * 2^(tier-2)
-        double famaNecessaria = 900 * Math.pow(2, tierItem - 2);
+        // qtd de materiais nao-artefato na receita
+        int qtdMateriaisReceita = 0;
+        if (receitaAtual != null) {
+            qtdMateriaisReceita = receitaAtual.getMateriais().stream()
+                    .filter(m -> !m.isArtefato())
+                    .mapToInt(ReceitaCraft.MaterialCraft::getCount)
+                    .sum();
+        }
 
-        // quantidade real de crafts inclui o retorno geometrico
-        double diariosCompletos = famaNecessaria > 0 ? (famaPorCraft * qtdFinal) / famaNecessaria : 0;
+        // fama gerada por 1 craft: qtdMateriais * multiplier * 2^enchant
+        // (artefatos nao afetam fama desde atualizacao do jogo)
+        double famaPorCraft = qtdMateriaisReceita * fameMultiplier * Math.pow(2, enchantItem);
+
+        // total de diarios completos ao craftar qtdFinal itens
+        double diariosCompletos = (famaNecessaria > 0 && famaPorCraft > 0)
+                ? (famaPorCraft * qtdFinal) / famaNecessaria
+                : 0;
 
         double precoDiarioVazio = precoDiarioVazioApi;
         double precoDiarioCheio = precoDiarioCheioApi;
@@ -1533,7 +1591,9 @@ public class TelaCraft {
                     .findFirst()
                     .orElse(lm.cidade != null ? lm.cidade : "-");
 
-            int qtdReal = lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1);
+            int qtdReal = "Diario".equals(lm.tipo)
+                    ? lm.qtdNecessaria
+                    : lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1);
 
             sb.append("{\"material\": \"")
                     .append(lm.nome.replace("\"", "\\\""))

@@ -53,7 +53,7 @@ app.post('/webhook/hotmart', async (req, res) => {
 
             const chave = uuidv4();
             const expiracao = new Date();
-            expiracao.setDate(expiracao.getDate() + 5);
+            expiracao.setDate(expiracao.getDate() + 12);
 
 
             await pool.query(
@@ -154,7 +154,7 @@ app.post('/admin/gerar', async (req, res) => {
 
         const chave = uuidv4();
         const expiracao = new Date();
-        expiracao.setDate(expiracao.getDate() + 5);
+        expiracao.setDate(expiracao.getDate() + 12);
 
         await pool.query(
             `INSERT INTO licencas (email, chave, ativo, expiracao, email_enviado)
