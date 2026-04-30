@@ -943,15 +943,7 @@ public class TelaRefino {
                         .map(CidadeInfo::getNome)
                         .findFirst().orElse(apiId != null ? apiId : "-");
 
-        // mapa nome -> cidade da tabela de materiais
-        Map<String, String> cidadePorMaterial = new LinkedHashMap<>();
-        if (tabelaMateriais != null) {
-            for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
-                String nomeBase = lm.nome.contains(" .") ? lm.nome.substring(0, lm.nome.lastIndexOf(" .")) : lm.nome;
-                cidadePorMaterial.put(lm.nome, lm.cidade);
-                cidadePorMaterial.put(nomeBase, lm.cidade);
-            }
-        }
+
 
         // brutos e retornos separados igual craft separa recursos e artefatos
         List<ReceitaCraft.MaterialCraft> brutosCalc = receitaAtual == null
@@ -987,21 +979,22 @@ public class TelaRefino {
         ));
 
         // qtd e local de cada bruto
-        String[] nomesRec = {"Qtd Bruto 1", "Qtd Bruto 2", "Qtd Bruto 3"};
-        String[] nomesLoc = {"Local Bruto 1", "Local Bruto 2", "Local Bruto 3"};
-        for (int ri = 0; ri < Math.min(brutosCalc.size(), 3); ri++) {
-            int qtdR = brutosCalc.get(ri).getCount() * (int) qtdProduzir;
-            metricas.add(new String[]{nomesRec[ri], String.valueOf(qtdR)});
-            String nomeMatR = getNomeExibir.apply(brutosCalc.get(ri));
-            String cidadeR = cidadePorMaterial.getOrDefault(nomeMatR, "-");
-            metricas.add(new String[]{nomesLoc[ri], cidadeParaNome.apply(cidadeR)});
+        if (tabelaMateriais != null) {
+            for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
+                if ("Bruto".equals(lm.tipo)) {
+                    int qtdTotal = lm.qtdNecessaria * (int) qtdProduzir;
+                    metricas.add(new String[]{"Qtd Bruto", String.valueOf(qtdTotal)});
+                    metricas.add(new String[]{"Local Bruto", cidadeParaNome.apply(lm.cidade)});
+                } else if ("Retorno".equals(lm.tipo)) {
+                    int qtdTotal = lm.qtdNecessaria * (int) qtdProduzir;
+                    metricas.add(new String[]{"Qtd Refinado", String.valueOf(qtdTotal)});
+                    metricas.add(new String[]{"Local Refinado", cidadeParaNome.apply(lm.cidade)});
+                }
+            }
         }
 
-        // retorno se houver (o bonus de itens de volta ao refinar)
-        if (!retornosCalc.isEmpty()) {
-            int qtdRetorno = retornosCalc.stream().mapToInt(ReceitaCraft.MaterialCraft::getCount).sum() * (int) qtdFinal;
-            metricas.add(new String[]{"Qtd Retorno", String.valueOf(qtdRetorno)});
-        }
+
+
 
         FlowPane fluxoNormal = new FlowPane(10, 10);
         fluxoNormal.setPrefWrapLength(Double.MAX_VALUE);
