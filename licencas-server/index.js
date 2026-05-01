@@ -260,6 +260,8 @@ app.get('/version', (req, res) => {
 const { Resend } = require('resend');
 
 async function enviarEmailChave(email, chave) {
+    console.log('1 - iniciando envio para:', email);
+
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 587,
@@ -270,6 +272,12 @@ async function enviarEmailChave(email, chave) {
         }
     });
 
+    console.log('2 - transporter criado, verificando conexao...');
+
+    await transporter.verify();
+
+    console.log('3 - conexao ok, enviando email...');
+
     const info = await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
@@ -277,7 +285,7 @@ async function enviarEmailChave(email, chave) {
         text: `Obrigado pela compra!\n\nSua chave de acesso: ${chave}\n\nDigite ela no software na tela de login.`
     });
 
-    console.log('email enviado, messageId:', info.messageId);
+    console.log('4 - email enviado, messageId:', info.messageId);
 }
 
 
