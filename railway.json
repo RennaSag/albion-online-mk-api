@@ -1,12 +1,9 @@
 {
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "cd licencas-server && npm install",
-    "nixpacksPlan": {
-      "providers": ["node"]
-    }
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "licencas-server/Dockerfile"
   },
   "deploy": {
-    "startCommand": "cd licencas-server && node index.js"
+    "startCommand": "node index.js"
   }
 }
