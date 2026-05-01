@@ -26,7 +26,6 @@ async function inicializarBanco() {
         )
     `);
 
-
     await pool.query(`
         ALTER TABLE licencas
         ADD COLUMN IF NOT EXISTS email_enviado BOOLEAN DEFAULT FALSE
@@ -154,7 +153,7 @@ app.post('/admin/gerar', async (req, res) => {
 
         const chave = uuidv4();
         const expiracao = new Date();
-        expiracao.setDate(expiracao.getDate() + 12);
+        expiracao.setDate(expiracao.getDate() + 12); // só uma linha de expiração
 
         await pool.query(
             `INSERT INTO licencas (email, chave, ativo, expiracao, email_enviado)
@@ -258,25 +257,20 @@ app.get('/version', (req, res) => {
 });
 
 
+const { Resend } = require('resend');
+
 async function enviarEmailChave(email, chave) {
-    console.log('configurando email, user:', process.env.EMAIL_USER ? 'definido' : 'nao definido');
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
-
-    const info = await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+    const { data, error } = await resend.emails.send({
+        from: 'Analisador de Mercado <onboarding@resend.dev>',
         to: email,
         subject: 'Sua chave de acesso - Analisador de Mercado',
         text: `Obrigado pela compra!\n\nSua chave de acesso: ${chave}\n\nDigite ela no software na tela de login.`
     });
 
-    console.log('email enviado, messageId:', info.messageId);
+    if (error) throw new Error(error.message);
+    console.log('email enviado, id:', data.id);
 }
 
 
