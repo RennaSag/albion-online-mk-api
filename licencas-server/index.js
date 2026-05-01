@@ -265,6 +265,37 @@ async function enviarEmailChave(email, chave) {
     console.log('email enviado, messageId:', info.messageId);
 }
 
+
+app.get('/obrigado', async (req, res) => {
+    const email = req.query.email;
+    if (!email) {
+        return res.send('<h2>Email nao informado.</h2>');
+    }
+
+    try {
+        const result = await pool.query(
+            'SELECT chave FROM licencas WHERE email = $1 AND ativo = true',
+            [email]
+        );
+
+        if (result.rows.length === 0) {
+            return res.send('<h2>Licenca nao encontrada para este email.</h2>');
+        }
+
+        const chave = result.rows[0].chave;
+
+        res.send(`
+            <h2>Obrigado pela compra!</h2>
+            <p>Sua chave de acesso: <strong>${chave}</strong></p>
+            <p>Digite ela no software na tela de login.</p>
+        `);
+    } catch (err) {
+        console.error('erro em /obrigado:', err);
+        res.send('<h2>Erro ao buscar licenca.</h2>');
+    }
+});
+
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', async () => {
     await inicializarBanco();
