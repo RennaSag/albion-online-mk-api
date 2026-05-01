@@ -1,7 +1,10 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "cd licencas-server && npm install"
+    "buildCommand": "cd licencas-server && npm install",
+    "nixpacksPlan": {
+      "providers": ["node"]
+    }
   },
   "deploy": {
     "startCommand": "cd licencas-server && node index.js"
