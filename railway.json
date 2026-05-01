@@ -1,9 +1,0 @@
-{
-  "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "licencas-server/Dockerfile"
-  },
-  "deploy": {
-    "startCommand": "node index.js"
-  }
-}

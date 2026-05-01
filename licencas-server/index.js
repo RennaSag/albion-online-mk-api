@@ -34,26 +34,21 @@ async function inicializarBanco() {
     console.log('banco inicializado');
 }
 
-
-
 app.post('/webhook/hotmart', async (req, res) => {
     try {
         const evento = req.body;
         console.log('webhook recebido:', evento.event);
 
         if (evento.event === 'PURCHASE_APPROVED') {
-
-            // validação do payload antes de tudo
             const email = evento?.data?.buyer?.email;
             if (!email) {
                 console.error('webhook PURCHASE_APPROVED sem email no payload:', JSON.stringify(evento));
-                return res.sendStatus(200); // 200 pra Hotmart não ficar tentando reenviar
+                return res.sendStatus(200);
             }
 
             const chave = uuidv4();
             const expiracao = new Date();
             expiracao.setDate(expiracao.getDate() + 12);
-
 
             await pool.query(
                 `INSERT INTO licencas (email, chave, ativo, expiracao, email_enviado)
@@ -64,7 +59,6 @@ app.post('/webhook/hotmart', async (req, res) => {
             );
             console.log('licenca criada para:', email);
 
-
             try {
                 await enviarEmailChave(email, chave);
                 await pool.query(
@@ -73,7 +67,6 @@ app.post('/webhook/hotmart', async (req, res) => {
                 );
                 console.log('email enviado para:', email);
             } catch (emailErr) {
-
                 console.error('ERRO ao enviar email para', email, ':', emailErr.message);
             }
         }
@@ -98,8 +91,6 @@ app.post('/webhook/hotmart', async (req, res) => {
         res.sendStatus(500);
     }
 });
-
-
 
 app.get('/validar', async (req, res) => {
     const chave = req.query.chave;
@@ -136,8 +127,6 @@ app.get('/validar', async (req, res) => {
     }
 });
 
-
-
 app.post('/admin/gerar', async (req, res) => {
     try {
         const { email, token } = req.body;
@@ -153,7 +142,7 @@ app.post('/admin/gerar', async (req, res) => {
 
         const chave = uuidv4();
         const expiracao = new Date();
-        expiracao.setDate(expiracao.getDate() + 12); // só uma linha de expiração
+        expiracao.setDate(expiracao.getDate() + 12);
 
         await pool.query(
             `INSERT INTO licencas (email, chave, ativo, expiracao, email_enviado)
@@ -162,7 +151,7 @@ app.post('/admin/gerar', async (req, res) => {
              SET chave = $2, ativo = true, expiracao = $3, email_enviado = false`,
             [email, chave, expiracao]
         );
-        console.log('licenca salva no banco para:', email);
+        console.log('licenca salva no banco, tentando enviar email...');
 
         try {
             await enviarEmailChave(email, chave);
@@ -181,7 +170,6 @@ app.post('/admin/gerar', async (req, res) => {
         res.status(500).json({ erro: err.message });
     }
 });
-
 
 app.post('/admin/reenviar-pendentes', async (req, res) => {
     const { token } = req.body;
@@ -224,8 +212,6 @@ app.post('/admin/reenviar-pendentes', async (req, res) => {
     }
 });
 
-
-
 app.get('/admin/pendentes', async (req, res) => {
     const token = req.query.token;
 
@@ -246,37 +232,25 @@ app.get('/admin/pendentes', async (req, res) => {
     }
 });
 
-
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.get('/version', (req, res) => {
     res.json({
-        version: "1.0.0",
-        downloadUrl: "https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/Analisador.de.Mercado.do.Albion.Online-1.0.0.msi"
+        version: '1.0.0',
+        downloadUrl: 'https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/Analisador.de.Mercado.do.Albion.Online-1.0.0.msi'
     });
 });
-
-
-const { Resend } = require('resend');
 
 async function enviarEmailChave(email, chave) {
     console.log('configurando email, user:', process.env.EMAIL_USER ? 'definido' : 'nao definido');
 
     const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
-        family: 4,
+        service: 'gmail',
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
         }
     });
-
-    console.log('tentando enviar...');
 
     const info = await transporter.sendMail({
         from: process.env.EMAIL_USER,
@@ -287,7 +261,6 @@ async function enviarEmailChave(email, chave) {
 
     console.log('email enviado, messageId:', info.messageId);
 }
-
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', async () => {
