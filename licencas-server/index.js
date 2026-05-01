@@ -260,29 +260,26 @@ app.get('/version', (req, res) => {
 const { Resend } = require('resend');
 
 async function enviarEmailChave(email, chave) {
-    console.log('1 - iniciando envio via Brevo para:', email);
+    console.log('configurando email, user:', process.env.EMAIL_USER ? 'definido' : 'nao definido');
 
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-            'api-key': process.env.BREVO_API_KEY,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            sender: { name: 'Analisador de Mercado', email: 'rennasagcontato@gmail.com' },
-            to: [{ email }],
-            subject: 'Sua chave de acesso - Analisador de Mercado',
-            textContent: `Obrigado pela compra!\n\nSua chave de acesso: ${chave}\n\nDigite ela no software na tela de login.`
-        })
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
     });
 
-    const resultado = await response.json();
+    const info = await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Sua chave de acesso - Analisador de Mercado',
+        text: `Obrigado pela compra!\n\nSua chave de acesso: ${chave}\n\nDigite ela no software na tela de login.`
+    });
 
-    if (!response.ok) {
-        throw new Error(JSON.stringify(resultado));
-    }
-
-    console.log('2 - email enviado via Brevo, messageId:', resultado.messageId);
+    console.log('email enviado, messageId:', info.messageId);
 }
 
 
