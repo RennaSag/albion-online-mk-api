@@ -748,8 +748,6 @@ public class BancoDeDadosCraft {
     }
 
 
-
-
     // retorna o sufixo do diario de craft correspondente ao item
     // ex: "JOURNAL_WARRIOR", "JOURNAL_MAGE", "JOURNAL_HUNTER"
     public static String getDiarioSufixo(String itemId) {
@@ -806,7 +804,19 @@ public class BancoDeDadosCraft {
         return null;
     }
 
-
+    /**
+     * Retorna o nome de exibição do diário baseado no sufixo.
+     * Ex: "JOURNAL_WARRIOR" → "Guerreiro", "JOURNAL_MAGE" → "Mago"
+     */
+    public static String getNomeDiario(String sufixo) {
+        if (sufixo == null) return "Trabalhador";
+        return switch (sufixo) {
+            case "JOURNAL_WARRIOR" -> "Ferreiro";
+            case "JOURNAL_MAGE" -> "Imbuídor";
+            case "JOURNAL_HUNTER" -> "Flexeiro";
+            default -> "Trabalhador";
+        };
+    }
 
 
     private static ItemDefinition item(String id, String nome, String keywords) {
@@ -844,15 +854,15 @@ public class BancoDeDadosCraft {
 
             //recursos brutos
             case "FIBER" ->
-                new String[]{"Algodão", "Linho", "Cânhamo", "Verbena", "Algodão-Dourado", "Linhossol", "Cânhamo-Fantasma"};
+                    new String[]{"Algodão", "Linho", "Cânhamo", "Verbena", "Algodão-Dourado", "Linhossol", "Cânhamo-Fantasma"};
             case "ORE" ->
-                new String[]{"Minério de Cobre","Minério de Estanho","Minério de Ferro","Minério de Titânio", "Minério de Runita","Minério de Meteorito","Minério de Adamante"};
+                    new String[]{"Minério de Cobre", "Minério de Estanho", "Minério de Ferro", "Minério de Titânio", "Minério de Runita", "Minério de Meteorito", "Minério de Adamante"};
             case "WOOD" ->
-                new String[]{"Troncos de Bétula","Troncos de Castanheira","Troncos de Pinho", "Troncos de Cedro","Troncos de Carvalho-Sangue","Troncos de Freixo","Troncos de Pau-Branco"};
+                    new String[]{"Troncos de Bétula", "Troncos de Castanheira", "Troncos de Pinho", "Troncos de Cedro", "Troncos de Carvalho-Sangue", "Troncos de Freixo", "Troncos de Pau-Branco"};
             case "HIDE" ->
-                new String[]{"Pelego Rústico", "Pelego Fino", "Pelego Médio", "Pelego Pesado", "Pelego Robusto", "Pelego Resistente"};
+                    new String[]{"Pelego Rústico", "Pelego Fino", "Pelego Médio", "Pelego Pesado", "Pelego Robusto", "Pelego Resistente"};
             case "ROCK" ->
-                new String[]{"Calcário","Anerito","Traventino","Granito","Ardósia","Basalto","Mármore"};
+                    new String[]{"Calcário", "Anerito", "Traventino", "Granito", "Ardósia", "Basalto", "Mármore"};
             default -> null;
         };
         if (nomes == null || idx < 0 || idx >= nomes.length) return null;

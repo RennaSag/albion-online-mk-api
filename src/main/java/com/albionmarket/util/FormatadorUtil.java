@@ -54,4 +54,37 @@ public class FormatadorUtil {
             default -> "?";
         };
     }
+
+
+    /**
+     * Converte uma string de preço formatada em pt-BR de volta para double.
+     * Ex: "1.234.567" → 1234567.0, "—" → 0.0
+     */
+    public static double parseSilver(String val) {
+        if (val == null || val.equals("-") || val.equals("—")) return 0;
+        try {
+            NumberFormat fmt = NumberFormat.getNumberInstance(new Locale("pt", "BR"));
+            return fmt.parse(val).doubleValue();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Formata um double sem casas decimais.
+     * Ex: 1.0 → "1"
+     */
+    public static String fmt(double v) {
+        return String.format("%.0f", v);
+    }
+
+    /**
+     * Formata um valor em prata de forma legível.
+     * Ex: 1500000.0 → "1.50M de prata", 1500.0 → "1.5K de prata"
+     */
+    public static String fmtSilver(double v) {
+        if (Math.abs(v) >= 1_000_000) return String.format("%.2fM de prata", v / 1_000_000);
+        if (Math.abs(v) >= 1_000)     return String.format("%.1fK de prata", v / 1_000);
+        return String.format("%.0f prata", v);
+    }
 }

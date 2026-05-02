@@ -66,8 +66,8 @@ public class TelaCraft {
     private long itemValue = 0;
 
 
-    private long precoDiarioVazioApi = 0;
-    private long precoDiarioCheioApi = 0;
+    private double precoDiarioVazioApi = 0;
+    private double precoDiarioCheioApi = 0;
 
 
     private double lucroAtual = 0;
@@ -97,11 +97,36 @@ public class TelaCraft {
         }
     }
 
+
     // criador do json pra salvar as informações da operacao, precisando corrigir, ta sem alguns campos
     private void salvarOperacao() {
         try {
-            int t = (tier == -1) ? 4 : tier;
-            int e = (enchant == -1) ? 0 : enchant;
+            int t = AlbionIdUtil.tierEfetivo(tier);
+            int e = AlbionIdUtil.enchantEfetivo(enchant);
+
+            // pega melhor cidade de venda da tabela
+            String melhorCidadeApiTemp = "-";
+            double melhorV = 0;
+            for (LinhaPreco lp : tabelaPrecos.getItems()) {
+                double v = FormatadorUtil.parseSilver(lp.sellMin);
+                if (v > melhorV) {
+                    melhorV = v;
+                    melhorCidadeApiTemp = lp.cidade;
+                }
+            }
+            final String melhorCidadeApi = melhorCidadeApiTemp;
+            String nomeCidadeVenda = BancoDeDadosCraft.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(melhorCidadeApi))
+                    .map(CidadeInfo::getNome)
+                    .findFirst().orElse(melhorCidadeApi);
+
+            // monta locais de compra dos materiais
+            String locaisJson = cidadesPorMaterialJson();
+
+            // monta o JSON usando os valores já calculados pelo atualizarTabelaCalculo()
+            double qtdInicial = Double.parseDouble(campoQuantidade.getText().trim());
+            double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+            double qtdFinal = qtdInicial / (1.0 - taxaRetorno);
 
             StringBuilder sb = new StringBuilder();
             sb.append("{\n");
@@ -112,68 +137,17 @@ public class TelaCraft {
             sb.append("  \"parametros\": {\n");
             sb.append("    \"quantidade\": \"").append(campoQuantidade.getText()).append("\",\n");
             sb.append("    \"taxaRetorno\": \"").append(campoRetorno.getText()).append("\",\n");
-            sb.append("    \"taxaMercado\": \"").append(campoTaxaMercado.getText()).append("\",\n");
-            sb.append("    \"taxaBarraca\": \"").append(campoSinergiaBarraca.getText()).append("\",\n");
-            sb.append("    \"itemValue\": \"").append(labelItemValue.getText()).append("\"\n");
+            sb.append("    \"taxaBarraca\": \"").append(campoSinergiaBarraca.getText()).append("\"\n");
             sb.append("  },\n");
-
-
-            double qtdCraftInicial = parseDoubleSafe(campoQuantidade, 1.0);
-            //quantidade q vou craftar
-
-            double sinergiaPercentual = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
-            //taxa de retorno bonus, sinergia
-
-            double taxaDeCraftDaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
-            //taxa da barraca
-
-            double qtdFinalCraftada = qtdCraftInicial / (1.0 - sinergiaPercentual);
-            //qtd final q vou ter com o bonus
-
-            double nutricaoTotal = (itemValue * qtdFinalCraftada) * 0.1125;
-            //nutricao de tudo
-
-
-            double taxaDaBarracaDeCraft = (nutricaoTotal * taxaDeCraftDaBarraca) / 100;
-            //taxa q vou pagar pra barraca, regra de 2
-            // taxaBa___100nutri;  taxaBa . nutriTot = 100 x;  x = taxaBa . nutriTot / 100
-            //    x_____nutriTot;
-
-            double taxaCompra = possuiPremium ? 0.03 : 0.05;
-            double taxaVenda = possuiPremium ? 0.025 : 0.05;
-            //taxa do mercado com e sem premium, pra compra e venda
-
-
-            double lucroSalvar = lucroAtual;
-            double custoTotal = custoAtual;
-            double receitaFinalMontante = receitaAtual2;
-
-
-            String[] melhorCidadeHolder = {"-"};
-            double[] melhorVHolder = {0};
-
-            for (LinhaPreco lp : tabelaPrecos.getItems()) {
-                double v = parseSilver(lp.sellMin);
-                if (v > melhorVHolder[0]) {
-                    melhorVHolder[0] = v;
-                    melhorCidadeHolder[0] = lp.cidade;
-                }
-            }
-            String nomeCidadeVendaSalvar = BancoDeDadosCraft.CIDADES.stream()
-                    .filter(c -> c.getApiId().equals(melhorCidadeHolder[0]))
-                    .map(CidadeInfo::getNome)
-                    .findFirst()
-                    .orElse(melhorCidadeHolder[0]);
-
             sb.append("  \"calculadora\": {\n");
-            sb.append("    \"Quantidade a craftar\": \"").append(fmt(qtdCraftInicial)).append(" un\",\n");
-            sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinalCraftada)).append("\",\n");
-            sb.append("    \"Melhor preco de venda\": \"").append(fmtSilver(receitaFinalMontante)).append("\",\n");
-            sb.append("    \"Local de venda\": \"").append(nomeCidadeVendaSalvar).append("\",\n");
-            sb.append("    \"Custo dos materiais\": \"").append(fmtSilver(custoAtual)).append("\",\n");
-            sb.append("    \"Local de compra dos materiais\": ").append(cidadesPorMaterialJson()).append(",\n");
-            sb.append("    \"Custo total\": \"").append(fmtSilver(custoTotal)).append("\",\n");
-            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroSalvar >= 0 ? "+" : "").append(fmtSilver(lucroSalvar)).append("\"\n");
+            sb.append("    \"Quantidade a craftar\": \"").append(FormatadorUtil.fmt(qtdInicial)).append(" un\",\n");
+            sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinal)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(FormatadorUtil.fmtSilver(receitaAtual2)).append("\",\n");
+            sb.append("    \"Local de venda\": \"").append(nomeCidadeVenda).append("\",\n");
+            sb.append("    \"Custo dos materiais\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
+            sb.append("    \"Local de compra dos materiais\": ").append(locaisJson).append(",\n");
+            sb.append("    \"Custo total\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
+            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroAtual >= 0 ? "+" : "").append(FormatadorUtil.fmtSilver(lucroAtual)).append("\"\n");
             sb.append("  }\n");
             sb.append("}\n");
 
@@ -184,6 +158,7 @@ public class TelaCraft {
             labelStatus.setText("Erro ao salvar: " + ex.getMessage());
         }
     }
+
 
     // modelo tabela de receita (materiais)
     public static class LinhaMaterial {
@@ -789,8 +764,8 @@ public class TelaCraft {
 
                 receitaAtual = receita;
 
-                precoDiarioVazioApi = precoDiarioVazioEntry != null ? precoDiarioVazioEntry.getSellMin() : 0;
-                precoDiarioCheioApi = precoDiarioCheioEntry != null ? precoDiarioCheioEntry.getBuyMax() : 0;
+                precoDiarioVazioApi = precoDiarioVazioEntry != null ? (double) precoDiarioVazioEntry.getSellMin() : 0;
+                precoDiarioCheioApi = precoDiarioCheioEntry != null ? (double) precoDiarioCheioEntry.getBuyMax() : 0;
 
                 atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
                 atualizarTabelaReceita(receita, precosMateirais, precoDiarioVazioEntry, precoDiarioCheioEntry);
@@ -863,9 +838,12 @@ public class TelaCraft {
                 String corCidade = BancoDeDadosCraft.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(pd.getCidade()))
                         .map(CidadeInfo::getCor).findFirst().orElse("#888");
+
+                String sufixoDiarioNomePreco = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+                String nomeDiarioPreco = BancoDeDadosCraft.getNomeDiario(sufixoDiarioNomePreco);
                 linhas.add(new LinhaPreco(
                         "Diário Cheio",
-                        "Diário de trabalhador (cheio)",
+                        "Diário de " + nomeDiarioPreco + " (cheio)",
                         pd.getCidade(),
                         corCidade,
                         FormatadorUtil.formatarPreco(pd.getBuyMax()),
@@ -990,7 +968,9 @@ public class TelaCraft {
                     .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String dataCheio = diarioCheio != null ? FormatadorUtil.formatarData(diarioCheio.getBuyMax() > 0 ? diarioCheio.getBuyDate() : "-") : "-";
 
-            linhas.add(new LinhaMaterial(iconeVazio, "Diario Vazio", "Diario", 1, cidadeVazio, corVazio, precoVazioStr, dataVazio));
+            String sufixoDiarioNome = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+            String nomeDiario = BancoDeDadosCraft.getNomeDiario(sufixoDiarioNome);
+            linhas.add(new LinhaMaterial(iconeVazio, "Diário de " + nomeDiario + " (vazio)", "Diario", 1, cidadeVazio, corVazio, precoVazioStr, dataVazio));
 
         }
 
@@ -1209,28 +1189,38 @@ public class TelaCraft {
         double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
         double taxaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
 
+
         // soma custo dos materiais das tabelas
         double custoMateriais = 0;
+        double precoDiarioVazioTabela = 0;
+        int qtdDiariosTabela = 1;
+
         if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
-            for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
-                if (!"Diario".equals(lm.tipo))
-                    custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria;
+            for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
+                if ("Diario".equals(lm.tipo)) {
+                    precoDiarioVazioTabela = FormatadorUtil.parseSilver(lm.buyMax);
+                    qtdDiariosTabela = lm.qtdNecessaria;
+                } else {
+                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria;
+                }
+            }
         } else if (tabelaReceita != null) {
             for (LinhaMaterial lm : tabelaReceita.getItems())
                 if (!"Diario".equals(lm.tipo))
-                    custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
+                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtd;
         }
 
         // melhor preço de venda
         double melhorVenda = 0;
         String melhorCidadeTemp = "-";
         for (LinhaPreco lp : tabelaPrecos.getItems()) {
-            double v = parseSilver(lp.sellMin);
+            double v = FormatadorUtil.parseSilver(lp.sellMin);
             if (v > melhorVenda) {
                 melhorVenda = v;
                 melhorCidadeTemp = lp.cidade;
             }
         }
+
         final String melhorCidade = melhorCidadeTemp;
         String nomeCidadeVenda = BancoDeDadosCraft.CIDADES.stream()
                 .filter(c -> c.getApiId().equals(melhorCidade))
@@ -1263,14 +1253,20 @@ public class TelaCraft {
         double diariosCompletos = CalculadoraService.calcularDiarios(
                 tierItem, enchantItem, qtdMateriaisReceita, qtdFinal);
 
+        // usa o preco da tabela se editado manualmente, senao usa o da api
+        double precVazioFinal = precoDiarioVazioTabela > 0 ? precoDiarioVazioTabela : precoDiarioVazioApi;
         double lucroDiarios = CalculadoraService.calcularLucroDiarios(
-                diariosCompletos, precoDiarioVazioApi, precoDiarioCheioApi);
+                diariosCompletos, precVazioFinal, precoDiarioCheioApi);
 
         double lucroComDiarios = lucro + lucroDiarios;
 
         lucroAtual = lucroComDiarios;
         custoAtual = custoTotal;
         receitaAtual2 = receitaTotal;
+
+
+
+
 
         // funcoes auxiliares de nome e cidade
         java.util.function.Function<ReceitaCraft.MaterialCraft, String> getNomeExibir = mat -> {
@@ -1310,14 +1306,14 @@ public class TelaCraft {
                 : receitaAtual.getMateriais().stream().filter(ReceitaCraft.MaterialCraft::isArtefato).collect(Collectors.toList());
 
         List<String[]> metricas = new ArrayList<>(Arrays.asList(
-                new String[]{"Qtd a craftar", fmt(qtdProduzir) + " un"},
+                new String[]{"Qtd a craftar", FormatadorUtil.fmt(qtdProduzir) + " un"},
                 new String[]{"Qtd final craftada", String.format("%.2f un", qtdFinal)},
-                new String[]{"Melhor preço de venda", fmtSilver(melhorVenda)},
+                new String[]{"Melhor preço de venda", FormatadorUtil.fmtSilver(melhorVenda)},
                 new String[]{"Local de venda", nomeCidadeVenda},
-                new String[]{"Custo dos materiais", fmtSilver(custoMatComTaxa)},
-                new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)},
+                new String[]{"Custo dos materiais", FormatadorUtil.fmtSilver(custoMatComTaxa)},
+                new String[]{"Taxa da barraca", FormatadorUtil.fmtSilver(taxaCraftTotal)},
                 new String[]{"Diarios completos", String.format("%.2f un", diariosCompletos)},
-                new String[]{"Lucro c/ diarios", fmtSilver(lucroDiarios)}
+                new String[]{"Lucro c/ diarios", FormatadorUtil.fmtSilver(lucroDiarios)}
         ));
 
         String[] nomesRec = {"Qtd Recurso 1", "Qtd Recurso 2", "Qtd Recurso 3"};
@@ -1355,11 +1351,11 @@ public class TelaCraft {
         HBox linhaDestaque = new HBox(16);
         linhaDestaque.setAlignment(Pos.CENTER);
 
-        VBox cardCusto = criarCardDestaque("Custo Total", fmtSilver(custoTotal), "#e05555");
-        VBox cardReceita = criarCardDestaque("Receita Total", fmtSilver(receitaTotal), "#3dba6e");
+        VBox cardCusto = criarCardDestaque("Custo Total", FormatadorUtil.fmtSilver(custoTotal), "#e05555");
+        VBox cardReceita = criarCardDestaque("Receita Total", FormatadorUtil.fmtSilver(receitaTotal), "#3dba6e");
         VBox cardLucro = criarCardDestaque(
                 lucroComDiarios >= 0 ? "Lucro" : "Prejuízo",
-                (lucroComDiarios >= 0 ? "+" : "") + fmtSilver(lucroComDiarios),
+                (lucroComDiarios >= 0 ? "+" : "") + FormatadorUtil.fmtSilver(lucroComDiarios),
                 lucroComDiarios >= 0 ? "#5a8dee" : "#e05555");
 
         HBox.setHgrow(cardCusto, Priority.ALWAYS);
@@ -1371,21 +1367,6 @@ public class TelaCraft {
     }
 
 
-    // utilitários
-    private double parseSilver(String val) {
-        if (val == null || val.equals("-")) return 0;
-        try {
-            try {
-                java.text.NumberFormat fmt = java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR"));
-                return fmt.parse(val).doubleValue();
-            } catch (Exception e2) {
-                return 0;
-            }
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
     private double parseDoubleSafe(TextField campo, double padrao) {
         try {
             return Double.parseDouble(campo.getText().trim().replace(",", "."));
@@ -1394,15 +1375,6 @@ public class TelaCraft {
         }
     }
 
-    private String fmt(double v) {
-        return String.format("%.0f", v);
-    }
-
-    private String fmtSilver(double v) {
-        if (Math.abs(v) >= 1_000_000) return String.format("%.2fM de prata", v / 1_000_000);
-        if (Math.abs(v) >= 1_000) return String.format("%.1fK de prata", v / 1_000);
-        return String.format("%.0f prata", v);
-    }
 
     private TableColumn<LinhaPreco, String> criarColunaCidade(boolean ehPreco) {
         TableColumn<LinhaPreco, String> col = new TableColumn<>("Cidade");

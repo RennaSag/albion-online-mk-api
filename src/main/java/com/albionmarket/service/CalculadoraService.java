@@ -6,7 +6,8 @@ package com.albionmarket.service;
  */
 public class CalculadoraService {
 
-    private CalculadoraService() {}
+    private CalculadoraService() {
+    }
 
     /**
      * Resultado completo de um cálculo de craft ou refino.
@@ -23,13 +24,13 @@ public class CalculadoraService {
         public ResultadoCalculo(double qtdFinal, double custoMateriais,
                                 double taxaBarraca, double taxaMercado,
                                 double custoTotal, double receitaTotal, double lucro) {
-            this.qtdFinal        = qtdFinal;
-            this.custoMateriais  = custoMateriais;
-            this.taxaBarraca     = taxaBarraca;
-            this.taxaMercado     = taxaMercado;
-            this.custoTotal      = custoTotal;
-            this.receitaTotal    = receitaTotal;
-            this.lucro           = lucro;
+            this.qtdFinal = qtdFinal;
+            this.custoMateriais = custoMateriais;
+            this.taxaBarraca = taxaBarraca;
+            this.taxaMercado = taxaMercado;
+            this.custoTotal = custoTotal;
+            this.receitaTotal = receitaTotal;
+            this.lucro = lucro;
         }
     }
 
@@ -53,19 +54,19 @@ public class CalculadoraService {
             double melhorVenda,
             boolean possuiPremium) {
 
-        double qtdFinal     = qtdProduzir / (1.0 - taxaRetorno);
-        double nutricao     = (itemValue * qtdFinal) * 0.1125;
-        double taxaBarraca  = (taxaBarracaPct * nutricao) / 100.0;
+        double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
+        double nutricao = (itemValue * qtdFinal) * 0.1125;
+        double taxaBarraca = (taxaBarracaPct * nutricao) / 100.0;
 
-        double taxaCompra   = possuiPremium ? 0.03 : 0.05;
-        double taxaVenda    = possuiPremium ? 0.025 : 0.05;
+        double taxaCompra = possuiPremium ? 0.03 : 0.05;
+        double taxaVenda = possuiPremium ? 0.025 : 0.05;
 
         double custoMatComTaxa = custoMateriais * qtdProduzir + (qtdProduzir * taxaCompra);
-        double custoTotal      = custoMatComTaxa + taxaBarraca + (qtdFinal * taxaCompra);
+        double custoTotal = custoMatComTaxa + taxaBarraca + (qtdFinal * taxaCompra);
 
-        double receitaTotal    = qtdFinal * melhorVenda;
-        double taxaMercado     = receitaTotal * taxaVenda;
-        double lucro           = receitaTotal - custoTotal - taxaMercado;
+        double receitaTotal = qtdFinal * melhorVenda;
+        double taxaMercado = receitaTotal * taxaVenda;
+        double lucro = receitaTotal - custoTotal - taxaMercado;
 
         return new ResultadoCalculo(
                 qtdFinal, custoMatComTaxa, taxaBarraca,
@@ -75,15 +76,15 @@ public class CalculadoraService {
     /**
      * Calcula quantos diários completos são gerados ao craftar.
      *
-     * @param tier              tier do item (2-8)
-     * @param enchant           encantamento do item (0-4)
+     * @param tier                    tier do item (2-8)
+     * @param enchant                 encantamento do item (0-4)
      * @param qtdMateriaisNaoArtefato quantidade de materiais não-artefato na receita
-     * @param qtdFinal          quantidade final produzida (já com retorno)
+     * @param qtdFinal                quantidade final produzida (já com retorno)
      */
     public static double calcularDiarios(int tier, int enchant,
                                          int qtdMateriaisNaoArtefato, double qtdFinal) {
-        double[] fameMultiplier  = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
-        double[] famaNecessaria  = {0, 0, 0, 0, 3600, 7200, 14400, 28380, 58590};
+        double[] fameMultiplier = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
+        double[] famaNecessaria = {0, 0, 0, 0, 3600, 7200, 14400, 28380, 58590};
 
         if (tier < 2 || tier > 8) return 0;
 
@@ -98,14 +99,11 @@ public class CalculadoraService {
 
     /**
      * Calcula o lucro adicional dos diários.
-     *
-     * @param diariosCompletos  quantidade de diários completos
-     * @param precoDiarioVazio  preço de compra do diário vazio
-     * @param precoDiarioCheio  preço de venda do diário cheio
+     * Lucro = (preço do cheio * qtd diários) - (preço do vazio * qtd diários)
      */
     public static double calcularLucroDiarios(double diariosCompletos,
-                                              long precoDiarioVazio,
-                                              long precoDiarioCheio) {
-        return diariosCompletos * (precoDiarioCheio - precoDiarioVazio);
+                                              double precoDiarioVazio,
+                                              double precoDiarioCheio) {
+        return (precoDiarioCheio * diariosCompletos) - (precoDiarioVazio * diariosCompletos);
     }
 }
