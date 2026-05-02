@@ -602,7 +602,7 @@ public class TelaCraft {
                 String exibir;
                 if ("Diario".equals(lm.tipo)) {
                     double[] fameMultiplierPorTier = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
-                    double[] famaNecessariaPorTier = {0, 0, 400, 2400, 9600, 38400, 153600, 614400, 2457600};
+                    double[] famaNecessariaPorTier = {0, 0, 0, 0, 3600, 7200, 14400, 28380, 58590};
                     int tierItem = (tier == -1) ? 4 : tier;
                     int enchantItem = (enchant == -1) ? 0 : enchant;
                     double fameMultiplier = (tierItem >= 2 && tierItem <= 8) ? fameMultiplierPorTier[tierItem] : 0;
@@ -1087,10 +1087,10 @@ public class TelaCraft {
 
             // mesma logica do atualizarTabelaCalculo
             double[] fameMultiplierPorTier2 = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
-            double[] famaNecessariaPorTier2 = {0, 0, 400, 2400, 9600, 38400, 153600, 614400, 2457600};
+            double[] famaNecessariaPorTier = {0, 0, 0, 0, 3600, 7200, 14400, 28380, 58590};
 
             double fameMultiplier2 = (tierItem2 >= 2 && tierItem2 <= 8) ? fameMultiplierPorTier2[tierItem2] : 0;
-            double famaNecessaria2 = (tierItem2 >= 2 && tierItem2 <= 8) ? famaNecessariaPorTier2[tierItem2] : 0;
+            double famaNecessaria2 = (tierItem2 >= 2 && tierItem2 <= 8) ? famaNecessariaPorTier[tierItem2] : 0;
 
             int enchantItem2 = (enchant == -1) ? 0 : enchant;
 
@@ -1267,7 +1267,7 @@ public class TelaCraft {
         // fama necessaria para encher 1 diario de craft por tier
         // T2=400, T3=2400, T4=9600, T5=38400, T6=153600, T7=614400, T8=2457600
         // padrao: cada tier multiplica por 4 a partir do T3
-        double[] famaNecessariaPorTier = {0, 0, 400, 2400, 9600, 38400, 153600, 614400, 2457600};
+        double[] famaNecessariaPorTier = {0, 0, 0, 0, 3600, 7200, 14400, 28380, 58590};
         double famaNecessaria = (tierItem >= 2 && tierItem <= 8) ? famaNecessariaPorTier[tierItem] : 0;
 
         // qtd de materiais nao-artefato na receita
