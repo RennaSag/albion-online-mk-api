@@ -1,5 +1,7 @@
 package com.albionmarket.model;
 
+import com.albionmarket.util.AlbionIdUtil;
+
 import java.util.List;
 import java.util.Map;
 
@@ -54,11 +56,7 @@ public class ReceitaCraft {
          * retorna o tier do material como inteiro, ou -1 se não tiver.
          */
         public int getTier() {
-            if (uniqueName.startsWith("T") && uniqueName.length() > 1
-                    && Character.isDigit(uniqueName.charAt(1))) {
-                return Character.getNumericValue(uniqueName.charAt(1));
-            }
-            return -1;
+            return AlbionIdUtil.extrairTier(uniqueName);
         }
     }
 

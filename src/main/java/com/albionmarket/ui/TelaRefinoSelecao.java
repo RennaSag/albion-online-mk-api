@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import com.albionmarket.util.AlbionIdUtil;
+
 /**
  * Tela de seleção do recurso a ser refinado.
  * Filtra apenas os itens da categoria "Recursos" do BancoDeDadosCraft:
@@ -59,8 +61,7 @@ public class TelaRefinoSelecao {
     private Label labelItemAtual;
     private ImageView iconItem;
 
-    private final EstadoRefinoSelecao estadoAnterior;
-
+    private final EstadoSelecao estadoAnterior;
 
 
     public TelaRefinoSelecao(Stage palco) {
@@ -69,7 +70,7 @@ public class TelaRefinoSelecao {
         this.itensRefinaveis = carregarItensRefinaveis();
     }
 
-    public TelaRefinoSelecao(Stage palco, EstadoRefinoSelecao estado) {
+    public TelaRefinoSelecao(Stage palco, EstadoSelecao estado) {
         this.palco = palco;
         this.estadoAnterior = estado;
         this.itensRefinaveis = carregarItensRefinaveis();
@@ -83,7 +84,6 @@ public class TelaRefinoSelecao {
                 .filter(i -> IDS_REFINADOS.contains(i.getId()))
                 .collect(Collectors.toList());
     }
-
 
 
     public void mostrar() {
@@ -100,7 +100,6 @@ public class TelaRefinoSelecao {
         if (estadoAnterior != null) restaurarEstado();
         else carregarPreferencias();
     }
-
 
 
     private void restaurarEstado() {
@@ -127,7 +126,6 @@ public class TelaRefinoSelecao {
             });
         }
     }
-
 
 
     private HBox criarCabecalho() {
@@ -352,14 +350,14 @@ public class TelaRefinoSelecao {
             return;
         }
 
-        int tier = parseTier(cbTier.getValue());
-        int enchant = parseEnchant(cbEncantamento.getValue());
+        int tier = AlbionIdUtil.parseTier(cbTier.getValue());
+        int enchant = AlbionIdUtil.parseEnchant(cbEncantamento.getValue());
         List<String> cidades = checksCidades.stream()
                 .filter(CheckBox::isSelected)
                 .map(cb -> (String) cb.getUserData())
                 .collect(Collectors.toList());
 
-        EstadoRefinoSelecao estado = new EstadoRefinoSelecao(
+        EstadoSelecao estado = new EstadoSelecao(
                 item, tier, enchant, campoBusca.getText(), cidades);
         salvarPreferencias(item, tier, enchant, campoBusca.getText());
         new TelaRefino(palco, item, tier, enchant, estado).mostrar();
@@ -416,8 +414,8 @@ public class TelaRefinoSelecao {
     private String montarIdIcone() {
         if (itemSelecionado == null) return null;
 
-        int t = parseTier(cbTier.getValue());
-        int e = parseEnchant(cbEncantamento.getValue());
+        int t = AlbionIdUtil.parseTier(cbTier.getValue());
+        int e = AlbionIdUtil.parseEnchant(cbEncantamento.getValue());
 
         t = (t == -1) ? 4 : t;
         e = (e == -1) ? 0 : e;
@@ -456,18 +454,6 @@ public class TelaRefinoSelecao {
             marcarSelecionado(found);
             atualizarIconeItem(montarIdIcone());
         }
-    }
-
-
-    private int parseTier(String val) {
-        if (val == null || val.equals("Todos")) return -1;
-        return Integer.parseInt(val.replace("T", ""));
-    }
-
-    private int parseEnchant(String val) {
-        if (val == null || val.equals("Todos")) return -1;
-        if (val.equals("Sem encantamento")) return 0;
-        return Integer.parseInt(val.replace(".", ""));
     }
 
     private Label criarSecao(String texto) {

@@ -1,11 +1,9 @@
 package com.albionmarket.ui;
 
 import com.albionmarket.model.*;
-import com.albionmarket.model.EstadoRefinoSelecao;
-import com.albionmarket.service.ApiService;
-import com.albionmarket.service.BancoDeDadosCraft;
-import com.albionmarket.service.CraftService;
-import com.albionmarket.service.ItemValues;
+
+import com.albionmarket.service.*;
+import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -20,6 +18,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
+import com.albionmarket.service.CalculadoraService;
 
 import java.util.*;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class TelaRefino {
     private boolean modoEdicaoManual = false;
 
     // estado dos filtros da tela anterior para restaurar ao clicar voltar
-    private final EstadoRefinoSelecao estadoSelecao;
+    private final EstadoSelecao estadoSelecao;
 
     private final String itemIdApi;
     private final String itemIdRender;
@@ -137,17 +137,17 @@ public class TelaRefino {
         this(palco, item, tier, enchant, null);
     }
 
-    public TelaRefino(Stage palco, ItemDefinition item, int tier, int enchant, EstadoRefinoSelecao estadoSelecao) {
+    public TelaRefino(Stage palco, ItemDefinition item, int tier, int enchant, EstadoSelecao estadoSelecao) {
         this.palco = palco;
         this.item = item;
         this.tier = tier;
         this.enchant = enchant;
         this.estadoSelecao = estadoSelecao;
-        int t = (tier == -1) ? 4 : tier;
-        int e = (enchant == -1) ? 0 : enchant;
-        String base = "T" + t + "_" + item.getId();
-        this.itemIdApi = e > 0 ? base + "@" + e : base;
-        this.itemIdRender = e > 0 ? base + "_LEVEL" + e : base;
+        int t = AlbionIdUtil.tierEfetivo(tier);
+        int e = AlbionIdUtil.enchantEfetivo(enchant);
+        this.itemIdApi = AlbionIdUtil.buildApiId(item.getId(), t, e);
+        this.itemIdRender = e > 0 ? "T" + t + "_" + item.getId() + "_LEVEL" + e
+                : "T" + t + "_" + item.getId();
     }
 
     public void mostrar() {
@@ -887,27 +887,19 @@ public class TelaRefino {
         tabelaReceita.setEditable(ativo);
     }
 
+
     @SuppressWarnings("unchecked")
     private void atualizarTabelaCalculo() {
         if (painelCalculo == null) return;
 
         double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
-
-        // foco sobrescreve a taxa de retorno pra 47.9%, que e a taxa maxima de refino com foco
         double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
         double taxaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
 
-        double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
-        double nutricao = (itemValue * qtdFinal) * 0.1125;
-        double taxaCraftTotal = (taxaBarraca * nutricao) / 100.0;
-        double taxaCompra = possuiPremium ? 0.03 : 0.05;
-        double taxaVenda = possuiPremium ? 0.025 : 0.05;
-
-        // custo dos brutos da receita * qtd a refinar
+        // soma custo dos materiais — retorno não entra no custo
         double custoMateriais = 0;
         if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
-                // material de retorno nao e comprado, entao nao entra no custo
                 if (!"Retorno".equals(lm.tipo))
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdProduzir;
         } else if (tabelaReceita != null) {
@@ -916,9 +908,7 @@ public class TelaRefino {
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtd * qtdProduzir;
         }
 
-        double custoMatComTaxa = custoMateriais + (custoMateriais * taxaCompra);
-        double custoTotal = custoMatComTaxa + taxaCraftTotal;
-
+        // melhor preço de venda
         double melhorVenda = 0;
         String melhorCidadeTemp = "-";
         for (LinhaPreco lp : tabelaPrecos.getItems()) {
@@ -933,40 +923,23 @@ public class TelaRefino {
                 .filter(c -> c.getApiId().equals(melhorCidade))
                 .map(CidadeInfo::getNome).findFirst().orElse(melhorCidade);
 
-        double receitaTotal = qtdFinal * melhorVenda;
-        double taxaMercadoValor = receitaTotal * taxaVenda;
-        double lucro = receitaTotal - custoTotal - taxaMercadoValor;
+        // calculo principal via service
+        CalculadoraService.ResultadoCalculo calc = CalculadoraService.calcular(
+                qtdProduzir, taxaRetorno, taxaBarraca,
+                itemValue, custoMateriais, melhorVenda, possuiPremium);
+
+        double qtdFinal = calc.qtdFinal;
+        double custoMatComTaxa = calc.custoMateriais;
+        double taxaCraftTotal = calc.taxaBarraca;
+        double receitaTotal = calc.receitaTotal;
+        double custoTotal = calc.custoTotal;
+        double lucro = calc.lucro;
 
         java.util.function.Function<String, String> cidadeParaNome = apiId ->
                 BancoDeDadosCraft.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(apiId))
                         .map(CidadeInfo::getNome)
                         .findFirst().orElse(apiId != null ? apiId : "-");
-
-
-
-        // brutos e retornos separados igual craft separa recursos e artefatos
-        List<ReceitaCraft.MaterialCraft> brutosCalc = receitaAtual == null
-                ? new ArrayList<>()
-                : receitaAtual.getMateriais().stream().filter(m -> !m.isArtefato()).collect(Collectors.toList());
-        List<ReceitaCraft.MaterialCraft> retornosCalc = receitaAtual == null
-                ? new ArrayList<>()
-                : receitaAtual.getMateriais().stream().filter(ReceitaCraft.MaterialCraft::isArtefato).collect(Collectors.toList());
-
-        // funcao pra resolver nome do material pra exibir nos cards
-        java.util.function.Function<ReceitaCraft.MaterialCraft, String> getNomeExibir = mat -> {
-            String idMat = mat.getUniqueName();
-            String sufixo = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
-            int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
-                    ? Character.getNumericValue(idMat.charAt(1)) : 4;
-            String nomeRec = BancoDeDadosCraft.getNomeRecurso(sufixo, tierMat);
-            String nomeMat = nomeRec != null ? nomeRec
-                    : BancoDeDadosCraft.getTodosItens().stream()
-                    .filter(i -> i.getId().equals(sufixo))
-                    .map(ItemDefinition::getNome).findFirst().orElse(idMat);
-            int eAtual = (enchant == -1) ? 0 : enchant;
-            return eAtual > 0 ? nomeMat + " ." + eAtual : nomeMat;
-        };
 
         List<String[]> metricas = new ArrayList<>(Arrays.asList(
                 new String[]{"Qtd a refinar", fmt(qtdProduzir) + " un"},
@@ -978,34 +951,27 @@ public class TelaRefino {
                 new String[]{"Taxa da barraca", fmtSilver(taxaCraftTotal)}
         ));
 
-        // qtd e local de cada bruto
+        // qtd e local de cada material
         if (tabelaMateriais != null) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
                 if ("Bruto".equals(lm.tipo)) {
-                    int qtdTotal = lm.qtdNecessaria * (int) qtdProduzir;
-                    metricas.add(new String[]{"Qtd Bruto", String.valueOf(qtdTotal)});
+                    metricas.add(new String[]{"Qtd Bruto", String.valueOf(lm.qtdNecessaria * (int) qtdProduzir)});
                     metricas.add(new String[]{"Local Bruto", cidadeParaNome.apply(lm.cidade)});
                 } else if ("Retorno".equals(lm.tipo)) {
-                    int qtdTotal = lm.qtdNecessaria * (int) qtdProduzir;
-                    metricas.add(new String[]{"Qtd Refinado", String.valueOf(qtdTotal)});
+                    metricas.add(new String[]{"Qtd Refinado", String.valueOf(lm.qtdNecessaria * (int) qtdProduzir)});
                     metricas.add(new String[]{"Local Refinado", cidadeParaNome.apply(lm.cidade)});
                 }
             }
         }
 
-
-
-
         FlowPane fluxoNormal = new FlowPane(10, 10);
         fluxoNormal.setPrefWrapLength(Double.MAX_VALUE);
-        for (String[] m : metricas) {
+        for (String[] m : metricas)
             fluxoNormal.getChildren().add(criarCard(m[0], m[1], "#e0e0e0", "#2a2a2a"));
-        }
 
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #444;");
 
-        // cards de destaque
         HBox linhaDestaque = new HBox(16);
         linhaDestaque.setAlignment(Pos.CENTER);
 
@@ -1023,6 +989,7 @@ public class TelaRefino {
 
         painelCalculo.getChildren().setAll(fluxoNormal, sep, linhaDestaque);
     }
+
 
     // utilitarios
     private double parseSilver(String val) {
@@ -1279,13 +1246,9 @@ public class TelaRefino {
             sb.append("  }\n");
             sb.append("}\n");
 
-            String nomeArquivo = "operacao_" + itemIdApi + "_"
-                    + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-                    + ".json";
-            java.nio.file.Path caminho = getDiretorioOperacoes().resolve(nomeArquivo);
-            java.nio.file.Files.writeString(caminho, sb.toString());
-
+            String nomeArquivo = OperacaoService.salvar(itemIdApi, sb.toString());
             labelStatus.setText("Operação salva: " + nomeArquivo);
+
 
         } catch (Exception ex) {
             labelStatus.setText("Erro ao salvar: " + ex.getMessage());
@@ -1312,14 +1275,4 @@ public class TelaRefino {
         return sb.toString();
     }
 
-    private java.nio.file.Path getDiretorioOperacoes() {
-        java.nio.file.Path dir = java.nio.file.Paths.get(
-                System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes"
-        );
-        try {
-            java.nio.file.Files.createDirectories(dir);
-        } catch (Exception ignored) {
-        }
-        return dir;
-    }
 }

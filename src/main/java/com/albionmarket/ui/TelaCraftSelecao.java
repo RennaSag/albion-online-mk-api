@@ -1,11 +1,13 @@
 package com.albionmarket.ui;
 
 import com.albionmarket.model.Categoria;
-import com.albionmarket.model.EstadoCraftSelecao;
+
+import com.albionmarket.model.EstadoSelecao;
 import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.model.Subcategoria;
 import com.albionmarket.service.BancoDeDadosCraft;
 import com.albionmarket.service.BuscaService;
+import com.albionmarket.util.AlbionIdUtil;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,6 +22,8 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
+
+
 
 public class TelaCraftSelecao {
 
@@ -49,7 +53,7 @@ public class TelaCraftSelecao {
     private Label labelItemAtual;
     private ImageView iconItem;
 
-    private final EstadoCraftSelecao estadoAnterior;
+    private final EstadoSelecao estadoAnterior;
 
 
 
@@ -59,7 +63,7 @@ public class TelaCraftSelecao {
         this.estadoAnterior = null;
     }
 
-    public TelaCraftSelecao(Stage palco, EstadoCraftSelecao estado) {
+    public TelaCraftSelecao(Stage palco, EstadoSelecao estado) {
         this.palco = palco;
         this.estadoAnterior = estado;
     }
@@ -362,13 +366,13 @@ public class TelaCraftSelecao {
             labelItemAtual.setStyle("-fx-text-fill: #e05555; -fx-font-size: 13px;");
             return;
         }
-        int tier = parseTier(cbTier.getValue());
-        int enchant = parseEnchant(cbEncantamento.getValue());
+        int tier = AlbionIdUtil.parseTier(cbTier.getValue());
+        int enchant = AlbionIdUtil.parseEnchant(cbEncantamento.getValue());
         List<String> cidadesSelecionadas = checksCidades.stream()
                 .filter(CheckBox::isSelected)
                 .map(cb -> (String) cb.getUserData())
                 .collect(java.util.stream.Collectors.toList());
-        EstadoCraftSelecao estado = new EstadoCraftSelecao(
+        EstadoSelecao estado = new EstadoSelecao(
                 item, tier, enchant, campoBusca.getText(), cidadesSelecionadas);
         salvarPreferencias(item, tier, enchant, campoBusca.getText());
         new TelaCraft(palco, item, tier, enchant, estado).mostrar();
@@ -409,24 +413,16 @@ public class TelaCraftSelecao {
 
     private String montarIdIcone() {
         if (itemSelecionado == null) return null;
-        int t = parseTier(cbTier.getValue());
-        int e = parseEnchant(cbEncantamento.getValue());
+
+        int t = AlbionIdUtil.parseTier(cbTier.getValue());
+        int e = AlbionIdUtil.parseEnchant(cbEncantamento.getValue());
+
         t = (t == -1) ? 4 : t;
         e = (e == -1) ? 0 : e;
         String base = "T" + t + "_" + itemSelecionado.getId();
         return e > 0 ? base + "@" + e : base;
     }
 
-    private int parseTier(String val) {
-        if (val == null || val.equals("Todos")) return -1;
-        return Integer.parseInt(val.replace("T", ""));
-    }
-
-    private int parseEnchant(String val) {
-        if (val == null || val.equals("Todos")) return -1;
-        if (val.equals("Sem encantamento")) return 0;
-        return Integer.parseInt(val.replace(".", ""));
-    }
 
     private Label criarSecao(String texto) {
         Label lbl = new Label(texto);

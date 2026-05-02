@@ -4,6 +4,7 @@ import com.albionmarket.model.*;
 import com.albionmarket.service.ApiService;
 import com.albionmarket.service.BancoDeDadosCraft;
 import com.albionmarket.service.BuscaService;
+import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -385,8 +386,8 @@ public class TelaPesquisaPrecos {
             return;
         }
 
-        int tier = parseTier(cbTier.getValue());
-        int enchant = parseEnchant(cbEncantamento.getValue());
+        int tier = AlbionIdUtil.parseTier(cbTier.getValue());
+        int enchant = AlbionIdUtil.parseEnchant(cbEncantamento.getValue());
         int quality = parseQuality(cbQualidade.getValue());
 
 
@@ -530,16 +531,7 @@ public class TelaPesquisaPrecos {
     }
 
     // utilitarios
-    private int parseTier(String val) {
-        if (val == null || val.equals("Todos")) return -1;
-        return Integer.parseInt(val.replace("T", ""));
-    }
 
-    private int parseEnchant(String val) {
-        if (val == null || val.equals("Todos")) return -1;
-        if (val.equals("Sem encantamento")) return 0;
-        return Integer.parseInt(val.replace(".", ""));
-    }
 
 
     private int parseQuality(String val) {

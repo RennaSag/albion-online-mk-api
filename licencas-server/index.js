@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -11,6 +12,25 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
+
+// transportador de email usando gmail com senha de app
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+async function enviarEmailChave(email, chave) {
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Sua chave de acesso - Analisador de Mercado Albion',
+        text: `Obrigado pela compra!\nSua chave de acesso: ${chave}\nDigite ela no software na tela de login.`
+    });
+    console.log('email enviado para:', email);
+}
 
 async function inicializarBanco() {
     await pool.query(`
@@ -23,7 +43,6 @@ async function inicializarBanco() {
             criado_em TIMESTAMP DEFAULT NOW()
         )
     `);
-
     console.log('banco inicializado');
 }
 
@@ -41,8 +60,6 @@ app.post('/webhook/hotmart', async (req, res) => {
 
             const chave = uuidv4();
             const expiracao = new Date();
-
-            //tempo de duracao da key
             expiracao.setDate(expiracao.getDate() + 12);
 
             await pool.query(
@@ -53,6 +70,14 @@ app.post('/webhook/hotmart', async (req, res) => {
                 [email, chave, expiracao]
             );
             console.log('licenca criada para:', email);
+
+            // envia email com a chave para o cliente
+            try {
+                await enviarEmailChave(email, chave);
+            } catch (emailErr) {
+                // nao deixa o erro de email derrubar o webhook
+                console.error('erro ao enviar email para:', email, emailErr.message);
+            }
         }
 
         if (evento.event === 'SUBSCRIPTION_CANCELLATION') {
@@ -126,8 +151,6 @@ app.post('/admin/gerar', async (req, res) => {
 
         const chave = uuidv4();
         const expiracao = new Date();
-
-        //tempo de duracao da key
         expiracao.setDate(expiracao.getDate() + 12);
 
         await pool.query(

@@ -1,17 +1,13 @@
 package com.albionmarket.ui;
 
 import com.albionmarket.model.*;
-import com.albionmarket.model.EstadoCraftSelecao;
-import com.albionmarket.service.ApiService;
-import com.albionmarket.service.BancoDeDadosCraft;
-import com.albionmarket.service.CraftService;
-import com.albionmarket.service.ItemValues;
+import com.albionmarket.service.*;
+import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -21,6 +17,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
+import com.albionmarket.service.CalculadoraService;
 
 import java.util.*;
 import java.util.Arrays;
@@ -179,12 +177,7 @@ public class TelaCraft {
             sb.append("  }\n");
             sb.append("}\n");
 
-            String nomeArquivo = "operacao_" + itemIdCompleto + "_"
-                    + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-                    + ".json";
-            java.nio.file.Path caminho = getDiretorioOperacoes().resolve(nomeArquivo);
-            java.nio.file.Files.writeString(caminho, sb.toString());
-
+            String nomeArquivo = OperacaoService.salvar(itemIdCompleto, sb.toString());
             labelStatus.setText("Operação salva: " + nomeArquivo);
 
         } catch (Exception ex) {
@@ -211,7 +204,7 @@ public class TelaCraft {
     }
 
     // estado dos filtros da tela anterior (para restaurar ao clicar Voltar)
-    private final EstadoCraftSelecao estadoSelecao;
+    private final EstadoSelecao estadoSelecao;
 
     // modelo da tabela de precos dos materiais
     public static class LinhaMaterialPreco {
@@ -244,16 +237,16 @@ public class TelaCraft {
         this(palco, item, tier, enchant, null);
     }
 
-    public TelaCraft(Stage palco, ItemDefinition item, int tier, int enchant, EstadoCraftSelecao estadoSelecao) {
+    public TelaCraft(Stage palco, ItemDefinition item, int tier, int enchant, EstadoSelecao estadoSelecao) {
         this.palco = palco;
         this.item = item;
         this.tier = tier;
         this.enchant = enchant;
         this.estadoSelecao = estadoSelecao;
-        int t = (tier == -1) ? 4 : tier;
-        int e = (enchant == -1) ? 0 : enchant;
-        String base = "T" + t + "_" + item.getId();
-        this.itemIdCompleto = e > 0 ? base + "@" + e : base;
+
+        int t = AlbionIdUtil.tierEfetivo(tier);
+        int e = AlbionIdUtil.enchantEfetivo(enchant);
+        this.itemIdCompleto = AlbionIdUtil.buildApiId(item.getId(), t, e);
     }
 
     public void mostrar() {
@@ -597,7 +590,10 @@ public class TelaCraft {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); return; }
+                if (empty || v == null) {
+                    setText(null);
+                    return;
+                }
                 LinhaMaterialPreco lm = getTableView().getItems().get(getIndex());
                 String exibir;
                 if ("Diario".equals(lm.tipo)) {
@@ -1212,12 +1208,8 @@ public class TelaCraft {
         double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
         double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
         double taxaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
-        double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
-        double nutricao = (itemValue * qtdFinal) * 0.1125;
-        double taxaCraftTotal = (taxaBarraca * nutricao) / 100.0;
-        double taxaCompra = possuiPremium ? 0.03 : 0.05;
-        double taxaVenda = possuiPremium ? 0.025 : 0.05;
 
+        // soma custo dos materiais das tabelas
         double custoMateriais = 0;
         if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
@@ -1229,9 +1221,7 @@ public class TelaCraft {
                     custoMateriais += parseSilver(lm.buyMax) * lm.qtd;
         }
 
-        double custoMatComTaxa = custoMateriais * qtdProduzir + (qtdProduzir * taxaCompra);
-        double custoTotal = custoMatComTaxa + taxaCraftTotal + (qtdFinal * taxaCompra);
-
+        // melhor preço de venda
         double melhorVenda = 0;
         String melhorCidadeTemp = "-";
         for (LinhaPreco lp : tabelaPrecos.getItems()) {
@@ -1246,31 +1236,22 @@ public class TelaCraft {
                 .filter(c -> c.getApiId().equals(melhorCidade))
                 .map(CidadeInfo::getNome).findFirst().orElse(melhorCidade);
 
-        double receitaTotal = qtdFinal * melhorVenda;
-        double taxaMercadoValor = receitaTotal * taxaVenda;
-        double lucro = receitaTotal - custoTotal - taxaMercadoValor;
+        // calculo principal via service
+        CalculadoraService.ResultadoCalculo calc = CalculadoraService.calcular(
+                qtdProduzir, taxaRetorno, taxaBarraca,
+                itemValue, custoMateriais, melhorVenda, possuiPremium);
 
+        double qtdFinal = calc.qtdFinal;
+        double custoMatComTaxa = calc.custoMateriais;
+        double taxaCraftTotal = calc.taxaBarraca;
+        double receitaTotal = calc.receitaTotal;
+        double custoTotal = calc.custoTotal;
+        double lucro = calc.lucro;
 
         // calculo dos diarios
-        // calculo dos diarios - formula correta conforme wiki + forum oficial
-        // Fonte: wiki.albiononline.com/wiki/Fame
-        // Journal Fame por craft = qtdMateriais * fameMultiplierDoTier * 2^encantamento
-        // Fama necessaria por diario por tier (confirmado no forum):
-        // T2=400, T3=2400, T4=9600, T5=38400, T6=153600, T7=614400, T8=2457600
-        int tierItem = (tier == -1) ? 4 : tier;
-        int enchantItem = (enchant == -1) ? 0 : enchant;
+        int tierItem = AlbionIdUtil.tierEfetivo(tier);
+        int enchantItem = AlbionIdUtil.enchantEfetivo(enchant);
 
-        // multiplicador de fama base por tier (da wiki oficial)
-        double[] fameMultiplierPorTier = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
-        double fameMultiplier = (tierItem >= 2 && tierItem <= 8) ? fameMultiplierPorTier[tierItem] : 0;
-
-        // fama necessaria para encher 1 diario de craft por tier
-        // T2=400, T3=2400, T4=9600, T5=38400, T6=153600, T7=614400, T8=2457600
-        // padrao: cada tier multiplica por 4 a partir do T3
-        double[] famaNecessariaPorTier = {0, 0, 0, 0, 3600, 7200, 14400, 28380, 58590};
-        double famaNecessaria = (tierItem >= 2 && tierItem <= 8) ? famaNecessariaPorTier[tierItem] : 0;
-
-        // qtd de materiais nao-artefato na receita
         int qtdMateriaisReceita = 0;
         if (receitaAtual != null) {
             qtdMateriaisReceita = receitaAtual.getMateriais().stream()
@@ -1279,20 +1260,11 @@ public class TelaCraft {
                     .sum();
         }
 
-        // fama gerada por 1 craft: qtdMateriais * multiplier * 2^enchant
-        // (artefatos nao afetam fama desde atualizacao do jogo)
-        double famaPorCraft = qtdMateriaisReceita * fameMultiplier * Math.pow(2, enchantItem);
+        double diariosCompletos = CalculadoraService.calcularDiarios(
+                tierItem, enchantItem, qtdMateriaisReceita, qtdFinal);
 
-        // total de diarios completos ao craftar qtdFinal itens
-        double diariosCompletos = (famaNecessaria > 0 && famaPorCraft > 0)
-                ? (famaPorCraft * qtdFinal) / famaNecessaria
-                : 0;
-
-        double precoDiarioVazio = precoDiarioVazioApi;
-        double precoDiarioCheio = precoDiarioCheioApi;
-
-
-        double lucroDiarios = diariosCompletos * (precoDiarioCheio - precoDiarioVazio);
+        double lucroDiarios = CalculadoraService.calcularLucroDiarios(
+                diariosCompletos, precoDiarioVazioApi, precoDiarioCheioApi);
 
         double lucroComDiarios = lucro + lucroDiarios;
 
@@ -1300,19 +1272,19 @@ public class TelaCraft {
         custoAtual = custoTotal;
         receitaAtual2 = receitaTotal;
 
-        // cards pequenos (métricas auxiliares)
+        // funcoes auxiliares de nome e cidade
         java.util.function.Function<ReceitaCraft.MaterialCraft, String> getNomeExibir = mat -> {
             String idMat = mat.getUniqueName();
             String sufixo = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
-            int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
-                    ? Character.getNumericValue(idMat.charAt(1)) : 4;
+            int tierMat = AlbionIdUtil.extrairTier(idMat);
+            if (tierMat == -1) tierMat = 4;
             String nomeRec = BancoDeDadosCraft.getNomeRecurso(sufixo, tierMat);
             String nomeMat = nomeRec != null ? nomeRec
                     : BancoDeDadosCraft.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixo))
                     .map(ItemDefinition::getNome).findFirst().orElse(idMat);
-            int enchantAtual2 = (enchant == -1) ? 0 : enchant;
-            return enchantAtual2 > 0 ? nomeMat + " ." + enchantAtual2 : nomeMat;
+            int eAtual = AlbionIdUtil.enchantEfetivo(enchant);
+            return eAtual > 0 ? nomeMat + " ." + eAtual : nomeMat;
         };
 
         java.util.function.Function<String, String> cidadeParaNome = apiId ->
@@ -1321,7 +1293,6 @@ public class TelaCraft {
                         .map(CidadeInfo::getNome)
                         .findFirst().orElse(apiId != null ? apiId : "-");
 
-        // mapa nome-material -> cidade (da tabelaMateriais)
         Map<String, String> cidadePorMaterial = new LinkedHashMap<>();
         if (tabelaMateriais != null) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
@@ -1331,7 +1302,6 @@ public class TelaCraft {
             }
         }
 
-        // recursos e artefatos
         List<ReceitaCraft.MaterialCraft> recursosCalc = receitaAtual == null
                 ? new ArrayList<>()
                 : receitaAtual.getMateriais().stream().filter(m -> !m.isArtefato()).collect(Collectors.toList());
@@ -1339,7 +1309,6 @@ public class TelaCraft {
                 ? new ArrayList<>()
                 : receitaAtual.getMateriais().stream().filter(ReceitaCraft.MaterialCraft::isArtefato).collect(Collectors.toList());
 
-        // cards pequenos (métricas auxiliares)
         List<String[]> metricas = new ArrayList<>(Arrays.asList(
                 new String[]{"Qtd a craftar", fmt(qtdProduzir) + " un"},
                 new String[]{"Qtd final craftada", String.format("%.2f un", qtdFinal)},
@@ -1351,7 +1320,6 @@ public class TelaCraft {
                 new String[]{"Lucro c/ diarios", fmtSilver(lucroDiarios)}
         ));
 
-        // adiciona qtd e local de cada recurso
         String[] nomesRec = {"Qtd Recurso 1", "Qtd Recurso 2", "Qtd Recurso 3"};
         String[] nomesLoc = {"Local Recurso 1", "Local Recurso 2", "Local Recurso 3"};
         for (int ri = 0; ri < Math.min(recursosCalc.size(), 3); ri++) {
@@ -1362,35 +1330,28 @@ public class TelaCraft {
             metricas.add(new String[]{nomesLoc[ri], cidadeParaNome.apply(cidadeR)});
         }
 
-// adiciona qtd e local do artefato se houver
         if (!artefatosCalc.isEmpty()) {
             int qtdArt = artefatosCalc.stream().mapToInt(ReceitaCraft.MaterialCraft::getCount).sum() * (int) qtdFinal;
             metricas.add(new String[]{"Qtd Artefatos", String.valueOf(qtdArt)});
-
-            // busca a cidade do artefato diretamente pelo tipo "Artefato" na tabelaMateriais
             String cidadeArt = "-";
             if (tabelaMateriais != null) {
                 cidadeArt = tabelaMateriais.getItems().stream()
                         .filter(lm -> "Artefato".equals(lm.tipo))
                         .map(lm -> lm.cidade)
                         .filter(c -> c != null && !c.equals("-"))
-                        .findFirst()
-                        .orElse("-");
+                        .findFirst().orElse("-");
             }
             metricas.add(new String[]{"Local do Artefato", cidadeParaNome.apply(cidadeArt)});
         }
 
         FlowPane fluxoNormal = new FlowPane(10, 10);
         fluxoNormal.setPrefWrapLength(Double.MAX_VALUE);
-        for (String[] m : metricas) {
+        for (String[] m : metricas)
             fluxoNormal.getChildren().add(criarCard(m[0], m[1], "#e0e0e0", "#2a2a2a"));
-        }
-
 
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #444;");
 
-        // cards grandes de destaque
         HBox linhaDestaque = new HBox(16);
         linhaDestaque.setAlignment(Pos.CENTER);
 
@@ -1605,14 +1566,4 @@ public class TelaCraft {
         return sb.toString();
     }
 
-    private java.nio.file.Path getDiretorioOperacoes() {
-        java.nio.file.Path dir = java.nio.file.Paths.get(
-                System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes"
-        );
-        try {
-            java.nio.file.Files.createDirectories(dir);
-        } catch (Exception ignored) {
-        }
-        return dir;
-    }
 }
