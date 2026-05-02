@@ -1,6 +1,5 @@
 com\albionmarket\service\CraftService.class
 com\albionmarket\ui\TelaCraft$10.class
-com\albionmarket\model\EstadoRefinoSelecao.class
 com\albionmarket\ui\TelaRefino$5.class
 com\albionmarket\model\Subcategoria.class
 com\albionmarket\ui\TelaChangelog$1.class
@@ -12,6 +11,7 @@ com\albionmarket\ui\TelaRefino$9.class
 com\albionmarket\ui\TelaCraft$4.class
 com\albionmarket\ui\TelaRefino$2.class
 com\albionmarket\ui\TelaRefino$LinhaPreco.class
+com\albionmarket\service\CalculadoraService.class
 com\albionmarket\ui\TelaCraft$11.class
 com\albionmarket\ui\TelaRefino$LinhaMaterialPreco.class
 com\albionmarket\ui\TelaCraft$6.class
@@ -23,6 +23,7 @@ com\albionmarket\ui\TelaRefinoSelecao.class
 com\albionmarket\ui\TelaRefino$LinhaMaterial.class
 com\albionmarket\service\ApiService.class
 com\albionmarket\service\ItemValues$ValorBase.class
+com\albionmarket\service\OperacaoService.class
 com\albionmarket\ui\TelaRefino$8.class
 com\albionmarket\ui\TelaUpdate.class
 com\albionmarket\service\BuscaService$ResultadoInterno.class
@@ -47,8 +48,10 @@ com\albionmarket\ui\TelaPesquisaPrecos$LinhaPreco.class
 com\albionmarket\ui\TelaRefino$7.class
 com\albionmarket\model\PriceEntry.class
 com\albionmarket\model\Categoria.class
+com\albionmarket\model\EstadoSelecao.class
 com\albionmarket\model\VersaoInfo.class
 com\albionmarket\model\VersaoInfo$Mudanca.class
+com\albionmarket\service\CalculadoraService$ResultadoCalculo.class
 com\albionmarket\ui\TelaRefino$6.class
 com\albionmarket\MainApp.class
 com\albionmarket\service\BuscaService.class
@@ -56,9 +59,10 @@ com\albionmarket\util\FormatadorUtil.class
 com\albionmarket\ui\TelaHome.class
 com\albionmarket\model\VersaoInfo$TipoMudanca.class
 com\albionmarket\ui\TelaRefino$11.class
+com\albionmarket\util\AlbionIdUtil.class
 com\albionmarket\ui\TelaRefino$3.class
 com\albionmarket\ui\TelaCraft$LinhaPreco.class
-com\albionmarket\model\EstadoCraftSelecao.class
+com\albionmarket\service\OperacaoService$LinhaLocais.class
 com\albionmarket\ui\TelaCraft$2.class
 com\albionmarket\model\ItemDefinition.class
 com\albionmarket\ui\TelaCraft$8.class

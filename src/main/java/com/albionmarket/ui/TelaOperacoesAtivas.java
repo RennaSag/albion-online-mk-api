@@ -1,5 +1,6 @@
 package com.albionmarket.ui;
 
+import com.albionmarket.service.OperacaoService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -69,7 +70,7 @@ public class TelaOperacoesAtivas {
         painelCards.getChildren().clear();
 
         try {
-            List<Path> arquivos = Files.list(getDiretorioOperacoes())
+            List<Path> arquivos = Files.list(OperacaoService.getDiretorio())
                     .filter(p -> p.getFileName().toString().startsWith("operacao_")
                             && p.getFileName().toString().endsWith(".json"))
                     .sorted(Comparator.comparing(p -> p.getFileName().toString()))
@@ -296,13 +297,4 @@ public class TelaOperacoesAtivas {
         return sb.length() > 0 ? sb.toString() : null;
     }
 
-    private java.nio.file.Path getDiretorioOperacoes() {
-        java.nio.file.Path dir = java.nio.file.Paths.get(
-                System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes"
-        );
-        try {
-            java.nio.file.Files.createDirectories(dir);
-        } catch (Exception ignored) {}
-        return dir;
     }
-}
