@@ -907,7 +907,7 @@ public class TelaRefino {
         if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
                 if (!"Retorno".equals(lm.tipo))
-                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdProduzir;
+                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria;
         } else if (tabelaReceita != null) {
             for (LinhaMaterial lm : tabelaReceita.getItems())
                 if (!"Retorno".equals(lm.tipo))

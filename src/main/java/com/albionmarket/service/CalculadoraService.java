@@ -61,8 +61,8 @@ public class CalculadoraService {
         double taxaCompra = possuiPremium ? 0.03 : 0.05;
         double taxaVenda = possuiPremium ? 0.025 : 0.05;
 
-        double custoMatComTaxa = custoMateriais * qtdProduzir + (qtdProduzir * taxaCompra);
-        double custoTotal = custoMatComTaxa + taxaBarraca + (qtdFinal * taxaCompra);
+        double custoMatComTaxa = custoMateriais * (1.0 + taxaCompra);
+        double custoTotal = custoMatComTaxa + taxaBarraca;
 
         double receitaTotal = qtdFinal * melhorVenda;
         double taxaMercado = receitaTotal * taxaVenda;
