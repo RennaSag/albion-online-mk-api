@@ -902,19 +902,27 @@ public class TelaRefino {
         double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
         double taxaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
 
-        // soma custo dos materiais — retorno não entra no custo
+        double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
+        double nutricao = (itemValue * qtdFinal) * 0.1125;
+        double taxaCraftTotal = (taxaBarraca * nutricao) / 100.0;
+        double taxaCompra = possuiPremium ? 0.03 : 0.05;
+        double taxaVenda = possuiPremium ? 0.025 : 0.05;
+
+        // custo dos brutos — retorno não entra
         double custoMateriais = 0;
         if (tabelaMateriais != null && !tabelaMateriais.getItems().isEmpty()) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems())
                 if (!"Retorno".equals(lm.tipo))
-                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria;
+                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdProduzir;
         } else if (tabelaReceita != null) {
             for (LinhaMaterial lm : tabelaReceita.getItems())
                 if (!"Retorno".equals(lm.tipo))
                     custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtd * qtdProduzir;
         }
 
-        // melhor preço de venda
+        double custoMatComTaxa = custoMateriais + (custoMateriais * taxaCompra);
+        double custoTotal = custoMatComTaxa + taxaCraftTotal;
+
         double melhorVenda = 0;
         String melhorCidadeTemp = "-";
         for (LinhaPreco lp : tabelaPrecos.getItems()) {
@@ -929,17 +937,13 @@ public class TelaRefino {
                 .filter(c -> c.getApiId().equals(melhorCidade))
                 .map(CidadeInfo::getNome).findFirst().orElse(melhorCidade);
 
-        // calculo principal via service
-        CalculadoraService.ResultadoCalculo calc = CalculadoraService.calcular(
-                qtdProduzir, taxaRetorno, taxaBarraca,
-                itemValue, custoMateriais, melhorVenda, possuiPremium);
+        double receitaTotal = qtdFinal * melhorVenda;
+        double taxaMercadoValor = receitaTotal * taxaVenda;
+        double lucro = receitaTotal - custoTotal - taxaMercadoValor;
 
-        double qtdFinal = calc.qtdFinal;
-        double custoMatComTaxa = calc.custoMateriais;
-        double taxaCraftTotal = calc.taxaBarraca;
-        double receitaTotal = calc.receitaTotal;
-        double custoTotal = calc.custoTotal;
-        double lucro = calc.lucro;
+        lucroAtual = lucro;
+        custoAtual = custoTotal;
+        receitaAtual2 = receitaTotal;
 
         java.util.function.Function<String, String> cidadeParaNome = apiId ->
                 BancoDeDadosCraft.CIDADES.stream()
@@ -957,7 +961,6 @@ public class TelaRefino {
                 new String[]{"Taxa da barraca", FormatadorUtil.fmtSilver(taxaCraftTotal)}
         ));
 
-        // qtd e local de cada material
         if (tabelaMateriais != null) {
             for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
                 if ("Bruto".equals(lm.tipo)) {
@@ -969,10 +972,6 @@ public class TelaRefino {
                 }
             }
         }
-
-        lucroAtual = lucro;
-        custoAtual = custoTotal;
-        receitaAtual2 = receitaTotal;
 
         FlowPane fluxoNormal = new FlowPane(10, 10);
         fluxoNormal.setPrefWrapLength(Double.MAX_VALUE);
@@ -998,8 +997,6 @@ public class TelaRefino {
         linhaDestaque.getChildren().addAll(cardCusto, cardReceita, cardLucro);
 
         painelCalculo.getChildren().setAll(fluxoNormal, sep, linhaDestaque);
-
-
     }
 
 
