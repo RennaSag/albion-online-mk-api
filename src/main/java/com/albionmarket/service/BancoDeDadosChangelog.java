@@ -19,14 +19,14 @@ import java.util.List;
 public class BancoDeDadosChangelog {
 
 
-    public static final String APP_VERSAO_ATUAL = "1.0.8";
+    public static final String APP_VERSAO_ATUAL = "1.0.9";
 
 
     public static final List<VersaoInfo> VERSOES = Arrays.asList(
 
 
             new VersaoInfo(
-                    "1.0.8",
+                    "1.0.9",
                     "02 de Maio, 2026",
                     "Otimizações e correção de bugs",
                     Arrays.asList(
