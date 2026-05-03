@@ -45,6 +45,7 @@ public class CalculadoraService {
      * @param melhorVenda    melhor preço de venda encontrado
      * @param possuiPremium  se o usuário tem premium
      */
+
     public static ResultadoCalculo calcular(
             double qtdProduzir,
             double taxaRetorno,
@@ -61,6 +62,7 @@ public class CalculadoraService {
         double taxaCompra = possuiPremium ? 0.03 : 0.05;
         double taxaVenda = possuiPremium ? 0.025 : 0.05;
 
+        // custoMateriais chega por unidade, escala pela quantidade e aplica taxa de compra
         double custoMatComTaxa = custoMateriais * (1.0 + taxaCompra);
         double custoTotal = custoMatComTaxa + taxaBarraca;
 

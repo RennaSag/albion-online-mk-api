@@ -19,14 +19,14 @@ import java.util.List;
 public class BancoDeDadosChangelog {
 
 
-    public static final String APP_VERSAO_ATUAL = "1.0.9";
+    public static final String APP_VERSAO_ATUAL = "1.1.0";
 
 
     public static final List<VersaoInfo> VERSOES = Arrays.asList(
 
 
             new VersaoInfo(
-                    "1.0.9",
+                    "1.1.0",
                     "02 de Maio, 2026",
                     "Otimizações e correção de bugs",
                     Arrays.asList(
@@ -35,8 +35,8 @@ public class BancoDeDadosChangelog {
                             new Mudanca(TipoMudanca.NOVIDADE, "Nas versões futuras, haverá melhorias no sistema de busca de dados pela api, com o proposito de deixar as requisições mais rápidas."),
                             new Mudanca(TipoMudanca.REMOCAO, "Preste atenção no craft com diários! O campo 'Lucro' na tabela de craft não está incluindo o lucro com a venda dos diários de craft."),
                             new Mudanca(TipoMudanca.REMOCAO, "Se você está tendo ou tiver qualquer problema com o aplicativo, entre em contato comigo pelo email de suporte: rennasagcontato@gmail.com. Um forte abraço"),
-                            new Mudanca(TipoMudanca.CORRECAO, "Corrigido cálculo de refino, eu tinha mexido no código e ficou errado, mas agora ta resolvido")
-
+                            new Mudanca(TipoMudanca.CORRECAO, "Corrigido cálculo de refino, eu tinha mexido no código e ficou errado, mas agora ta resolvido"),
+                            new Mudanca(TipoMudanca.CORRECAO, "Peço desculpas se ao utilizar o aplicativo você se deparar com muitos pedidos de atualizações contantemente. Como eu havia comentando, estou trabalhando muito no projeto e essas atualizações são importantes pra refirnar o software, corrigir bugs e deixar ele melhor. Agradeço a paciencia de todos")
                     )
             )
 

@@ -1201,7 +1201,7 @@ public class TelaCraft {
                     precoDiarioVazioTabela = FormatadorUtil.parseSilver(lm.buyMax);
                     qtdDiariosTabela = lm.qtdNecessaria;
                 } else {
-                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria;
+                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdProduzir;
                 }
             }
         } else if (tabelaReceita != null) {
