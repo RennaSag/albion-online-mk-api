@@ -4,10 +4,16 @@ const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+// albion
+const albionRoutes = require('./albion/routes');
+const { popularCatalogo } = require('./albion/catalogoPopulador');
+const { iniciarWorker } = require('./albion/workerColeta');
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// pool de licencas (banco atual)
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -71,11 +77,9 @@ app.post('/webhook/hotmart', async (req, res) => {
             );
             console.log('licenca criada para:', email);
 
-            // envia email com a chave para o cliente
             try {
                 await enviarEmailChave(email, chave);
             } catch (emailErr) {
-                // nao deixa o erro de email derrubar o webhook
                 console.error('erro ao enviar email para:', email, emailErr.message);
             }
         }
@@ -202,13 +206,20 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.get('/version', (req, res) => {
     res.json({
-        version: '1.0.0',
-        downloadUrl: 'https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.0.0/Analisador.de.Mercado.do.Albion.Online-1.0.0.msi'
+        version: '1.1.1',
+        downloadUrl: 'https://github.com/RennaSag/albion-online-mk-api/releases/download/v1.1.1/Analisador.de.Mercado.do.Albion.Online-1.1.1.msi'
     });
 });
+
+// rotas do albion
+app.use('/api/v2', albionRoutes);
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', async () => {
     await inicializarBanco();
     console.log('servidor rodando na porta', PORT);
+
+    // inicia o albion: popula catalogo e liga o worker
+    await popularCatalogo();
+    iniciarWorker();
 });

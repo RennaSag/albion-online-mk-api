@@ -19,9 +19,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import com.albionmarket.service.CalculadoraService;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import java.text.Normalizer;
+//import com.albionmarket.service.CalculadoraService;
+//import java.text.Normalizer;
+
 import java.util.*;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -558,45 +562,71 @@ public class TelaRefino {
                 ? estadoSelecao.cidades
                 : BancoDeDadosCraft.CIDADES.stream().map(CidadeInfo::getApiId).collect(Collectors.toList());
 
+        List<String> cidadesSemBM = cidades.stream()
+                .filter(c -> !c.equals("BlackMarket"))
+                .collect(Collectors.toList());
+
         progresso.setVisible(true);
-        labelStatus.setText("Buscando preços e receita...");
+        labelStatus.setText("Buscando precos e receita...");
         tabelaPrecos.setItems(FXCollections.emptyObservableList());
         tabelaReceita.setItems(FXCollections.emptyObservableList());
         if (tabelaMateriais != null) tabelaMateriais.setItems(FXCollections.emptyObservableList());
 
+        int tierEfetivo    = (tier    == -1) ? 4 : tier;
+        int enchantEfetivo = (enchant == -1) ? 0 : enchant;
+
+        ExecutorService pool = Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+
         Task<Void> tarefa = new Task<>() {
+
             private List<PriceEntry> precos;
-            private ReceitaCraft receita;
+            private ReceitaCraft     receita;
             private List<PriceEntry> precosMateirais;
 
             @Override
             protected Void call() throws Exception {
-                precos = apiService.buscarPrecos(
-                        (enchant > 0 ? item.getId() + "_LEVEL" + enchant : item.getId()),
-                        (tier == -1) ? 4 : tier,
-                        (enchant == -1) ? 0 : enchant,
-                        -1, cidades);
-                String itemIdSemEnchant = itemIdApi.contains("@") ? itemIdApi.split("@")[0] : itemIdApi;
-                receita = craftService.buscarReceita(itemIdSemEnchant);
-                itemValue = ItemValues.getValor(itemIdApi);
 
+                // etapa 1: precos do refinado e receita em paralelo
+                String sufixoBusca = enchantEfetivo > 0
+                        ? item.getId() + "_LEVEL" + enchantEfetivo
+                        : item.getId();
 
-                //outputs de testes
+                CompletableFuture<List<PriceEntry>> futurePrecos = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return apiService.buscarPrecos(sufixoBusca, tierEfetivo, enchantEfetivo, -1, cidades);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }, pool);
 
-                if (receita != null && !receita.getMateriais().isEmpty()) {
-                    List<String> idsMat = receita.getMateriais().stream()
-                            .map(ReceitaCraft.MaterialCraft::getUniqueName)
-                            .collect(Collectors.toList());
+                CompletableFuture<ReceitaCraft> futureReceita = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        String itemIdSemEnchant = itemIdApi.contains("@") ? itemIdApi.split("@")[0] : itemIdApi;
+                        return craftService.buscarReceita(itemIdSemEnchant);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }, pool);
 
+                CompletableFuture<Long> futureItemValue = CompletableFuture.supplyAsync(
+                        () -> ItemValues.getValor(itemIdApi), pool);
 
+                // aguarda as tres antes de continuar
+                precos    = futurePrecos.get();
+                receita   = futureReceita.get();
+                itemValue = futureItemValue.get();
 
-                    precosMateirais = new ArrayList<>();
-                    int enchantItem = (enchant == -1) ? 0 : enchant;
-                    List<String> cidadesSemBM = cidades.stream()
-                            .filter(c -> !c.equals("BlackMarket"))
-                            .collect(Collectors.toList());
+                if (receita == null || receita.getMateriais().isEmpty()) return null;
 
-                    for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
+                // etapa 2: cada material em paralelo
+                List<CompletableFuture<List<PriceEntry>>> futuresMateriais = new ArrayList<>();
+
+                for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
+                    futuresMateriais.add(CompletableFuture.supplyAsync(() -> {
                         try {
                             String idMat = mat.getUniqueName();
                             String[] partes = idMat.split("_", 2);
@@ -604,18 +634,29 @@ public class TelaRefino {
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
 
-                            if (enchantItem == 0) {
-                                precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM));
+                            if (enchantEfetivo == 0) {
+                                return apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM);
                             } else {
-
-                                String sufixoLevel = sufixo + "_LEVEL" + enchantItem;
-                                precosMateirais.addAll(apiService.buscarPrecos(sufixoLevel, tMat, enchantItem, -1, cidadesSemBM));
+                                String sufixoLevel = sufixo + "_LEVEL" + enchantEfetivo;
+                                return apiService.buscarPrecos(sufixoLevel, tMat, enchantEfetivo, -1, cidadesSemBM);
                             }
                         } catch (Exception ex) {
-
+                            return List.of();
                         }
-                    }
+                    }, pool));
                 }
+
+                // aguarda todos os materiais
+                CompletableFuture.allOf(
+                        futuresMateriais.toArray(new CompletableFuture[0])
+                ).get();
+
+                // agrega resultados
+                precosMateirais = new ArrayList<>();
+                for (CompletableFuture<List<PriceEntry>> f : futuresMateriais) {
+                    precosMateirais.addAll(f.get());
+                }
+
                 return null;
             }
 
@@ -629,14 +670,17 @@ public class TelaRefino {
                 labelItemValue.setText(itemValue > 0 ? String.format("%,d", itemValue) : "nao cadastrado");
                 progresso.setVisible(false);
                 labelStatus.setText("Dados atualizados.");
+                pool.shutdown();
             }
 
             @Override
             protected void failed() {
                 progresso.setVisible(false);
                 labelStatus.setText("Erro: " + getException().getMessage());
+                pool.shutdown();
             }
         };
+
         new Thread(tarefa, "thread-refino").start();
     }
 
@@ -1001,8 +1045,6 @@ public class TelaRefino {
 
 
     // utilitarios
-
-
     private double parseDoubleSafe(TextField campo, double padrao) {
         try {
             return Double.parseDouble(campo.getText().trim().replace(",", "."));

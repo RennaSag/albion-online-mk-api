@@ -18,6 +18,12 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+
+//imports pras threads de busca
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import com.albionmarket.service.CalculadoraService;
 
 import java.util.*;
@@ -666,40 +672,79 @@ public class TelaCraft {
         return scroll;
     }
 
-    // logica principal
+
+
+    // logica principal com busca por threads
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null && estadoSelecao.cidades != null && !estadoSelecao.cidades.isEmpty())
                 ? estadoSelecao.cidades
                 : BancoDeDadosCraft.CIDADES.stream().map(CidadeInfo::getApiId).collect(Collectors.toList());
 
+        List<String> cidadesSemBM = cidades.stream()
+                .filter(c -> !c.equals("BlackMarket"))
+                .collect(Collectors.toList());
+
         progresso.setVisible(true);
-        labelStatus.setText("Buscando preços e receita...");
+        labelStatus.setText("Buscando precos e receita...");
         tabelaPrecos.setItems(FXCollections.emptyObservableList());
         tabelaReceita.setItems(FXCollections.emptyObservableList());
         if (tabelaMateriais != null) tabelaMateriais.setItems(FXCollections.emptyObservableList());
 
+        int tierEfetivo   = (tier   == -1) ? 4 : tier;
+        int enchantEfetivo = (enchant == -1) ? 0 : enchant;
+
+        // pool dedicado pra essa busca — descartado ao terminar
+        ExecutorService pool = Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+
         Task<Void> tarefa = new Task<>() {
-            private List<PriceEntry> precos;
-            private ReceitaCraft receita;
-            private List<PriceEntry> precosMateirais;
-            private PriceEntry precoDiarioVazioEntry;
-            private PriceEntry precoDiarioCheioEntry;
-            private List<PriceEntry> precosDiarioCheioTodos;
+
+            // resultados coletados entre as etapas
+            private List<PriceEntry>  precos;
+            private ReceitaCraft      receita;
+            private List<PriceEntry>  precosMateirais;
+            private PriceEntry        precoDiarioVazioEntry;
+            private PriceEntry        precoDiarioCheioEntry;
+            private List<PriceEntry>  precosDiarioCheioTodos;
 
             @Override
             protected Void call() throws Exception {
-                precos = apiService.buscarPrecos(item.getId(), (tier == -1) ? 4 : tier, (enchant == -1) ? 0 : enchant, -1, cidades);
-                receita = craftService.buscarReceita(itemIdCompleto);
-                itemValue = ItemValues.getValor(itemIdCompleto);
 
-                if (receita != null && !receita.getMateriais().isEmpty()) {
-                    precosMateirais = new ArrayList<>();
-                    int enchantItem = (enchant == -1) ? 0 : enchant;
-                    List<String> cidadesSemBM = cidades.stream()
-                            .filter(c -> !c.equals("BlackMarket"))
-                            .collect(Collectors.toList());
+                // etapa 1: precos do item e receita em paralelo — nenhum depende do outro
+                CompletableFuture<List<PriceEntry>> futurePrecos = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return apiService.buscarPrecos(item.getId(), tierEfetivo, enchantEfetivo, -1, cidades);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }, pool);
 
-                    for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
+                CompletableFuture<ReceitaCraft> futureReceita = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return craftService.buscarReceita(itemIdCompleto);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }, pool);
+
+                CompletableFuture<Long> futureItemValue = CompletableFuture.supplyAsync(
+                        () -> ItemValues.getValor(itemIdCompleto), pool);
+
+                // aguarda precos e receita antes de continuar
+                precos  = futurePrecos.get();
+                receita = futureReceita.get();
+                itemValue = futureItemValue.get();
+
+                if (receita == null || receita.getMateriais().isEmpty()) return null;
+
+                // etapa 2: cada material e os diarios em paralelo
+                List<CompletableFuture<List<PriceEntry>>> futuresMateriais = new ArrayList<>();
+
+                for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
+                    futuresMateriais.add(CompletableFuture.supplyAsync(() -> {
                         try {
                             String idMat = mat.getUniqueName();
                             String[] partes = idMat.split("_", 2);
@@ -707,60 +752,76 @@ public class TelaCraft {
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
 
-                            if (mat.isArtefato() || enchantItem == 0) {
-                                precosMateirais.addAll(apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM));
+                            if (mat.isArtefato() || enchantEfetivo == 0) {
+                                return apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM);
                             } else {
-                                String sufixoLevel = sufixo + "_LEVEL" + enchantItem;
-                                precosMateirais.addAll(apiService.buscarPrecos(sufixoLevel, tMat, enchantItem, -1, cidadesSemBM));
+                                String sufixoLevel = sufixo + "_LEVEL" + enchantEfetivo;
+                                return apiService.buscarPrecos(sufixoLevel, tMat, enchantEfetivo, -1, cidadesSemBM);
                             }
                         } catch (Exception ex) {
-                            // ignora material com erro
+                            return List.of(); // ignora material com erro
                         }
-                    }
+                    }, pool));
+                }
 
-                    // busca precos dos diarios automaticamente
-                    int tierItem = (tier == -1) ? 4 : tier;
-                    String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
-                    if (sufixoDiario != null && tierItem >= 2) {
+                // diarios em paralelo com os materiais
+                String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+                CompletableFuture<Void> futureDiarios = CompletableFuture.completedFuture(null);
+
+                if (sufixoDiario != null && tierEfetivo >= 2) {
+                    futureDiarios = CompletableFuture.runAsync(() -> {
                         try {
-                            String idVazio = "T" + tierItem + "_" + sufixoDiario + "_EMPTY";
-                            String idCheio = "T" + tierItem + "_" + sufixoDiario + "_FULL";
-                            List<String> cidadesSemBMDiario = cidades.stream()
-                                    .filter(c -> !c.equals("BlackMarket"))
-                                    .collect(Collectors.toList());
-
-
-                            //diarios so tem qualidade Normal(1), passa sufixo sem tier pra buscarPrecos montar correto
                             String sufixoDiarioVazio = sufixoDiario + "_EMPTY";
                             String sufixoDiarioCheio = sufixoDiario + "_FULL";
-                            List<PriceEntry> precosDiarioVazio = apiService.buscarPrecos(sufixoDiarioVazio, tierItem, 0, 1, cidadesSemBMDiario);
-                            List<PriceEntry> precosDiarioCheio = apiService.buscarPrecos(sufixoDiarioCheio, tierItem, 0, 1, cidadesSemBMDiario);
 
+                            CompletableFuture<List<PriceEntry>> fVazio = CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return apiService.buscarPrecos(sufixoDiarioVazio, tierEfetivo, 0, 1, cidadesSemBM);
+                                } catch (Exception ex) { return List.of(); }
+                            }, pool);
 
-                            precosDiarioCheioTodos = precosDiarioCheio;
-                            precoDiarioVazioEntry = precosDiarioVazio.stream()
+                            CompletableFuture<List<PriceEntry>> fCheio = CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return apiService.buscarPrecos(sufixoDiarioCheio, tierEfetivo, 0, 1, cidadesSemBM);
+                                } catch (Exception ex) { return List.of(); }
+                            }, pool);
+
+                            List<PriceEntry> listaVazio = fVazio.get();
+                            List<PriceEntry> listaCheio = fCheio.get();
+
+                            precosDiarioCheioTodos = listaCheio;
+                            precoDiarioVazioEntry = listaVazio.stream()
                                     .filter(p -> p.getSellMin() > 0)
                                     .min(java.util.Comparator.comparingLong(PriceEntry::getSellMin))
                                     .orElse(null);
-                            precoDiarioCheioEntry = precosDiarioCheio.stream()
+                            precoDiarioCheioEntry = listaCheio.stream()
                                     .filter(p -> p.getBuyMax() > 0)
                                     .max(java.util.Comparator.comparingLong(PriceEntry::getBuyMax))
                                     .orElse(null);
 
-
                         } catch (Exception ex) {
                             // ignora erro de diario
-
                         }
-                    }
+                    }, pool);
                 }
+
+                // aguarda todos os materiais e os diarios
+                CompletableFuture.allOf(
+                        futuresMateriais.toArray(new CompletableFuture[0])
+                ).get();
+                futureDiarios.get();
+
+                // agrega resultados dos materiais
+                precosMateirais = new ArrayList<>();
+                for (CompletableFuture<List<PriceEntry>> f : futuresMateriais) {
+                    precosMateirais.addAll(f.get());
+                }
+
                 return null;
             }
 
-
             @Override
             protected void succeeded() {
-
                 receitaAtual = receita;
 
                 precoDiarioVazioApi = precoDiarioVazioEntry != null ? (double) precoDiarioVazioEntry.getSellMin() : 0;
@@ -773,14 +834,17 @@ public class TelaCraft {
                 labelItemValue.setText(itemValue > 0 ? String.format("%,d", itemValue) : "nao cadastrado");
                 progresso.setVisible(false);
                 labelStatus.setText("Dados atualizados.");
+                pool.shutdown();
             }
 
             @Override
             protected void failed() {
                 progresso.setVisible(false);
                 labelStatus.setText("Erro: " + getException().getMessage());
+                pool.shutdown();
             }
         };
+
         new Thread(tarefa, "thread-craft").start();
     }
 
@@ -951,7 +1015,7 @@ public class TelaCraft {
             String idVazio = "T" + tierItem + "_" + sufixoDiario + "_EMPTY";
             String idCheio = "T" + tierItem + "_" + sufixoDiario + "_FULL";
             String iconeVazio = "https://render.albiononline.com/v1/item/" + idVazio + ".png";
-            String iconeCheio = "https://render.albiononline.com/v1/item/" + idCheio + ".png";
+            //String iconeCheio = "https://render.albiononline.com/v1/item/" + idCheio + ".png";
 
             String precoVazioStr = diarioVazio != null ? FormatadorUtil.formatarPreco(diarioVazio.getSellMin()) : "-";
             String cidadeVazio = diarioVazio != null ? diarioVazio.getCidade() : "-";
