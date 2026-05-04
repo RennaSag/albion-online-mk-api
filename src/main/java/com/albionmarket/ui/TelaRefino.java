@@ -239,7 +239,7 @@ public class TelaRefino {
         painel.getChildren().addAll(
                 label("Quantidade a refinar"), campoQuantidade,
                 label("Taxa de retorno (%)"), campoRetorno,
-                label("Taxa da barraca (%)"), campoSinergiaBarraca
+                label("Taxa da barraca"), campoSinergiaBarraca
         );
 
         painel.getChildren().add(separador());
@@ -589,7 +589,7 @@ public class TelaRefino {
                             .collect(Collectors.toList());
 
 
-                    precosMateirais = new ArrayList<>();
+
                     precosMateirais = new ArrayList<>();
                     int enchantItem = (enchant == -1) ? 0 : enchant;
                     List<String> cidadesSemBM = cidades.stream()
@@ -730,7 +730,7 @@ public class TelaRefino {
                     .orElse(idMat);
 
             String nomeExibir = (eAtual > 0 && !ehRetorno) ? nomeMat + " ." + eAtual : nomeMat;
-            String tipo = ehRetorno ? "Retorno" : "Bruto";
+            String tipo = ehRetorno ? "Retorno" : ehRefinado ? "Refinado" : "Bruto";
 
             String chaveCompra = (eAtual > 0)
                     ? idMat + "_LEVEL" + eAtual + "@" + eAtual
@@ -797,7 +797,7 @@ public class TelaRefino {
                     .orElse(idMat);
             String nomeExibir = (eAtual > 0 && !ehRetorno) ? nomeMat + " ." + eAtual : nomeMat;
 
-            String tipo = ehRetorno ? "Retorno" : "Bruto";
+            String tipo = ehRetorno ? "Retorno" : ehRefinado ? "Refinado" : "Bruto";
 
             String chaveCompra = (eAtual > 0)
                     ? idMat + "_LEVEL" + eAtual + "@" + eAtual
@@ -954,7 +954,7 @@ public class TelaRefino {
         List<String[]> metricas = new ArrayList<>(Arrays.asList(
                 new String[]{"Qtd a refinar", FormatadorUtil.fmt(qtdProduzir) + " un"},
                 new String[]{"Qtd final refinada", String.format("%.2f un", qtdFinal)},
-                new String[]{"Taxa de retorno", String.format("%.1f%%", taxaRetorno * 100)},
+                //new String[]{"Taxa de retorno", String.format("%.1f%%", taxaRetorno * 100)},
                 new String[]{"Melhor preço de venda", FormatadorUtil.fmtSilver(melhorVenda)},
                 new String[]{"Local de venda", nomeCidadeVenda},
                 new String[]{"Custo dos materiais", FormatadorUtil.fmtSilver(custoMatComTaxa)},
@@ -966,9 +966,9 @@ public class TelaRefino {
                 if ("Bruto".equals(lm.tipo)) {
                     metricas.add(new String[]{"Qtd Bruto", String.valueOf(lm.qtdNecessaria * (int) qtdProduzir)});
                     metricas.add(new String[]{"Local Bruto", cidadeParaNome.apply(lm.cidade)});
-                } else if ("Retorno".equals(lm.tipo)) {
-                    metricas.add(new String[]{"Qtd Refinado", String.valueOf(lm.qtdNecessaria * (int) qtdProduzir)});
-                    metricas.add(new String[]{"Local Refinado", cidadeParaNome.apply(lm.cidade)});
+                } else if ("Refinado".equals(lm.tipo)) {
+                    metricas.add(new String[]{"Qtd Refinado tier abaixo", String.valueOf(lm.qtdNecessaria * (int) qtdProduzir)});
+                    metricas.add(new String[]{"Local Refinado tier abaixo", cidadeParaNome.apply(lm.cidade)});
                 }
             }
         }
@@ -1178,7 +1178,7 @@ public class TelaRefino {
             sb.append("  \"calculadora\": {\n");
             sb.append("    \"Quantidade a craftar\": \"").append(FormatadorUtil.fmt(qtdInicial)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinal)).append("\",\n");
-            sb.append("    \"Melhor preco de venda\": \"").append(FormatadorUtil.fmtSilver(receitaAtual2)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(FormatadorUtil.fmtSilver(melhorV)).append("\",\n");
             sb.append("    \"Local de venda\": \"").append(nomeCidadeVenda).append("\",\n");
             sb.append("    \"Custo dos materiais\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
             sb.append("    \"Local de compra dos materiais\": ").append(locaisJson).append(",\n");

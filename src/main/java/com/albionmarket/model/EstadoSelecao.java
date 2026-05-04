@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Mantém o estado dos filtros das telas de seleção
  * (craft e refino) para restaurar ao clicar Voltar.
- * Substitui EstadoCraftSelecao e EstadoRefinoSelecao que eram idênticas.
+ * Substitui EstadoCraftSelecao e EstadoRefinoSelecao que eram idênticas, então agora o codigo ficou menor.
  */
 public class EstadoSelecao {
 

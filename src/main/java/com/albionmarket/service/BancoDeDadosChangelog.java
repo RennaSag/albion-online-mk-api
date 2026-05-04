@@ -5,7 +5,6 @@ import com.albionmarket.model.VersaoInfo.Mudanca;
 import com.albionmarket.model.VersaoInfo.TipoMudanca;
 
 
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,24 +18,25 @@ import java.util.List;
 public class BancoDeDadosChangelog {
 
 
-    public static final String APP_VERSAO_ATUAL = "1.1.0";
+    public static final String APP_VERSAO_ATUAL = "1.1.1";
 
 
     public static final List<VersaoInfo> VERSOES = Arrays.asList(
 
 
             new VersaoInfo(
-                    "1.1.0",
-                    "02 de Maio, 2026",
-                    "Otimizações e correção de bugs",
+                    "1.1.1",
+                    "04 de Maio, 2026",
+                    "Adição dos diários de ferramenteiro",
                     Arrays.asList(
-                            new Mudanca(TipoMudanca.CORRECAO, "Nessa nova versão, houve correção de alguns bugs com o cálculo dos diários, que antes estava com alguns problemas."),
-                            new Mudanca(TipoMudanca.CORRECAO, "Por conta de um problema no servidor, alguns usuários não estavam recebendo a key de ativação no momento da compra, e isso foi corrigido."),
-                            new Mudanca(TipoMudanca.NOVIDADE, "Nas versões futuras, haverá melhorias no sistema de busca de dados pela api, com o proposito de deixar as requisições mais rápidas."),
-                            new Mudanca(TipoMudanca.REMOCAO, "Preste atenção no craft com diários! O campo 'Lucro' na tabela de craft não está incluindo o lucro com a venda dos diários de craft."),
-                            new Mudanca(TipoMudanca.REMOCAO, "Se você está tendo ou tiver qualquer problema com o aplicativo, entre em contato comigo pelo email de suporte: rennasagcontato@gmail.com. Um forte abraço"),
-                            new Mudanca(TipoMudanca.CORRECAO, "Corrigido cálculo de refino, eu tinha mexido no código e ficou errado, mas agora ta resolvido"),
-                            new Mudanca(TipoMudanca.CORRECAO, "Peço desculpas se ao utilizar o aplicativo você se deparar com muitos pedidos de atualizações contantemente. Como eu havia comentando, estou trabalhando muito no projeto e essas atualizações são importantes pra refirnar o software, corrigir bugs e deixar ele melhor. Agradeço a paciencia de todos")
+
+                            new Mudanca(TipoMudanca.NOVIDADE, "Um bom dia a todos"),
+                            new Mudanca(TipoMudanca.NOVIDADE, "Nessa nova versão, foi adicionado os diários de trabalhadores ferramenteiros, que até o momento estava faltando"),
+                            new Mudanca(TipoMudanca.MELHORIA, "Todos os diários pra outros itens como armas, armaduras e etc também já estão implementados"),
+                            new Mudanca(TipoMudanca.CORRECAO, "Também foram feitas algumas pequenas correções visuais e melhorias na parte de refino e no salvamento das operações ativas"),
+                            new Mudanca(TipoMudanca.NOVIDADE, "Espero que você esteja gostando do app e que lhe seja útil"),
+                            new Mudanca(TipoMudanca.REMOCAO, "Como sempre, se estiver tendo qualquer problema com o programa, tenha notado um bug ou queira sugerir melhorias, entre em contato com o email de suporte: rennasagcontato@gmail.com")
+
                     )
             )
 

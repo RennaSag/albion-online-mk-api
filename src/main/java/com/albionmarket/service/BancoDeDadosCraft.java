@@ -801,6 +801,54 @@ public class BancoDeDadosCraft {
             return "JOURNAL_WARRIOR";
         }
 
+
+        // diarios de ferramenteiro
+        if (
+                        base.startsWith("2H_TOOL_AXE") ||
+                        base.startsWith("2H_TOOL_AXE_AVALON") ||
+                        base.startsWith("H_TOOL_HAMMER") ||
+                        base.startsWith("H_TOOL_HAMMER_AVALON") ||
+                        base.startsWith("2H_TOOL_PICK") ||
+                        base.startsWith("2H_TOOL_PICK_AVALON") ||
+                        base.startsWith("2H_TOOL_KNIFE") ||
+                        base.startsWith("2H_TOOL_KNIFE_AVALON") ||
+                        base.startsWith("2H_TOOL_SICKLE") ||
+                        base.startsWith("2H_TOOL_SICKLE_AVALON") ||
+                        base.startsWith("2H_TOOL_FISHINGROD") ||
+                        base.startsWith("2H_TOOL_FISHINGROD_AVALON") ||
+
+                        base.startsWith("HEAD_GATHERER_WOOD") ||
+                        base.startsWith("ARMOR_GATHERER_WOOD") ||
+                        base.startsWith("SHOES_GATHERER_WOOD") ||
+                        base.startsWith("BACKPACK_GATHERER_WOOD") ||
+
+                        base.startsWith("BACKPACK_GATHERER_ROCK") ||
+                        base.startsWith("HEAD_GATHERER_ROCK") ||
+                        base.startsWith("ARMOR_GATHERER_ROCK") ||
+                        base.startsWith("SHOES_GATHERER_ROCK") ||
+
+                        base.startsWith("BACKPACK_GATHERER_ORE") ||
+                        base.startsWith("HEAD_GATHERER_ORE") ||
+                        base.startsWith("ARMOR_GATHERER_ORE") ||
+                        base.startsWith("SHOES_GATHERER_ORE") ||
+
+                        base.startsWith("BACKPACK_GATHERER_HIDE") ||
+                        base.startsWith("HEAD_GATHERER_HIDE") ||
+                        base.startsWith("ARMOR_GATHERER_HIDE") ||
+                        base.startsWith("SHOES_GATHERER_HIDE") ||
+
+                        base.startsWith("BACKPACK_GATHERER_FIBER") ||
+                        base.startsWith("HEAD_GATHERER_FIBER") ||
+                        base.startsWith("ARMOR_GATHERER_FIBER") ||
+                        base.startsWith("SHOES_GATHERER_FIBER") ||
+
+                        base.startsWith("BACKPACK_GATHERER_FISH") ||
+                        base.startsWith("HEAD_GATHERER_FISH") ||
+                        base.startsWith("ARMOR_GATHERER_FISH") ||
+                        base.startsWith("SHOES_GATHERER_FISH")) {
+            return "JOURNAL_TOOLMAKER";
+        }
+
         return null;
     }
 
@@ -814,6 +862,7 @@ public class BancoDeDadosCraft {
             case "JOURNAL_WARRIOR" -> "Ferreiro";
             case "JOURNAL_MAGE" -> "Imbuídor";
             case "JOURNAL_HUNTER" -> "Flexeiro";
+            case "JOURNAL_TOOLMAKER" -> "Ferramenteiro";
             default -> "Trabalhador";
         };
     }

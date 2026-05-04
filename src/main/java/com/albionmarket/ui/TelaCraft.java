@@ -42,7 +42,7 @@ public class TelaCraft {
     private final CraftService craftService = new CraftService();
 
     // controles da lateral
-    private final List<CheckBox> checksCidades = new ArrayList<>();
+    // private final List<CheckBox> checksCidades = new ArrayList<>();
     private Label labelStatus;
     private ProgressIndicator progresso;
 
@@ -142,7 +142,7 @@ public class TelaCraft {
             sb.append("  \"calculadora\": {\n");
             sb.append("    \"Quantidade a craftar\": \"").append(FormatadorUtil.fmt(qtdInicial)).append(" un\",\n");
             sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinal)).append("\",\n");
-            sb.append("    \"Melhor preco de venda\": \"").append(FormatadorUtil.fmtSilver(receitaAtual2)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(FormatadorUtil.fmtSilver(melhorV)).append("\",\n");
             sb.append("    \"Local de venda\": \"").append(nomeCidadeVenda).append("\",\n");
             sb.append("    \"Custo dos materiais\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
             sb.append("    \"Local de compra dos materiais\": ").append(locaisJson).append(",\n");
@@ -198,7 +198,7 @@ public class TelaCraft {
     }
 
 
-    // modelo da tabela de cálculo
+    /* modelo da tabela de cálculo
     public static class LinhaCalculo {
         public final String nomeColuna, valor;
 
@@ -206,7 +206,7 @@ public class TelaCraft {
             this.nomeColuna = nomeColuna;
             this.valor = valor;
         }
-    }
+    }*/
 
     public TelaCraft(Stage palco, ItemDefinition item, int tier, int enchant) {
         this(palco, item, tier, enchant, null);
@@ -313,14 +313,13 @@ public class TelaCraft {
         painel.getChildren().addAll(
                 label("Quantidade a craftar"), campoQuantidade,
                 label("Taxa de retorno (%)"), campoRetorno,
-                label("Taxa da barraca (%)"), campoSinergiaBarraca
+                label("Taxa da barraca"), campoSinergiaBarraca
         );
 
 
         painel.getChildren().add(separador());
 
         // switch inserir preços manualmente
-
         javafx.scene.canvas.Canvas canvasSwitch = new javafx.scene.canvas.Canvas(44, 22);
         final boolean[] estadoSwitch = {false};
 
@@ -961,12 +960,12 @@ public class TelaCraft {
                     .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String dataVazio = diarioVazio != null ? FormatadorUtil.formatarData(diarioVazio.getSellDate()) : "-";
 
-            String precoCheioStr = diarioCheio != null ? FormatadorUtil.formatarPreco(diarioCheio.getBuyMax()) : "-";
+            //String precoCheioStr = diarioCheio != null ? FormatadorUtil.formatarPreco(diarioCheio.getBuyMax()) : "-";
             String cidadeCheio = diarioCheio != null ? diarioCheio.getCidade() : "-";
-            String corCheio = diarioCheio != null
-                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeCheio))
-                    .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
-            String dataCheio = diarioCheio != null ? FormatadorUtil.formatarData(diarioCheio.getBuyMax() > 0 ? diarioCheio.getBuyDate() : "-") : "-";
+            //String corCheio = diarioCheio != null
+               //     ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeCheio))
+              //      .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
+            //String dataCheio = diarioCheio != null ? FormatadorUtil.formatarData(diarioCheio.getBuyMax() > 0 ? diarioCheio.getBuyDate() : "-") : "-";
 
             String sufixoDiarioNome = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
             String nomeDiario = BancoDeDadosCraft.getNomeDiario(sufixoDiarioNome);
@@ -1524,9 +1523,30 @@ public class TelaCraft {
                     .findFirst()
                     .orElse(lm.cidade != null ? lm.cidade : "-");
 
-            int qtdReal = "Diario".equals(lm.tipo)
-                    ? lm.qtdNecessaria
-                    : lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1);
+            int qtdReal;
+            if ("Diario".equals(lm.tipo)) {
+                // replica a mesma lógica da cellFactory da coluna Qtd necessaria
+                double[] fameMultiplierPorTier = {0, 0, 1.5, 7.5, 22.5, 90.0, 270.0, 645.0, 1395.0};
+                double[] famaNecessariaPorTier = {0, 0, 0, 0, 3600, 7200, 14400, 28380, 58590};
+                int tierItem = (tier == -1) ? 4 : tier;
+                int enchantItem = (enchant == -1) ? 0 : enchant;
+                double fameMultiplier = (tierItem >= 2 && tierItem <= 8) ? fameMultiplierPorTier[tierItem] : 0;
+                double famaNecessaria = (tierItem >= 2 && tierItem <= 8) ? famaNecessariaPorTier[tierItem] : 0;
+                int qtdMatReceita = receitaAtual == null ? 0 : receitaAtual.getMateriais().stream()
+                        .filter(m -> !m.isArtefato()).mapToInt(ReceitaCraft.MaterialCraft::getCount).sum();
+                double qtdP = parseDoubleSafe(campoQuantidade, 1.0);
+                double taxaR = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+                double qtdFinal = qtdP / (1.0 - taxaR);
+                double famaPorCraft = qtdMatReceita * fameMultiplier * Math.pow(2, enchantItem);
+                qtdReal = (famaNecessaria > 0 && famaPorCraft > 0)
+                        ? (int) Math.ceil((famaPorCraft * qtdFinal) / famaNecessaria) : 1;
+            } else if ("Artefato".equals(lm.tipo)) {
+                double qtdP = parseDoubleSafe(campoQuantidade, 1.0);
+                double taxaR = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
+                qtdReal = (int) Math.ceil(qtdP / (1.0 - taxaR));
+            } else {
+                qtdReal = lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1);
+            }
 
             sb.append("{\"material\": \"")
                     .append(lm.nome.replace("\"", "\\\""))
