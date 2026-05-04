@@ -89,7 +89,7 @@ async function marcarComoColetado(itemIds) {
 async function limparHistoricoAntigo() {
     const resultado = await query(
         `DELETE FROM precos_historico
-         WHERE coletado_em < NOW() - INTERVAL '3 days'`
+         WHERE coletado_em < NOW() - INTERVAL '7 days'`
     );
     if (resultado.rowCount > 0) {
         console.log('historico antigo deletado:', resultado.rowCount, 'registros');
