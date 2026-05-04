@@ -2,14 +2,8 @@ const { query } = require('./db');
 
 const CIDADES = 'Caerleon,Bridgewatch,FortSterling,Lymhurst,Martlock,Thetford,BlackMarket,Brecilien';
 const ALBION_API = 'https://west.albion-online-data.com/api/v2/stats/prices';
-
-
-//lotes, tempos e busca
 const TAMANHO_LOTE = 40;
-
-//busca de 5 lotes ao mesmo tempo
 const LOTES_PARALELOS = 5;
-
 const DELAY_ENTRE_LOTES_MS = 5000;
 
 // pega os proximos itens sem coleta ou com coleta mais antiga
@@ -23,33 +17,7 @@ async function buscarProximoLote() {
     return resultado.rows.map(r => r.item_id);
 }
 
-// busca precos na api publica do albion data, versao da funcao pra multiplos lotes
-async function cicloColeta() {
-    try {
-        const itemIds = await buscarProximoLote(TAMANHO_LOTE * LOTES_PARALELOS);
-        if (itemIds.length === 0) {
-            console.log('catalogo vazio, aguardando...');
-            return;
-        }
-
-        // divide em lotes de 40 e busca todos em paralelo
-        const lotes = [];
-        for (let i = 0; i < itemIds.length; i += TAMANHO_LOTE) {
-            lotes.push(itemIds.slice(i, i + TAMANHO_LOTE));
-        }
-
-        const resultados = await Promise.all(lotes.map(buscarPrecos));
-        const todosPrecos = resultados.flat();
-
-        await salvarPrecos(todosPrecos);
-        await marcarComoColetado(itemIds);
-
-        console.log('lote coletado:', itemIds.length, 'itens |', todosPrecos.length, 'precos salvos');
-    } catch (err) {
-        console.error('erro no ciclo de coleta:', err.message);
-    }
-}
-/*versao da funcao antiga pra um lote por vez
+// busca precos na api publica do albion data
 async function buscarPrecos(itemIds) {
     const ids = itemIds.join(',');
     const url = `${ALBION_API}/${ids}.json?locations=${CIDADES}&qualities=1,2,3,4,5`;
@@ -63,7 +31,7 @@ async function buscarPrecos(itemIds) {
     }
 
     return await resposta.json();
-}*/
+}
 
 // salva preco atual (upsert) e historico (so se o preco mudou)
 async function salvarPrecos(precos) {
@@ -118,11 +86,11 @@ async function marcarComoColetado(itemIds) {
     );
 }
 
-// deleta historico com mais de 7 dias
+// deleta historico com mais de 3 dias
 async function limparHistoricoAntigo() {
     const resultado = await query(
         `DELETE FROM precos_historico
-         WHERE coletado_em < NOW() - INTERVAL '7 days'`
+         WHERE coletado_em < NOW() - INTERVAL '3 days'`
     );
     if (resultado.rowCount > 0) {
         console.log('historico antigo deletado:', resultado.rowCount, 'registros');
