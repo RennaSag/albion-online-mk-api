@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 
-const poolAlbion = new Pool({
+const pool = new Pool({
     connectionString: process.env.ALBION_DATABASE_URL,
     ssl: { rejectUnauthorized: false },
     max: 5,
@@ -8,8 +8,8 @@ const poolAlbion = new Pool({
     connectionTimeoutMillis: 5000
 });
 
-async function queryAlbion(text, params) {
-    const client = await poolAlbion.connect();
+async function query(text, params) {
+    const client = await pool.connect();
     try {
         return await client.query(text, params);
     } finally {
@@ -17,4 +17,4 @@ async function queryAlbion(text, params) {
     }
 }
 
-module.exports = { poolAlbion, queryAlbion };
+module.exports = { query };
