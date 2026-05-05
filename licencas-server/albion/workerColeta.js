@@ -7,17 +7,18 @@ const LOTES_PARALELOS = 5;
 const DELAY_ENTRE_LOTES_MS = 5000;
 
 // pega os proximos itens sem coleta ou com coleta mais antiga
-async function buscarProximoLote() {
+// limite = TAMANHO_LOTE * LOTES_PARALELOS = 200 itens por ciclo
+async function buscarProximoLote(limite) {
     const resultado = await query(
         `SELECT item_id FROM itens_catalogo
          ORDER BY ultima_coleta NULLS FIRST
          LIMIT $1`,
-        [TAMANHO_LOTE]
+        [limite]
     );
     return resultado.rows.map(r => r.item_id);
 }
 
-// busca precos na api publica do albion data
+// busca precos de um lote de ate 40 itens na api do albion data
 async function buscarPrecos(itemIds) {
     const ids = itemIds.join(',');
     const url = `${ALBION_API}/${ids}.json?locations=${CIDADES}&qualities=1,2,3,4,5`;
@@ -97,20 +98,28 @@ async function limparHistoricoAntigo() {
     }
 }
 
-// ciclo principal do worker
+// ciclo principal do worker — busca 5 lotes de 40 em paralelo = 200 itens por ciclo
 async function cicloColeta() {
     try {
-        const itemIds = await buscarProximoLote();
+        const itemIds = await buscarProximoLote(TAMANHO_LOTE * LOTES_PARALELOS);
         if (itemIds.length === 0) {
             console.log('catalogo vazio, aguardando...');
             return;
         }
 
-        const precos = await buscarPrecos(itemIds);
-        await salvarPrecos(precos);
+        // divide em lotes de 40 e busca todos em paralelo
+        const lotes = [];
+        for (let i = 0; i < itemIds.length; i += TAMANHO_LOTE) {
+            lotes.push(itemIds.slice(i, i + TAMANHO_LOTE));
+        }
+
+        const resultados = await Promise.all(lotes.map(buscarPrecos));
+        const todosPrecos = resultados.flat();
+
+        await salvarPrecos(todosPrecos);
         await marcarComoColetado(itemIds);
 
-        console.log('lote coletado:', itemIds.length, 'itens |', precos.length, 'precos salvos');
+        console.log('lote coletado:', itemIds.length, 'itens |', todosPrecos.length, 'precos salvos');
     } catch (err) {
         console.error('erro no ciclo de coleta:', err.message);
     }
