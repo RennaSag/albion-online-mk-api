@@ -1,6 +1,7 @@
 package com.albionmarket.ui;
 
 import com.albionmarket.model.CidadeInfo;
+import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.service.BancoDeDadosItens;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -18,29 +19,31 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import com.albionmarket.model.ItemDefinition;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * tela de resultados de flip com paginacao e calculo de lucro por quantidade
  */
 public class TelaFlip {
 
-    private static final String API_BASE = "https://albion-licencas-api.onrender.com";
+    private static final String API_BASE = "https://west.albion-online-data.com/api/v2/stats/prices";
+    private static final String CIDADES_API = "Caerleon,Martlock,Bridgewatch,FortSterling,Lymhurst,Thetford";
+    private static final int POR_PAGINA = 10;
 
     private final Stage palco;
     private final int qualidade;
-    private final String tipoCompra;
-    private final String tipoVenda;
+    private final String tipoCompra; // "sell" ou "buy"
+    private final String tipoVenda;  // "sell" ou "buy"
     private final long lucroMinimo;
 
+    // lista completa calculada de oportunidades, paginada localmente
+    private List<LinhaFlip> todasLinhas = new ArrayList<>();
     private int paginaAtual = 1;
     private int totalPaginas = 1;
 
@@ -101,7 +104,7 @@ public class TelaFlip {
         palco.setMinWidth(1280);
         palco.setMinHeight(720);
 
-        buscarPagina(1);
+        buscarOportunidades();
     }
 
     private HBox criarCabecalho() {
@@ -154,25 +157,21 @@ public class TelaFlip {
         colItem.setPrefWidth(200);
         colItem.setCellValueFactory(r -> {
             String idCompleto = r.getValue().itemId;
-            // extrai tier do prefixo T5_
             String tierStr = "";
             if (idCompleto.length() > 1 && idCompleto.charAt(0) == 'T'
                     && Character.isDigit(idCompleto.charAt(1))) {
                 tierStr = String.valueOf(idCompleto.charAt(1));
             }
-            // extrai encantamento do sufixo @2
             String enchStr = "";
             if (idCompleto.contains("@")) {
                 enchStr = idCompleto.split("@")[1];
             }
-            // remove prefixo T5_ e sufixo @2 pra buscar o nome
             String sufixo = idCompleto.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");
             String nome = BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixo))
                     .map(ItemDefinition::getNome)
                     .findFirst()
                     .orElse(sufixo);
-            // monta exibicao: "Casaco de Assassino 5.2" ou "Casaco de Assassino 5" se sem encant
             String exibir = nome + " " + tierStr;
             if (!enchStr.isEmpty()) exibir += "." + enchStr;
             return new javafx.beans.property.SimpleStringProperty(exibir);
@@ -192,10 +191,7 @@ public class TelaFlip {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) {
-                    setGraphic(null);
-                    return;
-                }
+                if (empty || v == null) { setGraphic(null); return; }
                 String cor = BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getNome().equals(v) || c.getApiId().equals(v))
                         .map(CidadeInfo::getCor).findFirst().orElse("#888");
@@ -229,11 +225,8 @@ public class TelaFlip {
             @Override
             protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) {
-                    setGraphic(null);
-                    return;
-                }
-                String cor = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
+                if (empty || v == null) { setGraphic(null); return; }
+                String cor = BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getNome().equals(v) || c.getApiId().equals(v))
                         .map(CidadeInfo::getCor).findFirst().orElse("#888");
                 Circle ponto = new Circle(5, Color.web(cor));
@@ -316,7 +309,6 @@ public class TelaFlip {
                 colItem, colQual, colCompra, colPrecoCompra,
                 colVenda, colPrecoVenda, colLucro, colPct, colQtd, colTotal);
 
-        // botao salvar operacao
         Button btnSalvar = new Button("Salvar Operacao");
         btnSalvar.setStyle("-fx-background-color: #3dba6e; -fx-text-fill: white; "
                 + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 20;");
@@ -342,16 +334,16 @@ public class TelaFlip {
         btnAnterior.setStyle("-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
                 + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 16;");
         btnAnterior.setDisable(true);
-        btnAnterior.setOnAction(e -> buscarPagina(paginaAtual - 1));
+        btnAnterior.setOnAction(e -> exibirPagina(paginaAtual - 1));
 
         labelPagina = new Label("Pagina 1 de 1");
         labelPagina.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12px;");
 
-        btnProxima = new Button("Proxima");
+        btnProxima = new Button("Proxima >");
         btnProxima.setStyle("-fx-background-color: #5a8dee; -fx-text-fill: white; "
                 + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 16;");
         btnProxima.setDisable(true);
-        btnProxima.setOnAction(e -> buscarPagina(paginaAtual + 1));
+        btnProxima.setOnAction(e -> exibirPagina(paginaAtual + 1));
 
         HBox rodape = new HBox(16, btnAnterior, labelPagina, btnProxima);
         rodape.setAlignment(Pos.CENTER);
@@ -360,66 +352,152 @@ public class TelaFlip {
         return rodape;
     }
 
-    private void buscarPagina(int pagina) {
+    /**
+     * busca todos os itens do BancoDeDadosItens na API publica do Albion,
+     * calcula as oportunidades de arbitragem em memoria e popula todasLinhas.
+     * a paginacao e feita localmente por exibirPagina().
+     */
+    private void buscarOportunidades() {
         progresso.setVisible(true);
-        labelStatus.setText("Buscando pagina " + pagina + "...");
+        labelStatus.setText("Buscando precos...");
         tabelaResultados.setItems(FXCollections.emptyObservableList());
         btnAnterior.setDisable(true);
         btnProxima.setDisable(true);
 
-        Task<String> tarefa = new Task<>() {
+        Task<List<LinhaFlip>> tarefa = new Task<>() {
             @Override
-            protected String call() throws Exception {
-                StringBuilder url = new StringBuilder(API_BASE + "/api/v2/arbitragem?");
-                url.append("tipo_compra=").append(tipoCompra);
-                url.append("&tipo_venda=").append(tipoVenda);
-                url.append("&lucro_minimo=").append(lucroMinimo);
-                url.append("&pagina=").append(pagina);
-                if (qualidade > 0) url.append("&qualidade=").append(qualidade);
+            protected List<LinhaFlip> call() throws Exception {
 
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create(url.toString()))
-                        .timeout(Duration.ofSeconds(15))
-                        .GET().build();
+                // monta a lista de IDs de todos os itens do banco para tiers 4 a 8 e encants 0 a 3
+                List<String> ids = new ArrayList<>();
+                for (ItemDefinition item : BancoDeDadosItens.getTodosItens()) {
+                    for (int tier = 4; tier <= 8; tier++) {
+                        for (int enc = 0; enc <= 3; enc++) {
+                            ids.add(item.buildApiId(tier, enc));
+                        }
+                    }
+                }
 
-                HttpResponse<String> resp = cliente.send(req, HttpResponse.BodyHandlers.ofString());
-                if (resp.statusCode() != 200) throw new Exception("erro http: " + resp.statusCode());
-                return resp.body();
+                // a API aceita ate ~200 ids por requisicao — divide em lotes
+                int tamLote = 150;
+                List<JsonObject> todosRegistros = new ArrayList<>();
+
+                for (int i = 0; i < ids.size(); i += tamLote) {
+                    List<String> lote = ids.subList(i, Math.min(i + tamLote, ids.size()));
+                    String idsStr = String.join(",", lote);
+
+                    String qualidadeParam = qualidade > 0
+                            ? String.valueOf(qualidade)
+                            : "1,2,3,4,5";
+
+                    String url = API_BASE + "/" + idsStr
+                            + ".json?locations=" + CIDADES_API
+                            + "&qualities=" + qualidadeParam;
+
+                    HttpRequest req = HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .timeout(Duration.ofSeconds(20))
+                            .GET().build();
+
+                    HttpResponse<String> resp = cliente.send(req, HttpResponse.BodyHandlers.ofString());
+                    if (resp.statusCode() != 200)
+                        throw new Exception("erro http: " + resp.statusCode());
+
+                    JsonArray arr = JsonParser.parseString(resp.body()).getAsJsonArray();
+                    for (JsonElement el : arr) {
+                        todosRegistros.add(el.getAsJsonObject());
+                    }
+                }
+
+                // agrupa os registros por item_id + quality
+                // chave: "T5_MAIN_SWORD|1"  valor: lista de entradas de cidades
+                Map<String, List<JsonObject>> agrupado = new LinkedHashMap<>();
+                for (JsonObject o : todosRegistros) {
+                    String itemId = o.get("item_id").getAsString();
+                    int qual = o.get("quality").getAsInt();
+                    // ignora entradas sem preco nenhum
+                    long sellMin = o.get("sell_price_min").getAsLong();
+                    long buyMax  = o.get("buy_price_max").getAsLong();
+                    if (sellMin == 0 && buyMax == 0) continue;
+
+                    String chave = itemId + "|" + qual;
+                    agrupado.computeIfAbsent(chave, k -> new ArrayList<>()).add(o);
+                }
+
+                // para cada grupo, acha a melhor oportunidade de arbitragem
+                List<LinhaFlip> oportunidades = new ArrayList<>();
+
+                for (Map.Entry<String, List<JsonObject>> entry : agrupado.entrySet()) {
+                    List<JsonObject> entradas = entry.getValue();
+                    // precisa de pelo menos 2 cidades para ter arbitragem
+                    if (entradas.size() < 2) continue;
+
+                    String itemId = entradas.get(0).get("item_id").getAsString();
+                    int qual      = entradas.get(0).get("quality").getAsInt();
+
+                    // campo de compra: sell_price_min (compra direta) ou buy_price_max (pedido)
+                    String campoCompra = tipoCompra.equals("buy") ? "buy_price_max" : "sell_price_min";
+                    // campo de venda: sell_price_min (venda direta) ou buy_price_max (pedido)
+                    String campoVenda  = tipoVenda.equals("buy")  ? "buy_price_max" : "sell_price_min";
+
+                    // acha a cidade com menor preco de compra
+                    JsonObject melhorCompra = null;
+                    long menorPrecoCompra = Long.MAX_VALUE;
+                    for (JsonObject o : entradas) {
+                        long preco = o.get(campoCompra).getAsLong();
+                        if (preco > 0 && preco < menorPrecoCompra) {
+                            menorPrecoCompra = preco;
+                            melhorCompra = o;
+                        }
+                    }
+
+                    // acha a cidade com maior preco de venda (diferente da cidade de compra)
+                    JsonObject melhorVenda = null;
+                    long maiorPrecoVenda = Long.MIN_VALUE;
+                    for (JsonObject o : entradas) {
+                        // nao pode ser a mesma cidade de compra
+                        if (melhorCompra != null &&
+                                o.get("city").getAsString().equals(melhorCompra.get("city").getAsString())) continue;
+                        long preco = o.get(campoVenda).getAsLong();
+                        if (preco > 0 && preco > maiorPrecoVenda) {
+                            maiorPrecoVenda = preco;
+                            melhorVenda = o;
+                        }
+                    }
+
+                    if (melhorCompra == null || melhorVenda == null) continue;
+
+                    long lucroBruto = maiorPrecoVenda - menorPrecoCompra;
+                    if (lucroBruto < lucroMinimo) continue;
+
+                    double lucroPercentual = menorPrecoCompra > 0
+                            ? Math.round((lucroBruto * 10000.0) / menorPrecoCompra) / 100.0
+                            : 0;
+
+                    oportunidades.add(new LinhaFlip(
+                            itemId,
+                            qual,
+                            melhorCompra.get("city").getAsString(),
+                            menorPrecoCompra,
+                            melhorVenda.get("city").getAsString(),
+                            maiorPrecoVenda,
+                            lucroBruto,
+                            lucroPercentual
+                    ));
+                }
+
+                // ordena por maior lucro bruto
+                oportunidades.sort((a, b) -> Long.compare(b.lucroBruto, a.lucroBruto));
+                return oportunidades;
             }
         };
 
         tarefa.setOnSucceeded(e -> {
-            try {
-                JsonObject json = JsonParser.parseString(tarefa.getValue()).getAsJsonObject();
-                paginaAtual = json.get("pagina").getAsInt();
-                totalPaginas = json.get("total_paginas").getAsInt();
-                int total = json.get("total_resultados").getAsInt();
-                JsonArray arr = json.get("resultados").getAsJsonArray();
-
-                List<LinhaFlip> linhas = new ArrayList<>();
-                for (JsonElement el : arr) {
-                    JsonObject o = el.getAsJsonObject();
-                    linhas.add(new LinhaFlip(
-                            o.get("item_id").getAsString(),
-                            o.get("qualidade").getAsInt(),
-                            o.get("cidade_compra").getAsString(),
-                            o.get("preco_compra").getAsLong(),
-                            o.get("cidade_venda").getAsString(),
-                            o.get("preco_venda").getAsLong(),
-                            o.get("lucro_bruto").getAsLong(),
-                            o.get("lucro_percentual").getAsDouble()
-                    ));
-                }
-
-                tabelaResultados.setItems(FXCollections.observableArrayList(linhas));
-                labelStatus.setText(total + " oportunidades encontradas");
-                labelPagina.setText("Pagina " + paginaAtual + " de " + totalPaginas);
-                btnAnterior.setDisable(paginaAtual <= 1);
-                btnProxima.setDisable(paginaAtual >= totalPaginas);
-            } catch (Exception ex) {
-                labelStatus.setText("Erro ao processar resposta: " + ex.getMessage());
-            }
+            todasLinhas = tarefa.getValue();
+            totalPaginas = Math.max(1, (int) Math.ceil(todasLinhas.size() / (double) POR_PAGINA));
+            labelStatus.setText(todasLinhas.size() + " oportunidades encontradas");
             progresso.setVisible(false);
+            exibirPagina(1);
         });
 
         tarefa.setOnFailed(e -> {
@@ -428,6 +506,21 @@ public class TelaFlip {
         });
 
         new Thread(tarefa, "thread-flip").start();
+    }
+
+    /**
+     * pagina a lista ja calculada localmente, sem nova requisicao
+     */
+    private void exibirPagina(int pagina) {
+        paginaAtual = pagina;
+        int inicio = (pagina - 1) * POR_PAGINA;
+        int fim = Math.min(inicio + POR_PAGINA, todasLinhas.size());
+        List<LinhaFlip> paginaLinhas = todasLinhas.subList(inicio, fim);
+
+        tabelaResultados.setItems(FXCollections.observableArrayList(paginaLinhas));
+        labelPagina.setText("Pagina " + paginaAtual + " de " + totalPaginas);
+        btnAnterior.setDisable(paginaAtual <= 1);
+        btnProxima.setDisable(paginaAtual >= totalPaginas);
     }
 
     private void salvarOperacao() {
