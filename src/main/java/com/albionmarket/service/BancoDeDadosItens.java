@@ -17,7 +17,7 @@ import java.util.List;
  * catalogo completo (ou quase) de itens, categorias e cidades do Albion Online.
  * IDs baseados na Albion Online Data API (west.albion-online-data.com).
  */
-public class BancoDeDadosCraft {
+public class BancoDeDadosItens {
 
     // cidades
     public static final List<CidadeInfo> CIDADES = Arrays.asList(

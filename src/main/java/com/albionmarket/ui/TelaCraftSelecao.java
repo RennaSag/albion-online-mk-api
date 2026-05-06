@@ -5,13 +5,12 @@ import com.albionmarket.model.Categoria;
 import com.albionmarket.model.EstadoSelecao;
 import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.model.Subcategoria;
-import com.albionmarket.service.BancoDeDadosCraft;
+import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.BuscaService;
 import com.albionmarket.util.AlbionIdUtil;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -37,7 +36,7 @@ public class TelaCraftSelecao {
 
     private final Stage palco;
     private final BuscaService buscaService = new BuscaService();
-    private final List<Categoria> categorias = BancoDeDadosCraft.getCategorias();
+    private final List<Categoria> categorias = com.albionmarket.service.BancoDeDadosItens.getCategorias();
     private final List<CheckBox> checksCidades = new ArrayList<>();
 
     private ItemDefinition itemSelecionado = null;
@@ -209,7 +208,7 @@ public class TelaCraftSelecao {
 
         bloco.getChildren().add(criarSecao("Cidades"));
         FlowPane gridCidades = new FlowPane(8, 8);
-        for (com.albionmarket.model.CidadeInfo cidade : BancoDeDadosCraft.CIDADES) {
+        for (com.albionmarket.model.CidadeInfo cidade : BancoDeDadosItens.CIDADES) {
             CheckBox cb = new CheckBox(cidade.getNome());
             cb.setSelected(true);
             cb.setStyle("-fx-text-fill: #ccc;");
@@ -398,7 +397,7 @@ public class TelaCraftSelecao {
         if (!tierStr.isBlank()) cbTier.setValue(tierStr);
         if (!enchStr.isBlank()) cbEncantamento.setValue(enchStr);
         if (!itemId.isBlank()) {
-            ItemDefinition found = BancoDeDadosCraft.getTodosItens().stream()
+            ItemDefinition found = com.albionmarket.service.BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(itemId))
                     .findFirst().orElse(null);
             if (found != null) {

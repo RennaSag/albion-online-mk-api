@@ -121,7 +121,7 @@ public class TelaCraft {
                 }
             }
             final String melhorCidadeApi = melhorCidadeApiTemp;
-            String nomeCidadeVenda = BancoDeDadosCraft.CIDADES.stream()
+            String nomeCidadeVenda = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(melhorCidadeApi))
                     .map(CidadeInfo::getNome)
                     .findFirst().orElse(melhorCidadeApi);
@@ -247,7 +247,7 @@ public class TelaCraft {
 
     // cabeçalho
     private HBox criarCabecalho() {
-        Label titulo = new Label("Analisador de Mercado");
+        Label titulo = new Label("Craft");
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
@@ -635,7 +635,7 @@ public class TelaCraft {
                 }
                 LinhaMaterialPreco linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDadosCraft.CIDADES.stream()
+                String nome = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(v))
                         .map(CidadeInfo::getNome)
                         .findFirst().orElse(v);
@@ -678,7 +678,7 @@ public class TelaCraft {
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null && estadoSelecao.cidades != null && !estadoSelecao.cidades.isEmpty())
                 ? estadoSelecao.cidades
-                : BancoDeDadosCraft.CIDADES.stream().map(CidadeInfo::getApiId).collect(Collectors.toList());
+                : com.albionmarket.service.BancoDeDadosItens.CIDADES.stream().map(CidadeInfo::getApiId).collect(Collectors.toList());
 
         List<String> cidadesSemBM = cidades.stream()
                 .filter(c -> !c.equals("BlackMarket"))
@@ -765,7 +765,7 @@ public class TelaCraft {
                 }
 
                 // diarios em paralelo com os materiais
-                String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+                String sufixoDiario = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
                 CompletableFuture<Void> futureDiarios = CompletableFuture.completedFuture(null);
 
                 if (sufixoDiario != null && tierEfetivo >= 2) {
@@ -875,7 +875,7 @@ public class TelaCraft {
         List<LinhaPreco> linhas = new ArrayList<>();
         for (PriceEntry pe : melhor.values()) {
             if (pe.getSellMin() == 0 && pe.getBuyMax() == 0) continue;
-            String corCidade = BancoDeDadosCraft.CIDADES.stream()
+            String corCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888");
 
@@ -894,16 +894,16 @@ public class TelaCraft {
 
         // adiciona preços do diário cheio por cidade
         int tierDiario = (tier == -1) ? 4 : tier;
-        String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+        String sufixoDiario = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
         if (sufixoDiario != null && tierDiario >= 2 && precosDiarioCheio != null) {
             for (PriceEntry pd : precosDiarioCheio) {
                 if (pd.getBuyMax() <= 0) continue;
-                String corCidade = BancoDeDadosCraft.CIDADES.stream()
+                String corCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(pd.getCidade()))
                         .map(CidadeInfo::getCor).findFirst().orElse("#888");
 
-                String sufixoDiarioNomePreco = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
-                String nomeDiarioPreco = BancoDeDadosCraft.getNomeDiario(sufixoDiarioNomePreco);
+                String sufixoDiarioNomePreco = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
+                String nomeDiarioPreco = com.albionmarket.service.BancoDeDadosItens.getNomeDiario(sufixoDiarioNomePreco);
                 linhas.add(new LinhaPreco(
                         "Diário Cheio",
                         "Diário de " + nomeDiarioPreco + " (cheio)",
@@ -956,12 +956,12 @@ public class TelaCraft {
             int enchantAtualR = (enchant == -1) ? 0 : enchant;
             boolean ehArtefato = mat.isArtefato();
 
-            String raw = ehArtefato ? BancoDeDadosCraft.getArtefatoSufixo(itemIdCompleto) : null;
+            String raw = ehArtefato ? com.albionmarket.service.BancoDeDadosItens.getArtefatoSufixo(itemIdCompleto) : null;
             String sufixoArtefato = raw != null ? raw.split(";;")[0] : null;
             String nomeArtefato = raw != null ? raw.split(";;")[1] : null;
 
             // ícone usa o sufixoArtefato se disponível, se n usa idMat, q mostra o id do material
-            // se não aparecer o nome do material é pq ele n ta cadastrado no BancoDeDadosCraft.java
+            // se não aparecer o nome do material é pq ele n ta cadastrado no BancoDeDadosItens.java
             int tAtual = (tier == -1) ? 4 : tier;
             String iconeUrl = ehArtefato
                     ? "https://render.albiononline.com/v1/item/" +
@@ -981,9 +981,9 @@ public class TelaCraft {
 
 
             // nome: tenta getNomeRecurso, senão usa sufixoArtefato direto como fallback legível
-            String nomeRecurso = BancoDeDadosCraft.getNomeRecurso(sufixoMat, tierMat);
+            String nomeRecurso = com.albionmarket.service.BancoDeDadosItens.getNomeRecurso(sufixoMat, tierMat);
             String nomeMat = nomeRecurso != null ? nomeRecurso
-                    : BancoDeDadosCraft.getTodosItens().stream()
+                    : com.albionmarket.service.BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
                     .map(ItemDefinition::getNome).findFirst()
                     .orElse(nomeArtefato != null ? nomeArtefato : idMat);
@@ -1000,7 +1000,7 @@ public class TelaCraft {
             String precoExibir = pe != null ? FormatadorUtil.formatarPreco(pe.getSellMin()) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
-                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
+                    ? com.albionmarket.service.BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String data = pe != null ? FormatadorUtil.formatarData(
                     (pe.getSellDate() != null && !pe.getSellDate().startsWith("0001")) ? pe.getSellDate() : pe.getBuyDate()) : "-";
@@ -1010,7 +1010,7 @@ public class TelaCraft {
 
         // adiciona linha do diario vazio e cheio se disponivel
         int tierItem = (tier == -1) ? 4 : tier;
-        String sufixoDiario = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+        String sufixoDiario = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
         if (sufixoDiario != null && tierItem >= 2) {
             String idVazio = "T" + tierItem + "_" + sufixoDiario + "_EMPTY";
             String idCheio = "T" + tierItem + "_" + sufixoDiario + "_FULL";
@@ -1020,19 +1020,19 @@ public class TelaCraft {
             String precoVazioStr = diarioVazio != null ? FormatadorUtil.formatarPreco(diarioVazio.getSellMin()) : "-";
             String cidadeVazio = diarioVazio != null ? diarioVazio.getCidade() : "-";
             String corVazio = diarioVazio != null
-                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeVazio))
+                    ? com.albionmarket.service.BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeVazio))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String dataVazio = diarioVazio != null ? FormatadorUtil.formatarData(diarioVazio.getSellDate()) : "-";
 
             //String precoCheioStr = diarioCheio != null ? FormatadorUtil.formatarPreco(diarioCheio.getBuyMax()) : "-";
             String cidadeCheio = diarioCheio != null ? diarioCheio.getCidade() : "-";
             //String corCheio = diarioCheio != null
-               //     ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeCheio))
+               //     ? BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeCheio))
               //      .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             //String dataCheio = diarioCheio != null ? FormatadorUtil.formatarData(diarioCheio.getBuyMax() > 0 ? diarioCheio.getBuyDate() : "-") : "-";
 
-            String sufixoDiarioNome = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
-            String nomeDiario = BancoDeDadosCraft.getNomeDiario(sufixoDiarioNome);
+            String sufixoDiarioNome = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
+            String nomeDiario = com.albionmarket.service.BancoDeDadosItens.getNomeDiario(sufixoDiarioNome);
             linhas.add(new LinhaMaterial(iconeVazio, "Diário de " + nomeDiario + " (vazio)", "Diario", 1, cidadeVazio, corVazio, precoVazioStr, dataVazio));
 
         }
@@ -1081,7 +1081,7 @@ public class TelaCraft {
             String idMat = mat.getUniqueName();
             boolean ehArtefato = mat.isArtefato();
 
-            String raw = ehArtefato ? BancoDeDadosCraft.getArtefatoSufixo(itemIdCompleto) : null;
+            String raw = ehArtefato ? com.albionmarket.service.BancoDeDadosItens.getArtefatoSufixo(itemIdCompleto) : null;
             String sufixoArtefato = raw != null ? raw.split(";;")[0] : null;
             String nomeArtefato = raw != null ? raw.split(";;")[1] : null;
 
@@ -1092,9 +1092,9 @@ public class TelaCraft {
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : 4;
 
-            String nomeRecurso = BancoDeDadosCraft.getNomeRecurso(sufixoMat, tierMat);
+            String nomeRecurso = com.albionmarket.service.BancoDeDadosItens.getNomeRecurso(sufixoMat, tierMat);
             String nomeMat = nomeRecurso != null ? nomeRecurso
-                    : BancoDeDadosCraft.getTodosItens().stream()
+                    : com.albionmarket.service.BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
                     .map(ItemDefinition::getNome).findFirst()
                     .orElse(nomeArtefato != null ? nomeArtefato : idMat);
@@ -1109,7 +1109,7 @@ public class TelaCraft {
             String precoExibir = pe != null ? FormatadorUtil.formatarPreco(pe.getSellMin()) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
-                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
+                    ? com.albionmarket.service.BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String data = pe != null ? FormatadorUtil.formatarData(
                     (pe.getSellDate() != null && !pe.getSellDate().startsWith("0001")) ? pe.getSellDate() : pe.getBuyDate()) : "-";
@@ -1120,7 +1120,7 @@ public class TelaCraft {
 
 
         int tierItem2 = (tier == -1) ? 4 : tier;
-        String sufixoDiario2 = BancoDeDadosCraft.getDiarioSufixo(itemIdCompleto);
+        String sufixoDiario2 = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
         if (sufixoDiario2 != null && tierItem2 >= 2 && precoDiarioVazio != null) {
 
 
@@ -1153,7 +1153,7 @@ public class TelaCraft {
 
             String precoVazioStr = FormatadorUtil.formatarPreco(precoDiarioVazio.getSellMin());
             String cidadeVazio = precoDiarioVazio.getCidade();
-            String corVazio = BancoDeDadosCraft.CIDADES.stream()
+            String corVazio = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(cidadeVazio))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888");
             String dataVazio = FormatadorUtil.formatarData(precoDiarioVazio.getSellDate());
@@ -1285,7 +1285,7 @@ public class TelaCraft {
         }
 
         final String melhorCidade = melhorCidadeTemp;
-        String nomeCidadeVenda = BancoDeDadosCraft.CIDADES.stream()
+        String nomeCidadeVenda = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                 .filter(c -> c.getApiId().equals(melhorCidade))
                 .map(CidadeInfo::getNome).findFirst().orElse(melhorCidade);
 
@@ -1337,9 +1337,9 @@ public class TelaCraft {
             String sufixo = idMat.contains("_") ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
             int tierMat = AlbionIdUtil.extrairTier(idMat);
             if (tierMat == -1) tierMat = 4;
-            String nomeRec = BancoDeDadosCraft.getNomeRecurso(sufixo, tierMat);
+            String nomeRec = com.albionmarket.service.BancoDeDadosItens.getNomeRecurso(sufixo, tierMat);
             String nomeMat = nomeRec != null ? nomeRec
-                    : BancoDeDadosCraft.getTodosItens().stream()
+                    : com.albionmarket.service.BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixo))
                     .map(ItemDefinition::getNome).findFirst().orElse(idMat);
             int eAtual = AlbionIdUtil.enchantEfetivo(enchant);
@@ -1347,7 +1347,7 @@ public class TelaCraft {
         };
 
         java.util.function.Function<String, String> cidadeParaNome = apiId ->
-                BancoDeDadosCraft.CIDADES.stream()
+                com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(apiId))
                         .map(CidadeInfo::getNome)
                         .findFirst().orElse(apiId != null ? apiId : "-");
@@ -1454,7 +1454,7 @@ public class TelaCraft {
                 }
                 LinhaPreco linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDadosCraft.CIDADES.stream()
+                String nome = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(v))
                         .map(CidadeInfo::getNome).findFirst().orElse(v);
                 HBox hb = new HBox(6, ponto, new Label(nome));
@@ -1581,7 +1581,7 @@ public class TelaCraft {
             if (!primeiro) sb.append(", ");
             primeiro = false;
 
-            String nomeCidade = BancoDeDadosCraft.CIDADES.stream()
+            String nomeCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(lm.cidade))
                     .map(CidadeInfo::getNome)
                     .findFirst()

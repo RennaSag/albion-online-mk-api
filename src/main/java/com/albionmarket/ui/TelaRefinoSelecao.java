@@ -1,7 +1,7 @@
 package com.albionmarket.ui;
 
 import com.albionmarket.model.*;
-import com.albionmarket.service.BancoDeDadosCraft;
+import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.BuscaService;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -22,7 +22,7 @@ import com.albionmarket.util.AlbionIdUtil;
 
 /**
  * Tela de seleção do recurso a ser refinado.
- * Filtra apenas os itens da categoria "Recursos" do BancoDeDadosCraft:
+ * Filtra apenas os itens da categoria "Recursos" do BancoDeDadosItens:
  * METALBAR, LEATHER, CLOTH, PLANKS, STONEBLOCK
  * (ORE, HIDE, FIBER, WOOD, ROCK são brutos, não devem aparecer aqui)
  */
@@ -77,7 +77,7 @@ public class TelaRefinoSelecao {
     }
 
     private List<ItemDefinition> carregarItensRefinaveis() {
-        return BancoDeDadosCraft.getCategorias().stream()
+        return com.albionmarket.service.BancoDeDadosItens.getCategorias().stream()
                 .filter(c -> c.getNome().equals("Recursos"))
                 .flatMap(c -> c.getSubcategorias().stream())
                 .flatMap(s -> s.getItens().stream())
@@ -175,7 +175,7 @@ public class TelaRefinoSelecao {
         bloco.getChildren().add(criarSecao("Tipo de Recurso"));
 
         // Monta subcategorias filtradas: só as que tenham itens refináveis
-        Categoria catRecursos = BancoDeDadosCraft.getCategorias().stream()
+        Categoria catRecursos = com.albionmarket.service.BancoDeDadosItens.getCategorias().stream()
                 .filter(c -> c.getNome().equals("Recursos"))
                 .findFirst().orElse(null);
 
@@ -237,7 +237,7 @@ public class TelaRefinoSelecao {
 
         bloco.getChildren().add(criarSecao("Cidades"));
         FlowPane gridCidades = new FlowPane(8, 8);
-        for (CidadeInfo cidade : BancoDeDadosCraft.CIDADES) {
+        for (CidadeInfo cidade : BancoDeDadosItens.CIDADES) {
             CheckBox cb = new CheckBox(cidade.getNome());
             cb.setSelected(true);
             cb.setStyle("-fx-text-fill: #ccc;");

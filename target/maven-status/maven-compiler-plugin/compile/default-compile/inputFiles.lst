@@ -1,6 +1,7 @@
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaUpdate.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\service\BancoDeDadosChangelog.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaChangelog.java
+C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaFlipSelecao.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\model\PriceEntry.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\service\CalculadoraService.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\service\OperacaoService.java
@@ -15,16 +16,17 @@ C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\Au
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\MainApp.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\model\Subcategoria.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaHome.java
-C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\service\BancoDeDadosCraft.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\service\BuscaService.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaCraft.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaLogin.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\model\CidadeInfo.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaOperacoesAtivas.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaPesquisaPrecos.java
+C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaFlip.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\model\VersaoInfo.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaRefinoSelecao.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\util\FormatadorUtil.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\service\ApiService.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\model\Categoria.java
+C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\service\BancoDeDadosItens.java
 C:\Users\renna\Desktop\albion-online-mk-api\src\main\java\com\albionmarket\ui\TelaCraftSelecao.java

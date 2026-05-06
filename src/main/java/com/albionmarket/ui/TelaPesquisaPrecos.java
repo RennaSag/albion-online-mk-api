@@ -2,7 +2,7 @@ package com.albionmarket.ui;
 
 import com.albionmarket.model.*;
 import com.albionmarket.service.ApiService;
-import com.albionmarket.service.BancoDeDadosCraft;
+import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.BuscaService;
 import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
@@ -31,7 +31,7 @@ public class TelaPesquisaPrecos {
     // serviços
     private final ApiService apiService = new ApiService();
     private final BuscaService buscaService = new BuscaService();
-    private final List<Categoria> categorias = BancoDeDadosCraft.getCategorias();
+    private final List<Categoria> categorias = com.albionmarket.service.BancoDeDadosItens.getCategorias();
     private ImageView iconItem;
 
     // estado de seleção
@@ -207,8 +207,8 @@ public class TelaPesquisaPrecos {
         // qualidade
         painel.getChildren().add(criarSecao("Qualidade"));
         cbQualidade = new ComboBox<>();
-        cbQualidade.setItems(FXCollections.observableArrayList(BancoDeDadosCraft.QUALIDADES));
-        cbQualidade.setValue(BancoDeDadosCraft.QUALIDADES[0]);
+        cbQualidade.setItems(FXCollections.observableArrayList(com.albionmarket.service.BancoDeDadosItens.QUALIDADES));
+        cbQualidade.setValue(com.albionmarket.service.BancoDeDadosItens.QUALIDADES[0]);
         cbQualidade.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbQualidade);
         painel.getChildren().add(cbQualidade);
@@ -216,7 +216,7 @@ public class TelaPesquisaPrecos {
         // cidades
         painel.getChildren().add(criarSecao("Cidades"));
         FlowPane gridCidades = new FlowPane(8, 8);
-        for (CidadeInfo cidade : BancoDeDadosCraft.CIDADES) {
+        for (CidadeInfo cidade : BancoDeDadosItens.CIDADES) {
             CheckBox cb = new CheckBox(cidade.getNome());
             cb.setSelected(true);
             cb.setStyle("-fx-text-fill: #ccc;");
@@ -473,7 +473,7 @@ public class TelaPesquisaPrecos {
                     : "0";
 
             // cores das cidades
-            String corCidade = BancoDeDadosCraft.CIDADES.stream()
+            String corCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor)
                     .findFirst()
@@ -523,7 +523,7 @@ public class TelaPesquisaPrecos {
         cbItem.setDisable(true);
         cbTier.setValue("Todos");
         cbEncantamento.setValue("Todos");
-        cbQualidade.setValue(BancoDeDadosCraft.QUALIDADES[0]);
+        cbQualidade.setValue(com.albionmarket.service.BancoDeDadosItens.QUALIDADES[0]);
         checksCidades.forEach(cb -> cb.setSelected(true));
         tabelaResultados.setItems(FXCollections.emptyObservableList());
         labelStatus.setText("Selecione um item e clique em Buscar Preços");
@@ -599,7 +599,7 @@ public class TelaPesquisaPrecos {
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
 
                 // Nome amigável da cidade
-                String nomeCidade = BancoDeDadosCraft.CIDADES.stream()
+                String nomeCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(item))
                         .map(CidadeInfo::getNome)
                         .findFirst()

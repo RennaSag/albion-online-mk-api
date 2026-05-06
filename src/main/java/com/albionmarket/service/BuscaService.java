@@ -17,7 +17,7 @@ public class BuscaService {
     private final List<ItemDefinition> todosItens;
 
     public BuscaService() {
-        this.todosItens = BancoDeDadosCraft.getTodosItens();
+        this.todosItens = BancoDeDadosItens.getTodosItens();
     }
 
     /**

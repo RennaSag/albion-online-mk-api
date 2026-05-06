@@ -33,6 +33,12 @@ public class TelaHome {
         Button btnCraftar = criarBotao("Craftar", "home-botao");
         Button btnRefinar = criarBotao("Refinar", "home-botao");
         Button btnOperacoes = criarBotao("Operacoes Ativas", "home-botao");
+        Button btnFlip = criarBotao("Flip de Mercado", "home-botao");
+
+        btnFlip.setOnAction(e -> {
+            Stage palco = (Stage) btnFlip.getScene().getWindow();
+            new TelaFlipSelecao(palco).mostrar();
+        });
 
         btnPesquisar.setOnAction(e -> {
             palco.setTitle("Analisador de Mercado de Albion Online");
@@ -55,7 +61,7 @@ public class TelaHome {
             new TelaOperacoesAtivas(palco).mostrar();
         });
 
-        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnOperacoes);
+        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnFlip, btnOperacoes);
         botoes.setAlignment(Pos.CENTER);
 
         Region espaco = new Region();

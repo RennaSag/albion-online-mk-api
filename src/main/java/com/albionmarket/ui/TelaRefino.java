@@ -177,7 +177,7 @@ public class TelaRefino {
 
     // cabecalho igual ao craft
     private HBox criarCabecalho() {
-        Label titulo = new Label("Analisador de Mercado");
+        Label titulo = new Label("Refino");
         titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
         titulo.setStyle("-fx-text-fill: #e0e0e0;");
 
@@ -512,7 +512,7 @@ public class TelaRefino {
                 }
                 LinhaMaterialPreco linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDadosCraft.CIDADES.stream()
+                String nome = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(v))
                         .map(CidadeInfo::getNome).findFirst().orElse(v);
                 HBox hb = new HBox(6, ponto, new Label(nome));
@@ -560,7 +560,7 @@ public class TelaRefino {
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null && estadoSelecao.cidades != null && !estadoSelecao.cidades.isEmpty())
                 ? estadoSelecao.cidades
-                : BancoDeDadosCraft.CIDADES.stream().map(CidadeInfo::getApiId).collect(Collectors.toList());
+                : com.albionmarket.service.BancoDeDadosItens.CIDADES.stream().map(CidadeInfo::getApiId).collect(Collectors.toList());
 
         List<String> cidadesSemBM = cidades.stream()
                 .filter(c -> !c.equals("BlackMarket"))
@@ -697,7 +697,7 @@ public class TelaRefino {
         List<LinhaPreco> linhas = new ArrayList<>();
         for (PriceEntry pe : melhor.values()) {
             if (pe.getSellMin() == 0 && pe.getBuyMax() == 0) continue;
-            String corCidade = BancoDeDadosCraft.CIDADES.stream()
+            String corCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888");
 
@@ -766,9 +766,9 @@ public class TelaRefino {
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : tAtual;
 
-            String nomeRecurso = BancoDeDadosCraft.getNomeRecurso(sufixoMat, tierMat);
+            String nomeRecurso = com.albionmarket.service.BancoDeDadosItens.getNomeRecurso(sufixoMat, tierMat);
             String nomeMat = nomeRecurso != null ? nomeRecurso
-                    : BancoDeDadosCraft.getTodosItens().stream()
+                    : com.albionmarket.service.BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
                     .map(ItemDefinition::getNome).findFirst()
                     .orElse(idMat);
@@ -784,7 +784,7 @@ public class TelaRefino {
             String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
-                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
+                    ? com.albionmarket.service.BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String data = pe != null ? FormatadorUtil.formatarData(
                     (pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001"))
@@ -833,9 +833,9 @@ public class TelaRefino {
             int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T' && Character.isDigit(idMat.charAt(1)))
                     ? Character.getNumericValue(idMat.charAt(1)) : tAtual;
 
-            String nomeRecurso = BancoDeDadosCraft.getNomeRecurso(sufixoMat, tierMat);
+            String nomeRecurso = com.albionmarket.service.BancoDeDadosItens.getNomeRecurso(sufixoMat, tierMat);
             String nomeMat = nomeRecurso != null ? nomeRecurso
-                    : BancoDeDadosCraft.getTodosItens().stream()
+                    : com.albionmarket.service.BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixoMat))
                     .map(ItemDefinition::getNome).findFirst()
                     .orElse(idMat);
@@ -850,7 +850,7 @@ public class TelaRefino {
             String buyMax = pe != null ? FormatadorUtil.formatarPreco(pe.getBuyMax()) : "-";
             String cidade = pe != null ? pe.getCidade() : "-";
             String corCidade = pe != null
-                    ? BancoDeDadosCraft.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
+                    ? com.albionmarket.service.BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String data = pe != null ? FormatadorUtil.formatarData(
                     (pe.getBuyDate() != null && !pe.getBuyDate().startsWith("0001"))
@@ -977,7 +977,7 @@ public class TelaRefino {
             }
         }
         final String melhorCidade = melhorCidadeTemp;
-        String nomeCidadeVenda = BancoDeDadosCraft.CIDADES.stream()
+        String nomeCidadeVenda = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                 .filter(c -> c.getApiId().equals(melhorCidade))
                 .map(CidadeInfo::getNome).findFirst().orElse(melhorCidade);
 
@@ -990,7 +990,7 @@ public class TelaRefino {
         receitaAtual2 = receitaTotal;
 
         java.util.function.Function<String, String> cidadeParaNome = apiId ->
-                BancoDeDadosCraft.CIDADES.stream()
+                com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(apiId))
                         .map(CidadeInfo::getNome)
                         .findFirst().orElse(apiId != null ? apiId : "-");
@@ -1077,7 +1077,7 @@ public class TelaRefino {
                 }
                 LinhaPreco linha = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(linha.corCidade));
-                String nome = BancoDeDadosCraft.CIDADES.stream()
+                String nome = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                         .filter(c -> c.getApiId().equals(v))
                         .map(CidadeInfo::getNome).findFirst().orElse(v);
                 HBox hb = new HBox(6, ponto, new Label(nome));
@@ -1195,7 +1195,7 @@ public class TelaRefino {
                 }
             }
             final String melhorCidadeApi = melhorCidadeApiTemp;
-            String nomeCidadeVenda = BancoDeDadosCraft.CIDADES.stream()
+            String nomeCidadeVenda = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(melhorCidadeApi))
                     .map(CidadeInfo::getNome)
                     .findFirst().orElse(melhorCidadeApi);
@@ -1245,7 +1245,7 @@ public class TelaRefino {
         for (LinhaMaterialPreco lm : tabelaMateriais.getItems()) {
             if (!primeiro) sb.append(", ");
             primeiro = false;
-            String nomeCidade = BancoDeDadosCraft.CIDADES.stream()
+            String nomeCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(lm.cidade))
                     .map(CidadeInfo::getNome)
                     .findFirst().orElse(lm.cidade != null ? lm.cidade : "-");

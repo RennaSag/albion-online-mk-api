@@ -16,7 +16,7 @@ public class ItemDefinition {
     }
 
     /**
-     * monta o ID do item  de acordo com os IDS base de BancoDeDadosCraft.java,
+     * monta o ID do item  de acordo com os IDS base de BancoDeDadosItens.java,
      * juntamente com o tier e encantamento inserido na busca
      * sintaxe: T5_MAIN_SWORD@2: tier, iten, encantamento
      */
