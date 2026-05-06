@@ -6,8 +6,8 @@ require('dotenv').config();
 
 // albion
 //const albionRoutes = require('./albion/routes'); removido da abordagem
-const { popularCatalogo } = require('./albion/catalogoPopulador');
-const { iniciarWorker } = require('./albion/workerColeta');
+//const { popularCatalogo } = require('./albion/catalogoPopulador');
+//const { iniciarWorker } = require('./albion/workerColeta');
 
 const app = express();
 app.use(express.json());
@@ -212,7 +212,7 @@ app.get('/version', (req, res) => {
 });
 
 // rotas do albion
-app.use('/api/v2', albionRoutes);
+//app.use('/api/v2', albionRoutes);
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', async () => {
@@ -220,6 +220,6 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.log('servidor rodando na porta', PORT);
 
     // inicia o albion: popula catalogo e liga o worker
-    await popularCatalogo();
-    iniciarWorker();
+    //await popularCatalogo();
+    //iniciarWorker();
 });
