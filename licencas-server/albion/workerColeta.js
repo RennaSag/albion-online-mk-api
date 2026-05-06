@@ -126,6 +126,7 @@ async function cicloColeta() {
 }
 
 // inicia o worker em loop com delay entre cada ciclo
+/*
 function iniciarWorker() {
     console.log('worker de coleta iniciado');
 
@@ -148,5 +149,5 @@ function iniciarWorker() {
 
     loop();
 }
-
+*/
 module.exports = { iniciarWorker };
