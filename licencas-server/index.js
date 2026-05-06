@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 // albion
-const albionRoutes = require('./albion/routes');
+//const albionRoutes = require('./albion/routes'); removido da abordagem
 const { popularCatalogo } = require('./albion/catalogoPopulador');
 const { iniciarWorker } = require('./albion/workerColeta');
 
