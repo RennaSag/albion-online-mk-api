@@ -149,5 +149,6 @@ function iniciarWorker() {
 
     loop();
 }
-*/
+
 module.exports = { iniciarWorker };
+*/
