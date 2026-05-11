@@ -4,22 +4,15 @@ const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// albion
-//const albionRoutes = require('./albion/routes'); removido da abordagem
-//const { popularCatalogo } = require('./albion/catalogoPopulador');
-//const { iniciarWorker } = require('./albion/workerColeta');
-
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// pool de licencas (banco atual)
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// transportador de email usando gmail com senha de app
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -28,12 +21,12 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-async function enviarEmailChave(email, chave) {
+async function enviarEmailChave(email, chave, diasExpiracao) {
     await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         subject: 'Sua chave de acesso - Analisador de Mercado Albion',
-        text: `Obrigado pela compra!\nSua chave de acesso: ${chave}\nDigite ela no software na tela de login.`
+        text: `Obrigado pela compra!\nSua chave de acesso: ${chave}\nDigite ela no software na tela de login.\nSeu acesso e valido por ${diasExpiracao} dias.`
     });
     console.log('email enviado para:', email);
 }
@@ -46,16 +39,38 @@ async function inicializarBanco() {
             chave TEXT NOT NULL UNIQUE,
             ativo BOOLEAN DEFAULT TRUE,
             expiracao TIMESTAMP,
+            plano TEXT,
             criado_em TIMESTAMP DEFAULT NOW()
         )
     `);
+
+    // adiciona coluna plano se o banco ja existia sem ela
+    await pool.query(`
+        ALTER TABLE licencas ADD COLUMN IF NOT EXISTS plano TEXT
+    `);
+
     console.log('banco inicializado');
+}
+
+// recebe o nome ou codigo do plano da hotmart e retorna quantos dias de acesso
+function diasPorPlano(offerCode, productName) {
+    const nome = (offerCode + ' ' + productName).toLowerCase();
+
+    if (nome.includes('anual') || nome.includes('12')) return 365;
+    if (nome.includes('semestral') || nome.includes('6') || nome.includes('seis')) return 180;
+    if (nome.includes('trimestral') || nome.includes('3') || nome.includes('tres')) return 90;
+    if (nome.includes('mensal') || nome.includes('1') || nome.includes('mes')) return 30;
+
+    // fallback: 30 dias se nao reconhecer o plano
+    console.warn('plano nao reconhecido, usando 30 dias. offerCode:', offerCode, 'productName:', productName);
+    return 30;
 }
 
 app.post('/webhook/hotmart', async (req, res) => {
     try {
         const evento = req.body;
         console.log('webhook recebido:', evento.event);
+        console.log('payload completo:', JSON.stringify(evento));
 
         if (evento.event === 'PURCHASE_APPROVED') {
             const email = evento?.data?.buyer?.email;
@@ -64,21 +79,29 @@ app.post('/webhook/hotmart', async (req, res) => {
                 return res.sendStatus(200);
             }
 
+            // pega o codigo da oferta e nome do produto pra identificar o plano
+            // o campo exato pode variar, o console.log acima vai te mostrar o payload real
+            const offerCode = evento?.data?.offer?.code ?? '';
+            const productName = evento?.data?.product?.name ?? '';
+
+            const dias = diasPorPlano(offerCode, productName);
+            const plano = offerCode || productName || 'desconhecido';
+
             const chave = uuidv4();
             const expiracao = new Date();
-            expiracao.setDate(expiracao.getDate() + 12);
+            expiracao.setDate(expiracao.getDate() + dias);
 
             await pool.query(
-                `INSERT INTO licencas (email, chave, ativo, expiracao)
-                 VALUES ($1, $2, true, $3)
+                `INSERT INTO licencas (email, chave, ativo, expiracao, plano)
+                 VALUES ($1, $2, true, $3, $4)
                  ON CONFLICT (email) DO UPDATE
-                 SET chave = $2, ativo = true, expiracao = $3`,
-                [email, chave, expiracao]
+                 SET chave = $2, ativo = true, expiracao = $3, plano = $4`,
+                [email, chave, expiracao, plano]
             );
-            console.log('licenca criada para:', email);
+            console.log('licenca criada para:', email, '| plano:', plano, '| dias:', dias);
 
             try {
-                await enviarEmailChave(email, chave);
+                await enviarEmailChave(email, chave, dias);
             } catch (emailErr) {
                 console.error('erro ao enviar email para:', email, emailErr.message);
             }
@@ -97,6 +120,9 @@ app.post('/webhook/hotmart', async (req, res) => {
             );
             console.log('licenca cancelada para:', email);
         }
+
+        // renovacao de assinatura: hotmart manda PURCHASE_APPROVED de novo a cada ciclo
+        // o ON CONFLICT DO UPDATE ja cuida disso, atualizando a expiracao automaticamente
 
         res.sendStatus(200);
     } catch (err) {
@@ -132,7 +158,8 @@ app.get('/validar', async (req, res) => {
         return res.json({
             valido: true,
             expira: licenca.expiracao,
-            email: licenca.email
+            email: licenca.email,
+            plano: licenca.plano
         });
     } catch (err) {
         console.error('erro ao validar:', err);
@@ -142,7 +169,7 @@ app.get('/validar', async (req, res) => {
 
 app.post('/admin/gerar', async (req, res) => {
     try {
-        const { email, token } = req.body;
+        const { email, token, dias } = req.body;
         console.log('admin/gerar chamado, email:', email, 'token recebido:', token ? 'sim' : 'nao');
 
         if (token !== process.env.ADMIN_TOKEN) {
@@ -155,18 +182,19 @@ app.post('/admin/gerar', async (req, res) => {
 
         const chave = uuidv4();
         const expiracao = new Date();
-        expiracao.setDate(expiracao.getDate() + 12);
+        const diasFinal = dias ? parseInt(dias) : 30;
+        expiracao.setDate(expiracao.getDate() + diasFinal);
 
         await pool.query(
-            `INSERT INTO licencas (email, chave, ativo, expiracao)
-             VALUES ($1, $2, true, $3)
+            `INSERT INTO licencas (email, chave, ativo, expiracao, plano)
+             VALUES ($1, $2, true, $3, $4)
              ON CONFLICT (email) DO UPDATE
-             SET chave = $2, ativo = true, expiracao = $3`,
-            [email, chave, expiracao]
+             SET chave = $2, ativo = true, expiracao = $3, plano = $4`,
+            [email, chave, expiracao, 'manual']
         );
-        console.log('licenca criada para:', email);
+        console.log('licenca manual criada para:', email, '| dias:', diasFinal);
 
-        res.json({ chave, expiracao });
+        res.json({ chave, expiracao, dias: diasFinal });
     } catch (err) {
         console.error('erro em admin/gerar:', err);
         res.status(500).json({ erro: err.message });
@@ -181,7 +209,7 @@ app.get('/obrigado', async (req, res) => {
 
     try {
         const result = await pool.query(
-            'SELECT chave FROM licencas WHERE email = $1 AND ativo = true',
+            'SELECT chave, expiracao, plano FROM licencas WHERE email = $1 AND ativo = true',
             [email]
         );
 
@@ -189,11 +217,13 @@ app.get('/obrigado', async (req, res) => {
             return res.send('<h2>Licenca nao encontrada para este email.</h2>');
         }
 
-        const chave = result.rows[0].chave;
+        const { chave, expiracao, plano } = result.rows[0];
 
         res.send(`
             <h2>Obrigado pela compra!</h2>
+            <p>Plano: <strong>${plano ?? 'nao identificado'}</strong></p>
             <p>Sua chave de acesso: <strong>${chave}</strong></p>
+            <p>Valido ate: <strong>${new Date(expiracao).toLocaleDateString('pt-BR')}</strong></p>
             <p>Digite ela no software na tela de login.</p>
         `);
     } catch (err) {
@@ -211,15 +241,8 @@ app.get('/version', (req, res) => {
     });
 });
 
-// rotas do albion
-//app.use('/api/v2', albionRoutes);
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', async () => {
     await inicializarBanco();
     console.log('servidor rodando na porta', PORT);
-
-    // inicia o albion: popula catalogo e liga o worker
-    //await popularCatalogo();
-    //iniciarWorker();
 });
