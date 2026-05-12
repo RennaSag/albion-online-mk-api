@@ -19,7 +19,8 @@ public class TelaFlipSelecao {
     private ComboBox<String> cbQualidade;
     private ComboBox<String> cbTipoCompra;
     private ComboBox<String> cbTipoVenda;
-    private TextField campoLucroMinimo;
+    private Slider sliderLucroMinimo;
+    private Label labelLucroMinimo;
 
     public TelaFlipSelecao(Stage palco) {
         this.palco = palco;
@@ -122,10 +123,28 @@ public class TelaFlipSelecao {
 
         // lucro minimo
         bloco.getChildren().add(criarSecao("Lucro Minimo"));
-        campoLucroMinimo = new TextField("");
-        campoLucroMinimo.setStyle("-fx-background-color: #2e2e2e; -fx-text-fill: #e0e0e0; "
-                + "-fx-border-color: #444; -fx-border-radius: 6; -fx-background-radius: 6;");
-        bloco.getChildren().add(campoLucroMinimo);
+
+        labelLucroMinimo = new Label("0");
+        labelLucroMinimo.setStyle("-fx-text-fill: #5a8dee; -fx-font-weight: bold; -fx-font-size: 12px;");
+
+        sliderLucroMinimo = new Slider(0, 5_000_000, 0);
+        sliderLucroMinimo.setBlockIncrement(100_000);
+        sliderLucroMinimo.setMajorTickUnit(1_000_000);
+        sliderLucroMinimo.setShowTickMarks(false);
+        sliderLucroMinimo.setMaxWidth(Double.MAX_VALUE);
+        sliderLucroMinimo.setStyle("-fx-accent: #5a8dee;");
+
+        sliderLucroMinimo.valueProperty().addListener((obs, ant, novo) -> {
+            long val = novo.longValue();
+            if (val >= 1_000_000)
+                labelLucroMinimo.setText(String.format("%.1fM", val / 1_000_000.0));
+            else if (val >= 1_000)
+                labelLucroMinimo.setText(String.format("%.0fK", val / 1_000.0));
+            else
+                labelLucroMinimo.setText(String.valueOf(val));
+        });
+
+        bloco.getChildren().addAll(sliderLucroMinimo, labelLucroMinimo);
 
         HBox wrapper = new HBox(bloco);
         wrapper.setAlignment(Pos.CENTER);
@@ -178,11 +197,7 @@ public class TelaFlipSelecao {
     }
 
     private long parseLucroMinimo() {
-        try {
-            return Long.parseLong(campoLucroMinimo.getText().trim().replace(".", "").replace(",", ""));
-        } catch (Exception e) {
-            return 0;
-        }
+        return (long) sliderLucroMinimo.getValue();
     }
 
     private Label criarSecao(String texto) {
