@@ -39,7 +39,7 @@ public class TelaFlipSelecao {
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarConteudo());
 
-        palco.setTitle("Albion Online — Flip de Itens");
+        palco.setTitle("Seleção do Flip");
         palco.getScene().setRoot(raiz);
         palco.setMinWidth(1280);
         palco.setMinHeight(720);

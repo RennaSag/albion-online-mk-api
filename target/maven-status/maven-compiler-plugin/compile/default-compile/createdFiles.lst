@@ -25,6 +25,7 @@ com\albionmarket\ui\TelaRefinoSelecao.class
 com\albionmarket\ui\TelaRefino$LinhaMaterial.class
 com\albionmarket\service\ApiService.class
 com\albionmarket\ui\TelaFlip$1.class
+com\albionmarket\ui\TelaFlip$7.class
 com\albionmarket\service\ItemValues$ValorBase.class
 com\albionmarket\service\OperacaoService.class
 com\albionmarket\ui\TelaRefino$8.class
@@ -40,6 +41,7 @@ com\albionmarket\model\CidadeInfo.class
 com\albionmarket\ui\TelaFlip$2.class
 com\albionmarket\service\BancoDeDadosChangelog.class
 com\albionmarket\ui\TelaCraft$LinhaMaterialPreco.class
+com\albionmarket\ui\TelaFlip$6.class
 com\albionmarket\model\ReceitaCraft$MaterialCraft.class
 com\albionmarket\ui\TelaChangelog.class
 com\albionmarket\ui\TelaLogin.class
