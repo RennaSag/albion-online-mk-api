@@ -7,6 +7,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -27,409 +28,293 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javafx.application.Platform;
-
 /**
- * tela de resultados de flip com paginacao e calculo de lucro por quantidade
+ * Tela de resultados de flip entre cidades.
+
+ * Busca todas as qualidades automaticamente
+ * Sem paginação artificial
  */
 public class TelaFlip {
 
-    private static final String API_BASE = "https://west.albion-online-data.com/api/v2/stats/prices";
+    private static final String API_BASE   = "https://west.albion-online-data.com/api/v2/stats/prices";
     private static final String CIDADES_API = "Caerleon,Martlock,Bridgewatch,FortSterling,Lymhurst,Thetford";
-    private static final int POR_PAGINA = 10;
+    private static final int    TAM_LOTE   = 40;
 
-    private final Stage palco;
-    private final int qualidade;
-    private final String tipoCompra; // "sell" ou "buy"
-    private final String tipoVenda;  // "sell" ou "buy"
-    private final long lucroMinimo;
+    private final Stage  palco;
+    private final String tipoCompra;  // "sell" ou "buy"
+    private final String tipoVenda;   // "buy"  ou "sell"
+    private final long   lucroMin;
+    private final long   lucroMax;    // 0 = sem limite
 
-    // lista completa calculada de oportunidades, paginada localmente
     private List<LinhaFlip> todasLinhas = new ArrayList<>();
-    private int paginaAtual = 1;
-    private int totalPaginas = 1;
-
-    private TableView<LinhaFlip> tabelaResultados;
-    private Label labelStatus;
-    private Label labelPagina;
+    private TableView<LinhaFlip> tabela;
+    private Label  labelStatus;
+    private Label  labelContagem;
     private ProgressIndicator progresso;
-    private Button btnAnterior;
-    private Button btnProxima;
 
-    private List<String> todosIds = new ArrayList<>();
+    private List<String> todosIds  = new ArrayList<>();
     private int loteAtual = 0;
-    private static final int TAM_LOTE = 50;
+    private volatile boolean buscando = false;
 
     private final HttpClient cliente = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    // modelo da tabela
+
+
     public static class LinhaFlip {
         public final String itemId;
-        public final int qualidade;
+        public final int    qualidade;
         public final String cidadeCompra;
-        public final long precoCompra;
+        public final long   precoCompra;
         public final String cidadeVenda;
-        public final long precoVenda;
-        public final long lucroBruto;
+        public final long   precoVenda;
+        public final long   lucroBruto;
         public final double lucroPercentual;
         public final String dataCompra;
         public final String dataVenda;
-        public int quantidade;
+        public int quantidade = 1;
 
-        public LinhaFlip(String itemId, int qualidade, String cidadeCompra, long precoCompra,
-                         String cidadeVenda, long precoVenda, long lucroBruto, double lucroPercentual,
+        public LinhaFlip(String itemId, int qualidade,
+                         String cidadeCompra, long precoCompra,
+                         String cidadeVenda, long precoVenda,
+                         long lucroBruto, double lucroPercentual,
                          String dataCompra, String dataVenda) {
-            this.itemId = itemId;
-            this.qualidade = qualidade;
-            this.cidadeCompra = cidadeCompra;
-            this.precoCompra = precoCompra;
-            this.cidadeVenda = cidadeVenda;
-            this.precoVenda = precoVenda;
-            this.lucroBruto = lucroBruto;
+            this.itemId          = itemId;
+            this.qualidade       = qualidade;
+            this.cidadeCompra    = cidadeCompra;
+            this.precoCompra     = precoCompra;
+            this.cidadeVenda     = cidadeVenda;
+            this.precoVenda      = precoVenda;
+            this.lucroBruto      = lucroBruto;
             this.lucroPercentual = lucroPercentual;
-            this.dataCompra = dataCompra;
-            this.dataVenda = dataVenda;
-            this.quantidade = 1;
+            this.dataCompra      = dataCompra;
+            this.dataVenda       = dataVenda;
         }
     }
 
-    public TelaFlip(Stage palco, int qualidade, String tipoCompra, String tipoVenda, long lucroMinimo) {
-        this.palco = palco;
-        this.qualidade = qualidade;
+
+
+    public TelaFlip(Stage palco, String tipoCompra, String tipoVenda, long lucroMin, long lucroMax) {
+        this.palco      = palco;
         this.tipoCompra = tipoCompra;
-        this.tipoVenda = tipoVenda;
-        this.lucroMinimo = lucroMinimo;
+        this.tipoVenda  = tipoVenda;
+        this.lucroMin   = lucroMin;
+        this.lucroMax   = lucroMax;
     }
+
+
 
     public void mostrar() {
         BorderPane raiz = new BorderPane();
-        raiz.setStyle("-fx-background-color: #1e1e1e;");
+        raiz.setStyle("-fx-background-color: #1a1a1a;");
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarAreaCentral());
-        raiz.setBottom(criarRodape());
 
-        palco.setTitle("Flip de Mercado");
+        palco.setTitle("Flip de Mercado — Albion Online");
         palco.getScene().setRoot(raiz);
         palco.setMinWidth(1280);
         palco.setMinHeight(720);
 
-        buscarOportunidades();
+        iniciarBusca();
     }
 
+
+
     private HBox criarCabecalho() {
+        Label icone = new Label("⇄");
+        icone.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 22px;");
+
         Label titulo = new Label("Flip de Mercado");
-        titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
-        titulo.setStyle("-fx-text-fill: #e0e0e0;");
+        titulo.setFont(Font.font("System", FontWeight.BOLD, 18));
+        titulo.setStyle("-fx-text-fill: #e8e8e8;");
 
-        Label subtitulo = new Label("Flip de Mercado");
-        subtitulo.setStyle("-fx-text-fill: #999;");
+        // badges dos modos
+        String lblComp = tipoCompra.equals("sell") ? "Compra Direta" : "Pedido de Compra";
+        String lblVend = tipoVenda.equals("buy")   ? "Venda Direta"  : "Pedido de Venda";
+        Label badgeComp = criarBadge(lblComp, "#1e3a5f", "#5a8dee");
+        Label badgeVend = criarBadge(lblVend, "#1a3a26", "#3dba6e");
+        Label badgeLucro = criarBadge(
+                "Lucro: " + formatarPreco(lucroMin) + (lucroMax > 0 ? " – " + formatarPreco(lucroMax) : "+"),
+                "#3a2a10", "#e0b84a"
+        );
 
-        VBox textos = new VBox(2, titulo, subtitulo);
+        HBox badges = new HBox(8, badgeComp, badgeVend, badgeLucro);
+        badges.setAlignment(Pos.CENTER_LEFT);
+
+        VBox textos = new VBox(4, titulo, badges);
+        textos.setAlignment(Pos.CENTER_LEFT);
+
+        HBox esquerda = new HBox(10, icone, textos);
+        esquerda.setAlignment(Pos.CENTER_LEFT);
 
         Region espacador = new Region();
         HBox.setHgrow(espacador, Priority.ALWAYS);
 
-        Label btnHome = new Label("Inicio");
-        btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-text-fill: #e0e0e0;");
-        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-text-fill: #e0e0e0; -fx-opacity: 0.6;"));
-        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-text-fill: #e0e0e0; -fx-opacity: 1.0;"));
-        btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
+        // status de carregamento
+        progresso = new ProgressIndicator();
+        progresso.setMaxSize(18, 18);
+        progresso.setStyle("-fx-accent: #5a8dee;");
+        progresso.setVisible(false);
 
-        HBox cab = new HBox(textos, espacador, btnHome);
-        cab.setAlignment(Pos.CENTER_LEFT);
-        cab.setPadding(new Insets(14, 20, 14, 20));
-        cab.setStyle("-fx-background-color: #1e1e1e; -fx-border-color: #333; -fx-border-width: 0 0 1 0;");
+        labelContagem = new Label("");
+        labelContagem.setStyle("-fx-text-fill: #666; -fx-font-size: 11px;");
+
+        labelStatus = new Label("Preparando busca...");
+        labelStatus.setStyle("-fx-text-fill: #555; -fx-font-size: 11px;");
+
+        VBox statusBox = new VBox(2, labelContagem, labelStatus);
+        statusBox.setAlignment(Pos.CENTER_RIGHT);
+
+        Label btnVoltar = new Label("Voltar");
+        btnVoltar.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee;");
+        btnVoltar.setOnMouseEntered(e -> btnVoltar.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 0.7;"));
+        btnVoltar.setOnMouseExited(e -> btnVoltar.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 1;"));
+        btnVoltar.setOnMouseClicked(e -> new TelaFlipSelecao(palco).mostrar());
+
+        HBox cab = new HBox(esquerda, espacador, progresso, statusBox, new Label("  "), btnVoltar);
+        cab.setAlignment(Pos.CENTER);
+        cab.setSpacing(12);
+        cab.setPadding(new Insets(16, 24, 16, 24));
+        cab.setStyle("-fx-background-color: #1e1e1e; -fx-border-color: #2e2e2e; -fx-border-width: 0 0 1 0;");
         return cab;
     }
+
+    private Label criarBadge(String texto, String bgColor, String txtColor) {
+        Label badge = new Label(texto);
+        badge.setStyle(
+                "-fx-background-color: " + bgColor + "; -fx-text-fill: " + txtColor + "; " +
+                        "-fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3 8 3 8; " +
+                        "-fx-background-radius: 4;");
+        return badge;
+    }
+
 
 
     @SuppressWarnings("unchecked")
     private VBox criarAreaCentral() {
-        progresso = new ProgressIndicator();
-        progresso.setMaxSize(24, 24);
-        progresso.setVisible(false);
+        tabela = new TableView<>();
+        tabela.setStyle("-fx-background-color: #1a1a1a; -fx-table-cell-border-color: #2a2a2a;");
+        tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabela.setEditable(true);
 
-        labelStatus = new Label("Buscando oportunidades...");
-        labelStatus.setStyle("-fx-text-fill: #999;");
+        Label placeholder = new Label("Carregando oportunidades...");
+        placeholder.setStyle("-fx-text-fill: #555; -fx-font-size: 13px;");
+        tabela.setPlaceholder(placeholder);
 
-        HBox barraStatus = new HBox(10, progresso, labelStatus);
-        barraStatus.setAlignment(Pos.CENTER_LEFT);
-        barraStatus.setPadding(new Insets(10, 16, 8, 16));
-
-        tabelaResultados = new TableView<>();
-        tabelaResultados.setStyle("-fx-background-color: #1e1e1e;");
-        tabelaResultados.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tabelaResultados.setPlaceholder(new Label("Nenhuma oportunidade encontrada."));
-        tabelaResultados.setEditable(true);
-
-        TableColumn<LinhaFlip, String> colItem = new TableColumn<>("Item");
-        colItem.setPrefWidth(200);
+        // --- coluna Item ---
+        TableColumn<LinhaFlip, String> colItem = colTexto("Item", 200);
         colItem.setCellValueFactory(r -> {
-            String idCompleto = r.getValue().itemId;
-            String tierStr = "";
-            if (idCompleto.length() > 1 && idCompleto.charAt(0) == 'T'
-                    && Character.isDigit(idCompleto.charAt(1))) {
-                tierStr = String.valueOf(idCompleto.charAt(1));
-            }
-            String enchStr = "";
-            if (idCompleto.contains("@")) {
-                enchStr = idCompleto.split("@")[1];
-            }
-            String sufixo = idCompleto.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");
+            String id = r.getValue().itemId;
+            String tierStr = (id.length() > 1 && id.charAt(0) == 'T' && Character.isDigit(id.charAt(1)))
+                    ? " T" + id.charAt(1) : "";
+            String enchStr = id.contains("@") ? "." + id.split("@")[1] : "";
+            String sufixo  = id.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");
             String nome = BancoDeDadosItens.getTodosItens().stream()
                     .filter(i -> i.getId().equals(sufixo))
                     .map(ItemDefinition::getNome)
-                    .findFirst()
-                    .orElse(sufixo);
-            String exibir = nome + " " + tierStr;
-            if (!enchStr.isEmpty()) exibir += "." + enchStr;
-            return new javafx.beans.property.SimpleStringProperty(exibir);
+                    .findFirst().orElse(sufixo);
+            return prop(nome + tierStr + enchStr);
         });
 
-        TableColumn<LinhaFlip, String> colQual = new TableColumn<>("Qualidade");
-        colQual.setPrefWidth(90);
-        colQual.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                nomeQualidade(r.getValue().qualidade)));
+        // --- coluna Qualidade ---
+        TableColumn<LinhaFlip, String> colQual = colTexto("Qual.", 70);
+        colQual.setCellValueFactory(r -> prop(nomeQualidade(r.getValue().qualidade)));
 
-        TableColumn<LinhaFlip, String> colCompra = new TableColumn<>("Comprar em");
-        colCompra.setPrefWidth(130);
-        colCompra.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().cidadeCompra));
-        colCompra.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                if (empty || v == null) {
-                    setGraphic(null);
-                    return;
-                }
-                String cor = BancoDeDadosItens.CIDADES.stream()
-                        .filter(c -> c.getNome().equals(v) || c.getApiId().equals(v))
-                        .map(CidadeInfo::getCor).findFirst().orElse("#888");
-                Circle ponto = new Circle(5, Color.web(cor));
-                HBox hb = new HBox(6, ponto, new Label(v));
-                hb.setAlignment(Pos.CENTER_LEFT);
-                setGraphic(hb);
-                setText(null);
-            }
-        });
+        // --- coluna Comprar em (com bolinha colorida) ---
+        TableColumn<LinhaFlip, String> colCompra = colCidade("Comprar em", 130);
+        colCompra.setCellValueFactory(r -> prop(r.getValue().cidadeCompra));
 
-        TableColumn<LinhaFlip, String> colPrecoCompra = new TableColumn<>("Preco Compra");
-        colPrecoCompra.setPrefWidth(120);
-        colPrecoCompra.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                formatarPreco(r.getValue().precoCompra)));
-        colPrecoCompra.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : v);
-                setStyle("-fx-text-fill: #e05555; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
-            }
-        });
+        // --- coluna Preço de Compra (vermelho) ---
+        TableColumn<LinhaFlip, String> colPrecoCompra = colTexto("Preço Compra", 120);
+        colPrecoCompra.setCellValueFactory(r -> prop(formatarPreco(r.getValue().precoCompra)));
+        colPrecoCompra.setCellFactory(tc -> celulaCor("#e05555", true));
 
-        TableColumn<LinhaFlip, String> colDataCompra = new TableColumn<>("Atualiz. Compra");
-        colDataCompra.setPrefWidth(110);
-        colDataCompra.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                formatarData(r.getValue().dataCompra)));
+        // --- coluna Data Compra ---
+        TableColumn<LinhaFlip, String> colDataC = colTexto("Atualiz.", 70);
+        colDataC.setCellValueFactory(r -> prop(formatarData(r.getValue().dataCompra)));
+        colDataC.setCellFactory(tc -> celulaData());
 
-        TableColumn<LinhaFlip, String> colVenda = new TableColumn<>("Vender em");
-        colVenda.setPrefWidth(130);
-        colVenda.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().cidadeVenda));
-        colVenda.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                if (empty || v == null) {
-                    setGraphic(null);
-                    return;
-                }
-                String cor = BancoDeDadosItens.CIDADES.stream()
-                        .filter(c -> c.getNome().equals(v) || c.getApiId().equals(v))
-                        .map(CidadeInfo::getCor).findFirst().orElse("#888");
-                Circle ponto = new Circle(5, Color.web(cor));
-                HBox hb = new HBox(6, ponto, new Label(v));
-                hb.setAlignment(Pos.CENTER_LEFT);
-                setGraphic(hb);
-                setText(null);
-            }
-        });
+        // --- coluna Vender em (com bolinha colorida) ---
+        TableColumn<LinhaFlip, String> colVenda = colCidade("Vender em", 130);
+        colVenda.setCellValueFactory(r -> prop(r.getValue().cidadeVenda));
 
-        TableColumn<LinhaFlip, String> colPrecoVenda = new TableColumn<>("Preco Venda");
-        colPrecoVenda.setPrefWidth(120);
-        colPrecoVenda.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                formatarPreco(r.getValue().precoVenda)));
-        colPrecoVenda.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : v);
-                setStyle("-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
-            }
-        });
+        // --- coluna Preço de Venda (verde) ---
+        TableColumn<LinhaFlip, String> colPrecoVenda = colTexto("Preço Venda", 120);
+        colPrecoVenda.setCellValueFactory(r -> prop(formatarPreco(r.getValue().precoVenda)));
+        colPrecoVenda.setCellFactory(tc -> celulaCor("#3dba6e", true));
 
-        TableColumn<LinhaFlip, String> colDataVenda = new TableColumn<>("Atualiz. Venda");
-        colDataVenda.setPrefWidth(110);
-        colDataVenda.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                formatarData(r.getValue().dataVenda)));
+        // --- coluna Data Venda ---
+        TableColumn<LinhaFlip, String> colDataV = colTexto("Atualiz.", 70);
+        colDataV.setCellValueFactory(r -> prop(formatarData(r.getValue().dataVenda)));
+        colDataV.setCellFactory(tc -> celulaData());
 
-        TableColumn<LinhaFlip, String> colLucro = new TableColumn<>("Lucro Bruto");
-        colLucro.setPrefWidth(120);
-        colLucro.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                formatarPreco(r.getValue().lucroBruto)));
-        colLucro.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : v);
-                setStyle("-fx-text-fill: #5a8dee; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
-            }
-        });
+        // --- coluna Lucro Bruto (azul, destaque) ---
+        TableColumn<LinhaFlip, String> colLucro = colTexto("Lucro Bruto", 130);
+        colLucro.setCellValueFactory(r -> prop(formatarPreco(r.getValue().lucroBruto)));
+        colLucro.setCellFactory(tc -> celulaCor("#5a8dee", true));
 
-        TableColumn<LinhaFlip, String> colPct = new TableColumn<>("Lucro %");
-        colPct.setPrefWidth(80);
-        colPct.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                r.getValue().lucroPercentual + "%"));
-        colPct.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : v);
-                setStyle("-fx-text-fill: #e0b84a; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
-            }
-        });
+        // --- coluna % ---
+        TableColumn<LinhaFlip, String> colPct = colTexto("%", 65);
+        colPct.setCellValueFactory(r -> prop(r.getValue().lucroPercentual + "%"));
+        colPct.setCellFactory(tc -> celulaCor("#e0b84a", false));
 
+        // --- coluna Qtd (editável) ---
         TableColumn<LinhaFlip, Integer> colQtd = new TableColumn<>("Qtd");
-        colQtd.setPrefWidth(70);
-        colQtd.setCellValueFactory(r -> new javafx.beans.property.SimpleIntegerProperty(r.getValue().quantidade).asObject());
+        colQtd.setPrefWidth(55);
+        colQtd.setCellValueFactory(r ->
+                new javafx.beans.property.SimpleIntegerProperty(r.getValue().quantidade).asObject());
         colQtd.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn(
                 new javafx.util.converter.IntegerStringConverter()));
         colQtd.setOnEditCommit(ev -> {
-            LinhaFlip linha = ev.getRowValue();
-            linha.quantidade = ev.getNewValue() != null && ev.getNewValue() > 0 ? ev.getNewValue() : 1;
-            tabelaResultados.refresh();
+            LinhaFlip l = ev.getRowValue();
+            l.quantidade = (ev.getNewValue() != null && ev.getNewValue() > 0) ? ev.getNewValue() : 1;
+            tabela.refresh();
         });
 
-        TableColumn<LinhaFlip, String> colTotal = new TableColumn<>("Lucro Total");
-        colTotal.setPrefWidth(130);
-        colTotal.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(
-                formatarPreco(r.getValue().lucroBruto * r.getValue().quantidade)));
-        colTotal.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(String v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : v);
-                setStyle("-fx-text-fill: #5a8dee; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
-            }
-        });
+        // --- coluna Lucro Total ---
+        TableColumn<LinhaFlip, String> colTotal = colTexto("Lucro Total", 130);
+        colTotal.setCellValueFactory(r -> prop(formatarPreco(r.getValue().lucroBruto * r.getValue().quantidade)));
+        colTotal.setCellFactory(tc -> celulaCor("#5a8dee", true));
 
-        // colSalvar declarada antes de ser usada no addAll
+        // --- coluna Salvar ---
         TableColumn<LinhaFlip, Void> colSalvar = new TableColumn<>("Salvar");
-        colSalvar.setPrefWidth(90);
+        colSalvar.setPrefWidth(80);
         colSalvar.setCellFactory(tc -> new TableCell<>() {
             private final Button btn = new Button("Salvar");
-
             {
-                btn.setStyle("-fx-background-color: #3dba6e; -fx-text-fill: white; "
-                        + "-fx-font-weight: bold; -fx-background-radius: 4; -fx-font-size: 11px;");
-                btn.setOnAction(e -> {
-                    LinhaFlip linha = getTableView().getItems().get(getIndex());
-                    salvarOperacaoIndividual(linha);
-                });
+                btn.setStyle(
+                        "-fx-background-color: #1a3a26; -fx-text-fill: #3dba6e; " +
+                                "-fx-font-weight: bold; -fx-background-radius: 5; -fx-font-size: 11px; " +
+                                "-fx-border-color: #2a5a3a; -fx-border-radius: 5; -fx-border-width: 1; -fx-padding: 4 10;");
+                btn.setOnAction(e -> salvar(getTableView().getItems().get(getIndex())));
             }
-
-            @Override
-            protected void updateItem(Void v, boolean empty) {
+            @Override protected void updateItem(Void v, boolean empty) {
                 super.updateItem(v, empty);
                 setGraphic(empty ? null : btn);
             }
         });
 
-        // addAll so depois que todas as colunas estao declaradas
-        tabelaResultados.getColumns().addAll(
-                colItem, colQual, colCompra, colPrecoCompra, colDataCompra,
-                colVenda, colPrecoVenda, colDataVenda, colLucro, colPct, colQtd, colTotal, colSalvar);
+        tabela.getColumns().addAll(
+                colItem, colQual, colCompra, colPrecoCompra, colDataC,
+                colVenda, colPrecoVenda, colDataV,
+                colLucro, colPct, colQtd, colTotal, colSalvar
+        );
 
-        Button btnVoltar = new Button("Voltar");
-        btnVoltar.setStyle("-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
-                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 20;");
-        btnVoltar.setOnAction(e -> new TelaFlipSelecao(palco).mostrar());
-
-        // botoes declarado antes de ser usado no new VBox
-        HBox botoes = new HBox(10, btnVoltar);
-        botoes.setPadding(new Insets(10, 16, 10, 16));
-        botoes.setAlignment(Pos.CENTER_LEFT);
-
-        VBox area = new VBox(barraStatus, tabelaResultados, botoes);
-        VBox.setVgrow(tabelaResultados, Priority.ALWAYS);
-        area.setStyle("-fx-background-color: #1e1e1e;");
+        VBox area = new VBox(tabela);
+        VBox.setVgrow(tabela, Priority.ALWAYS);
+        area.setStyle("-fx-background-color: #1a1a1a;");
         return area;
     }
 
-    private HBox criarRodape() {
-        btnAnterior = new Button("Anterior");
-        btnAnterior.setStyle("-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
-                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 16;");
-        btnAnterior.setDisable(true);
-        btnAnterior.setOnAction(e -> exibirPagina(paginaAtual - 1));
 
-        labelPagina = new Label("Pagina 1 de 1");
-        labelPagina.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12px;");
 
-        btnProxima = new Button("Proxima");
-        btnProxima.setStyle("-fx-background-color: #5a8dee; -fx-text-fill: white; "
-                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 16;");
-        btnProxima.setDisable(true);
-        btnProxima.setOnAction(e -> {
-            if (paginaAtual < totalPaginas) {
-                exibirPagina(paginaAtual + 1);
-            } else {
-                buscarProximoLote();
-            }
-        });
-
-        HBox rodape = new HBox(16, btnAnterior, labelPagina, btnProxima);
-        rodape.setAlignment(Pos.CENTER);
-        rodape.setPadding(new Insets(12));
-        rodape.setStyle("-fx-background-color: #252525; -fx-border-color: #333; -fx-border-width: 1 0 0 0;");
-        return rodape;
-    }
-
-    private String formatarData(String isoStr) {
-        if (isoStr == null || isoStr.isBlank() || isoStr.startsWith("0001")) return "-";
-        try {
-            java.time.Instant data;
-            try {
-                data = java.time.Instant.parse(isoStr);
-            } catch (Exception ex) {
-                data = java.time.LocalDateTime.parse(isoStr)
-                        .toInstant(java.time.ZoneOffset.UTC);
-            }
-            long minutos = java.time.temporal.ChronoUnit.MINUTES.between(data, java.time.Instant.now());
-            if (minutos < 2) return "agora";
-            if (minutos < 60) return minutos + "min";
-            if (minutos < 1440) return (minutos / 60) + "h";
-            return (minutos / 1440) + "d";
-        } catch (Exception e) {
-            return "-";
-        }
-    }
-
-    /**
-     * busca todos os itens do BancoDeDadosItens na API publica do Albion,
-     * calcula as oportunidades de arbitragem em memoria e popula todasLinhas.
-     * a paginacao e feita localmente por exibirPagina().
-     */
-
-    private void buscarOportunidades() {
-        progresso.setVisible(true);
-        labelStatus.setText("Buscando precos...");
-        tabelaResultados.setItems(FXCollections.emptyObservableList());
+    private void iniciarBusca() {
         todasLinhas.clear();
-        btnAnterior.setDisable(true);
-        btnProxima.setDisable(true);
+        todosIds.clear();
+        loteAtual = 0;
 
-        todosIds = new ArrayList<>();
+
         for (ItemDefinition item : BancoDeDadosItens.getTodosItens()) {
             for (int tier = 4; tier <= 8; tier++) {
                 for (int enc = 0; enc <= 3; enc++) {
@@ -437,167 +322,31 @@ public class TelaFlip {
                 }
             }
         }
-        loteAtual = 0;
 
-        // inicia busca automaticamente ao abrir
+        atualizarStatus("Buscando preços... (0/" + todosIds.size() + " IDs)", true);
         buscarProximoLote();
     }
 
-
-    private List<LinhaFlip> calcularOportunidades(List<JsonObject> registros) {
-        Map<String, List<JsonObject>> agrupado = new LinkedHashMap<>();
-        for (JsonObject o : registros) {
-            long sellMin = o.get("sell_price_min").getAsLong();
-            long buyMax = o.get("buy_price_max").getAsLong();
-            if (sellMin == 0 && buyMax == 0) continue;
-
-            String chave = o.get("item_id").getAsString() + "|" + o.get("quality").getAsInt();
-            agrupado.computeIfAbsent(chave, k -> new ArrayList<>()).add(o);
-        }
-
-        List<LinhaFlip> oportunidades = new ArrayList<>();
-        for (List<JsonObject> entradas : agrupado.values()) {
-            if (entradas.size() < 2) continue;
-
-            String itemId = entradas.get(0).get("item_id").getAsString();
-            int qual = entradas.get(0).get("quality").getAsInt();
-            String campoCompra = tipoCompra.equals("buy") ? "buy_price_max" : "sell_price_min";
-            String campoVenda = tipoVenda.equals("buy") ? "buy_price_max" : "sell_price_min";
-
-            JsonObject melhorCompra = null;
-            long menorPrecoCompra = Long.MAX_VALUE;
-            for (JsonObject o : entradas) {
-                long preco = o.get(campoCompra).getAsLong();
-                if (preco > 0 && preco < menorPrecoCompra) {
-                    menorPrecoCompra = preco;
-                    melhorCompra = o;
-                }
-            }
-
-            JsonObject melhorVenda = null;
-            long maiorPrecoVenda = Long.MIN_VALUE;
-            for (JsonObject o : entradas) {
-                if (melhorCompra != null &&
-                        o.get("city").getAsString().equals(melhorCompra.get("city").getAsString())) continue;
-                long preco = o.get(campoVenda).getAsLong();
-                if (preco > 0 && preco > maiorPrecoVenda) {
-                    maiorPrecoVenda = preco;
-                    melhorVenda = o;
-                }
-            }
-
-            if (melhorCompra == null || melhorVenda == null) continue;
-
-            long lucroBruto = maiorPrecoVenda - menorPrecoCompra;
-            if (lucroBruto < lucroMinimo) continue;
-
-            double lucroPercentual = menorPrecoCompra > 0
-                    ? Math.round((lucroBruto * 10000.0) / menorPrecoCompra) / 100.0
-                    : 0;
-
-            String campoDataCompra = tipoCompra.equals("buy") ? "buy_price_max_date" : "sell_price_min_date";
-            String campoDataVenda = tipoVenda.equals("buy") ? "buy_price_max_date" : "sell_price_min_date";
-
-            String dataCompra = melhorCompra.has(campoDataCompra) && !melhorCompra.get(campoDataCompra).isJsonNull()
-                    ? melhorCompra.get(campoDataCompra).getAsString() : null;
-            String dataVenda = melhorVenda.has(campoDataVenda) && !melhorVenda.get(campoDataVenda).isJsonNull()
-                    ? melhorVenda.get(campoDataVenda).getAsString() : null;
-
-            oportunidades.add(new LinhaFlip(
-                    itemId, qual,
-                    melhorCompra.get("city").getAsString(), menorPrecoCompra,
-                    melhorVenda.get("city").getAsString(), maiorPrecoVenda,
-                    lucroBruto, lucroPercentual,
-                    dataCompra, dataVenda
-            ));
-
-
-        }
-        return oportunidades;
-    }
-
-    /**
-     * pagina a lista ja calculada localmente, sem nova requisicao
-     */
-    private void exibirPagina(int pagina) {
-        paginaAtual = pagina;
-        int inicio = (pagina - 1) * POR_PAGINA;
-        int fim = Math.min(inicio + POR_PAGINA, todasLinhas.size());
-        List<LinhaFlip> paginaLinhas = todasLinhas.subList(inicio, fim);
-
-        tabelaResultados.setItems(FXCollections.observableArrayList(paginaLinhas));
-        labelPagina.setText("Pagina " + paginaAtual + " de " + totalPaginas);
-        btnAnterior.setDisable(paginaAtual <= 1);
-        btnProxima.setDisable(paginaAtual >= totalPaginas);
-    }
-
-    private void salvarOperacaoIndividual(LinhaFlip l) {
-        try {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\n");
-            sb.append("  \"tipo\": \"flip\",\n");
-            sb.append("  \"tipo_compra\": \"").append(tipoCompra).append("\",\n");
-            sb.append("  \"tipo_venda\": \"").append(tipoVenda).append("\",\n");
-            sb.append("  \"item_id\": \"").append(l.itemId).append("\",\n");
-            sb.append("  \"qualidade\": ").append(l.qualidade).append(",\n");
-            sb.append("  \"cidade_compra\": \"").append(l.cidadeCompra).append("\",\n");
-            sb.append("  \"preco_compra\": ").append(l.precoCompra).append(",\n");
-            sb.append("  \"cidade_venda\": \"").append(l.cidadeVenda).append("\",\n");
-            sb.append("  \"preco_venda\": ").append(l.precoVenda).append(",\n");
-            sb.append("  \"quantidade\": ").append(l.quantidade).append(",\n");
-            sb.append("  \"lucro_total\": ").append(l.lucroBruto * l.quantidade).append("\n");
-            sb.append("}\n");
-
-            String nomeArquivo = "flip_"
-                    + java.time.LocalDateTime.now().format(
-                    java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-                    + ".json";
-
-            java.nio.file.Path dir = java.nio.file.Paths.get(
-                    System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes");
-            java.nio.file.Files.createDirectories(dir);
-            java.nio.file.Files.writeString(dir.resolve(nomeArquivo), sb.toString());
-
-            labelStatus.setText("Operacao salva: " + nomeArquivo);
-        } catch (Exception ex) {
-            labelStatus.setText("Erro ao salvar: " + ex.getMessage());
-        }
-    }
-
-    private String formatarPreco(long valor) {
-        if (valor <= 0) return "-";
-        return java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR")).format(valor);
-    }
-
-    private String nomeQualidade(int q) {
-        return switch (q) {
-            case 1 -> "Normal";
-            case 2 -> "Boa";
-            case 3 -> "Notavel";
-            case 4 -> "Excelente";
-            case 5 -> "Obra-prima";
-            default -> "Todas";
-        };
-    }
-
     private void buscarProximoLote() {
-        if (loteAtual * TAM_LOTE >= todosIds.size()) return;
-
-        progresso.setVisible(true);
-        btnProxima.setDisable(true);
-
         int inicio = loteAtual * TAM_LOTE;
+        if (inicio >= todosIds.size()) {
+            atualizarStatus("Concluído", false);
+            return;
+        }
+
         List<String> lote = todosIds.subList(inicio, Math.min(inicio + TAM_LOTE, todosIds.size()));
         loteAtual++;
+
+        int idsProcessados = Math.min(loteAtual * TAM_LOTE, todosIds.size());
 
         Task<List<LinhaFlip>> tarefa = new Task<>() {
             @Override
             protected List<LinhaFlip> call() throws Exception {
                 String idsStr = String.join(",", lote);
-                String qualidadeParam = qualidade > 0 ? String.valueOf(qualidade) : "1,2,3,4,5";
+                // busca todas as qualidades de uma vez
                 String url = API_BASE + "/" + idsStr
                         + ".json?locations=" + CIDADES_API
-                        + "&qualities=" + qualidadeParam;
+                        + "&qualities=1,2,3,4,5";
 
                 HttpRequest req = HttpRequest.newBuilder()
                         .uri(URI.create(url))
@@ -606,7 +355,7 @@ public class TelaFlip {
 
                 HttpResponse<String> resp = cliente.send(req, HttpResponse.BodyHandlers.ofString());
                 if (resp.statusCode() != 200)
-                    throw new Exception("erro http: " + resp.statusCode());
+                    throw new Exception("Erro HTTP " + resp.statusCode());
 
                 List<JsonObject> registros = new ArrayList<>();
                 JsonArray arr = JsonParser.parseString(resp.body()).getAsJsonArray();
@@ -619,28 +368,233 @@ public class TelaFlip {
         tarefa.setOnSucceeded(e -> {
             todasLinhas.addAll(tarefa.getValue());
             todasLinhas.sort((a, b) -> Long.compare(b.lucroBruto, a.lucroBruto));
-            totalPaginas = Math.max(1, (int) Math.ceil(todasLinhas.size() / (double) POR_PAGINA));
+            tabela.setItems(FXCollections.observableArrayList(todasLinhas));
 
-            // vai pra primeira pagina se acabou de carregar o primeiro lote
-            if (paginaAtual == 0) paginaAtual = 1;
-            exibirPagina(paginaAtual);
+            atualizarStatus(
+                    idsProcessados + "/" + todosIds.size() + " IDs processados",
+                    idsProcessados < todosIds.size()
+            );
+            labelContagem.setText(todasLinhas.size() + " oportunidades");
 
-            progresso.setVisible(false);
-            labelStatus.setText(todasLinhas.size() + " oportunidades encontradas");
-
-            boolean temMaisLotes = loteAtual * TAM_LOTE < todosIds.size();
-            boolean temMaisPaginas = paginaAtual < totalPaginas;
-            btnProxima.setDisable(!temMaisLotes && !temMaisPaginas);
-            btnAnterior.setDisable(paginaAtual <= 1);
+            // continua buscando automaticamente
+            buscarProximoLote();
         });
 
         tarefa.setOnFailed(e -> {
-            progresso.setVisible(false);
-            labelStatus.setText("Erro: " + tarefa.getException().getMessage());
-            btnProxima.setDisable(false);
+            atualizarStatus("Erro: " + tarefa.getException().getMessage(), false);
+            // tenta continuar mesmo com falha em um lote
+            buscarProximoLote();
         });
 
-        new Thread(tarefa, "thread-flip").start();
+        new Thread(tarefa, "thread-flip-lote-" + loteAtual).start();
     }
 
+
+
+    private List<LinhaFlip> calcularOportunidades(List<JsonObject> registros) {
+        // agrupa por (item_id, qualidade)
+        Map<String, List<JsonObject>> agrupado = new LinkedHashMap<>();
+        for (JsonObject o : registros) {
+            long sellMin = o.get("sell_price_min").getAsLong();
+            long buyMax  = o.get("buy_price_max").getAsLong();
+            if (sellMin == 0 && buyMax == 0) continue;
+            String chave = o.get("item_id").getAsString() + "|" + o.get("quality").getAsInt();
+            agrupado.computeIfAbsent(chave, k -> new ArrayList<>()).add(o);
+        }
+
+        String campoCompra     = tipoCompra.equals("sell") ? "sell_price_min" : "buy_price_max";
+        String campoDataCompra = tipoCompra.equals("sell") ? "sell_price_min_date" : "buy_price_max_date";
+        String campoVenda      = tipoVenda.equals("buy")   ? "buy_price_max" : "sell_price_min";
+        String campoDataVenda  = tipoVenda.equals("buy")   ? "buy_price_max_date" : "sell_price_min_date";
+
+        List<LinhaFlip> resultado = new ArrayList<>();
+
+        for (List<JsonObject> entradas : agrupado.values()) {
+            if (entradas.size() < 2) continue;
+
+            String itemId = entradas.get(0).get("item_id").getAsString();
+            int    qual   = entradas.get(0).get("quality").getAsInt();
+
+            // menor preço de compra entre todas as cidades
+            JsonObject melhorCompra = null;
+            long menorPreco = Long.MAX_VALUE;
+            for (JsonObject o : entradas) {
+                long preco = o.get(campoCompra).getAsLong();
+                if (preco > 0 && preco < menorPreco) {
+                    menorPreco  = preco;
+                    melhorCompra = o;
+                }
+            }
+            if (melhorCompra == null) continue;
+
+            // maior preço de venda em cidade diferente
+            JsonObject melhorVenda = null;
+            long maiorPreco = Long.MIN_VALUE;
+            String cidadeCompra = melhorCompra.get("city").getAsString();
+            for (JsonObject o : entradas) {
+                if (o.get("city").getAsString().equals(cidadeCompra)) continue;
+                long preco = o.get(campoVenda).getAsLong();
+                if (preco > 0 && preco > maiorPreco) {
+                    maiorPreco  = preco;
+                    melhorVenda = o;
+                }
+            }
+            if (melhorVenda == null) continue;
+
+            long   lucroBruto  = maiorPreco - menorPreco;
+            if (lucroBruto < lucroMin) continue;
+            if (lucroMax > 0 && lucroBruto > lucroMax) continue;
+
+            double lucroPerc = menorPreco > 0
+                    ? Math.round((lucroBruto * 10000.0) / menorPreco) / 100.0
+                    : 0;
+
+            String dataC = obterCampo(melhorCompra, campoDataCompra);
+            String dataV = obterCampo(melhorVenda,  campoDataVenda);
+
+            resultado.add(new LinhaFlip(
+                    itemId, qual,
+                    cidadeCompra, menorPreco,
+                    melhorVenda.get("city").getAsString(), maiorPreco,
+                    lucroBruto, lucroPerc,
+                    dataC, dataV
+            ));
+        }
+        return resultado;
+    }
+
+
+
+    private void salvar(LinhaFlip l) {
+        try {
+            String nomeArquivo = "flip_"
+                    + java.time.LocalDateTime.now().format(
+                    java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                    + ".json";
+
+            String json = "{\n" +
+                    "  \"tipo\": \"flip\",\n" +
+                    "  \"tipo_compra\": \"" + tipoCompra + "\",\n" +
+                    "  \"tipo_venda\": \"" + tipoVenda + "\",\n" +
+                    "  \"item_id\": \"" + l.itemId + "\",\n" +
+                    "  \"qualidade\": " + l.qualidade + ",\n" +
+                    "  \"cidade_compra\": \"" + l.cidadeCompra + "\",\n" +
+                    "  \"preco_compra\": " + l.precoCompra + ",\n" +
+                    "  \"cidade_venda\": \"" + l.cidadeVenda + "\",\n" +
+                    "  \"preco_venda\": " + l.precoVenda + ",\n" +
+                    "  \"quantidade\": " + l.quantidade + ",\n" +
+                    "  \"lucro_bruto_unitario\": " + l.lucroBruto + ",\n" +
+                    "  \"lucro_total\": " + (l.lucroBruto * l.quantidade) + ",\n" +
+                    "  \"data_registro\": \"" + java.time.Instant.now() + "\"\n" +
+                    "}\n";
+
+            java.nio.file.Path dir = java.nio.file.Paths.get(
+                    System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes");
+            java.nio.file.Files.createDirectories(dir);
+            java.nio.file.Files.writeString(dir.resolve(nomeArquivo), json);
+
+            labelStatus.setText("Salvo: " + nomeArquivo);
+        } catch (Exception ex) {
+            labelStatus.setText("Erro ao salvar: " + ex.getMessage());
+        }
+    }
+
+
+
+    private TableColumn<LinhaFlip, String> colTexto(String titulo, double largura) {
+        TableColumn<LinhaFlip, String> col = new TableColumn<>(titulo);
+        col.setPrefWidth(largura);
+        return col;
+    }
+
+    private TableColumn<LinhaFlip, String> colCidade(String titulo, double largura) {
+        TableColumn<LinhaFlip, String> col = colTexto(titulo, largura);
+        col.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(String v, boolean empty) {
+                super.updateItem(v, empty);
+                if (empty || v == null) { setGraphic(null); return; }
+                String cor = BancoDeDadosItens.CIDADES.stream()
+                        .filter(c -> c.getNome().equals(v) || c.getApiId().equals(v))
+                        .map(CidadeInfo::getCor).findFirst().orElse("#888");
+                Circle ponto = new Circle(5, Color.web(cor));
+                Label  label = new Label(v);
+                label.setStyle("-fx-text-fill: #e0e0e0;");
+                HBox hb = new HBox(6, ponto, label);
+                hb.setAlignment(Pos.CENTER_LEFT);
+                setGraphic(hb);
+                setText(null);
+            }
+        });
+        return col;
+    }
+
+    private TableCell<LinhaFlip, String> celulaCor(String cor, boolean negrito) {
+        return new TableCell<>() {
+            @Override protected void updateItem(String v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : v);
+                String peso = negrito ? "bold" : "normal";
+                setStyle("-fx-text-fill: " + cor + "; -fx-font-weight: " + peso + "; -fx-alignment: CENTER-RIGHT;");
+            }
+        };
+    }
+
+    private TableCell<LinhaFlip, String> celulaData() {
+        return new TableCell<>() {
+            @Override protected void updateItem(String v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : v);
+                setStyle("-fx-text-fill: #666; -fx-font-size: 11px; -fx-alignment: CENTER;");
+            }
+        };
+    }
+
+
+
+    private javafx.beans.property.SimpleStringProperty prop(String s) {
+        return new javafx.beans.property.SimpleStringProperty(s);
+    }
+
+    private String obterCampo(JsonObject o, String campo) {
+        return (o.has(campo) && !o.get(campo).isJsonNull()) ? o.get(campo).getAsString() : null;
+    }
+
+    private void atualizarStatus(String msg, boolean carregando) {
+        Platform.runLater(() -> {
+            labelStatus.setText(msg);
+            progresso.setVisible(carregando);
+        });
+    }
+
+    private String formatarPreco(long valor) {
+        if (valor <= 0) return "—";
+        return java.text.NumberFormat.getNumberInstance(new java.util.Locale("pt", "BR")).format(valor);
+    }
+
+    private String formatarData(String isoStr) {
+        if (isoStr == null || isoStr.isBlank() || isoStr.startsWith("0001")) return "—";
+        try {
+            java.time.Instant data;
+            try { data = java.time.Instant.parse(isoStr); }
+            catch (Exception ex) {
+                data = java.time.LocalDateTime.parse(isoStr).toInstant(java.time.ZoneOffset.UTC);
+            }
+            long min = java.time.temporal.ChronoUnit.MINUTES.between(data, java.time.Instant.now());
+            if (min <  2) return "agora";
+            if (min < 60) return min + "min";
+            if (min < 1440) return (min / 60) + "h";
+            return (min / 1440) + "d";
+        } catch (Exception e) { return "—"; }
+    }
+
+    private String nomeQualidade(int q) {
+        return switch (q) {
+            case 1 -> "Normal";
+            case 2 -> "Boa";
+            case 3 -> "Notável";
+            case 4 -> "Excelente";
+            case 5 -> "Obra-prima";
+            default -> "?";
+        };
+    }
 }

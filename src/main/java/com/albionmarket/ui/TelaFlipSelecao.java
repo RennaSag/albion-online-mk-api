@@ -10,17 +10,24 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 /**
- * tela de selecao de filtros para analise de flip entre cidades
+ * Tela de seleção de filtros para análise de flip entre cidades.
+ * - Lucro mínimo e máximo configuráveis
  */
 public class TelaFlipSelecao {
 
     private final Stage palco;
 
-    private ComboBox<String> cbQualidade;
     private ComboBox<String> cbTipoCompra;
     private ComboBox<String> cbTipoVenda;
-    private Slider sliderLucroMinimo;
-    private Label labelLucroMinimo;
+    private Slider sliderLucroMin;
+    private Slider sliderLucroMax;
+    private Label labelLucroMin;
+    private Label labelLucroMax;
+
+    // estilo base dos cards de secao
+    private static final String ESTILO_CARD =
+            "-fx-background-color: #252525; -fx-border-color: #383838; " +
+                    "-fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1;";
 
     public TelaFlipSelecao(Stage palco) {
         this.palco = palco;
@@ -28,65 +35,108 @@ public class TelaFlipSelecao {
 
     public void mostrar() {
         BorderPane raiz = new BorderPane();
-        raiz.setStyle("-fx-background-color: #1e1e1e;");
+        raiz.setStyle("-fx-background-color: #1a1a1a;");
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarConteudo());
 
-        palco.setTitle("Albion Online - Flip de Itens");
+        palco.setTitle("Albion Online — Flip de Itens");
         palco.getScene().setRoot(raiz);
         palco.setMinWidth(1280);
         palco.setMinHeight(720);
     }
 
+
+
     private HBox criarCabecalho() {
+        Label icone = new Label("⇄");
+        icone.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 22px;");
+
         Label titulo = new Label("Flip de Mercado");
-        titulo.setFont(Font.font("System", FontWeight.BOLD, 20));
-        titulo.setStyle("-fx-text-fill: #e0e0e0;");
+        titulo.setFont(Font.font("System", FontWeight.BOLD, 18));
+        titulo.setStyle("-fx-text-fill: #e8e8e8;");
 
-        Label subtitulo = new Label("Encontre oportunidades de arbitragem entre cidades");
-        subtitulo.setStyle("-fx-text-fill: #999;");
+        Label subtitulo = new Label("Encontre arbitragens entre cidades");
+        subtitulo.setStyle("-fx-text-fill: #666; -fx-font-size: 12px;");
 
-        VBox textos = new VBox(2, titulo, subtitulo);
-        textos.setAlignment(Pos.CENTER);
+        VBox textos = new VBox(1, titulo, subtitulo);
+        textos.setAlignment(Pos.CENTER_LEFT);
 
-        HBox cab = new HBox(textos);
+        HBox esquerda = new HBox(10, icone, textos);
+        esquerda.setAlignment(Pos.CENTER_LEFT);
+
+        Region espacador = new Region();
+        HBox.setHgrow(espacador, Priority.ALWAYS);
+
+        Label btnHome = new Label("← Início");
+        btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee;");
+        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 0.7;"));
+        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 1;"));
+        btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
+
+        HBox cab = new HBox(esquerda, espacador, btnHome);
         cab.setAlignment(Pos.CENTER);
-        cab.setPadding(new Insets(14, 20, 14, 20));
-        cab.setStyle("-fx-background-color: #1e1e1e; -fx-border-color: #333; -fx-border-width: 0 0 1 0;");
+        cab.setPadding(new Insets(16, 24, 16, 24));
+        cab.setStyle("-fx-background-color: #1e1e1e; -fx-border-color: #2e2e2e; -fx-border-width: 0 0 1 0;");
         return cab;
     }
 
-    private VBox criarConteudo() {
-        VBox conteudo = new VBox(10);
-        conteudo.setPadding(new Insets(15, 60, 15, 60));
+
+
+    private ScrollPane criarConteudo() {
+        VBox conteudo = new VBox(20);
+        conteudo.setPadding(new Insets(30, 0, 30, 0));
         conteudo.setAlignment(Pos.TOP_CENTER);
-        conteudo.setStyle("-fx-background-color: #1e1e1e;");
-        VBox.setVgrow(conteudo, Priority.ALWAYS);
-        conteudo.getChildren().addAll(
-                criarBlocoFiltros(),
+        conteudo.setStyle("-fx-background-color: #1a1a1a;");
+
+        // titulo da secao
+        Label lblTitulo = new Label("Configurar busca");
+        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 16));
+        lblTitulo.setStyle("-fx-text-fill: #e8e8e8;");
+
+        Label lblDesc = new Label("Defina como quer comprar, vender e qual faixa de lucro filtrar.");
+        lblDesc.setStyle("-fx-text-fill: #666; -fx-font-size: 12px;");
+
+        VBox header = new VBox(4, lblTitulo, lblDesc);
+        header.setMaxWidth(640);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        VBox corpo = new VBox(14,
+                header,
+                criarCardTipos(),
+                criarCardLucro(),
                 criarBotoesAcao()
         );
-        return conteudo;
+        corpo.setMaxWidth(640);
+        corpo.setAlignment(Pos.TOP_CENTER);
+
+        conteudo.getChildren().add(corpo);
+
+        ScrollPane scroll = new ScrollPane(conteudo);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: #1a1a1a; -fx-background: #1a1a1a;");
+        return scroll;
     }
 
-    private VBox criarBlocoFiltros() {
-        VBox bloco = new VBox(6);
-        bloco.setMaxWidth(600);
 
 
-        // qualidade
-        bloco.getChildren().add(criarSecao("Qualidade"));
-        cbQualidade = new ComboBox<>();
-        cbQualidade.setItems(FXCollections.observableArrayList(
-                "Todas", "Normal", "Boa", "Notavel", "Excelente", "Obra-prima"
-        ));
-        cbQualidade.setValue("Todas");
-        cbQualidade.setMaxWidth(Double.MAX_VALUE);
-        estilizarComboBox(cbQualidade);
-        bloco.getChildren().add(cbQualidade);
+    private VBox criarCardTipos() {
+        VBox card = new VBox(16);
+        card.setPadding(new Insets(18, 20, 18, 20));
+        card.setStyle(ESTILO_CARD);
 
-        // tipo de compra
-        bloco.getChildren().add(criarSecao("Tipo de Compra"));
+        Label titulo = new Label("Tipo de operação");
+        titulo.setFont(Font.font("System", FontWeight.BOLD, 13));
+        titulo.setStyle("-fx-text-fill: #c0c0c0;");
+
+        // linha separadora
+        Separator sep = new Separator();
+        sep.setStyle("-fx-background-color: #333;");
+
+        // compra
+        VBox blocoCompra = new VBox(6);
+        Label lblCompra = new Label("COMPRAR");
+        lblCompra.setStyle("-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;");
+
         cbTipoCompra = new ComboBox<>();
         cbTipoCompra.setItems(FXCollections.observableArrayList(
                 "Compra Direta",
@@ -95,16 +145,13 @@ public class TelaFlipSelecao {
         cbTipoCompra.setValue("Compra Direta");
         cbTipoCompra.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbTipoCompra);
+        blocoCompra.getChildren().addAll(lblCompra, cbTipoCompra);
 
-        //Label descCompra = new Label("Compra Direta = paga o preco listado agora  |  Pedido de Compra = coloca uma ordem de compra");
-        //descCompra.setStyle("-fx-text-fill: #666; -fx-font-size: 10px;");
-        //descCompra.setWrapText(true);
+        // venda
+        VBox blocoVenda = new VBox(6);
+        Label lblVenda = new Label("VENDER");
+        lblVenda.setStyle("-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;");
 
-        //bloco.getChildren().addAll(cbTipoCompra, descCompra);
-        bloco.getChildren().addAll(cbTipoCompra);
-
-        // tipo de venda
-        bloco.getChildren().add(criarSecao("Tipo de Venda"));
         cbTipoVenda = new ComboBox<>();
         cbTipoVenda.setItems(FXCollections.observableArrayList(
                 "Venda Direta",
@@ -113,101 +160,150 @@ public class TelaFlipSelecao {
         cbTipoVenda.setValue("Venda Direta");
         cbTipoVenda.setMaxWidth(Double.MAX_VALUE);
         estilizarComboBox(cbTipoVenda);
+        blocoVenda.getChildren().addAll(lblVenda, cbTipoVenda);
 
-        //Label descVenda = new Label("Venda Direta = vende no preco listado agora  |  Pedido de Venda = coloca uma ordem de venda");
-        //descVenda.setStyle("-fx-text-fill: #666; -fx-font-size: 10px;");
-        //descVenda.setWrapText(true);
+        // dica explicativa
+        Label dica = new Label(
+                "ℹ  Compra Direta + Venda Direta = operação instantânea, sem espera.\n" +
+                        "    Pedidos de Compra + Pedido de Venda = maior lucro potencial, mas você precisa esperar."
+        );
+        dica.setStyle("-fx-text-fill: #555; -fx-font-size: 11px;");
+        dica.setWrapText(true);
 
-        //bloco.getChildren().addAll(cbTipoVenda, descVenda);
-        bloco.getChildren().addAll(cbTipoVenda);
-
-        // lucro minimo
-        bloco.getChildren().add(criarSecao("Lucro Minimo"));
-
-        labelLucroMinimo = new Label("0");
-        labelLucroMinimo.setStyle("-fx-text-fill: #5a8dee; -fx-font-weight: bold; -fx-font-size: 12px;");
-
-        sliderLucroMinimo = new Slider(0, 5_000_000, 0);
-        sliderLucroMinimo.setBlockIncrement(100_000);
-        sliderLucroMinimo.setMajorTickUnit(1_000_000);
-        sliderLucroMinimo.setShowTickMarks(false);
-        sliderLucroMinimo.setMaxWidth(Double.MAX_VALUE);
-        sliderLucroMinimo.setStyle("-fx-accent: #5a8dee;");
-
-        sliderLucroMinimo.valueProperty().addListener((obs, ant, novo) -> {
-            long val = novo.longValue();
-            if (val >= 1_000_000)
-                labelLucroMinimo.setText(String.format("%.1fM", val / 1_000_000.0));
-            else if (val >= 1_000)
-                labelLucroMinimo.setText(String.format("%.0fK", val / 1_000.0));
-            else
-                labelLucroMinimo.setText(String.valueOf(val));
-        });
-
-        bloco.getChildren().addAll(sliderLucroMinimo, labelLucroMinimo);
-
-        HBox wrapper = new HBox(bloco);
-        wrapper.setAlignment(Pos.CENTER);
-
-        VBox container = new VBox(bloco);
-        container.setAlignment(Pos.CENTER);
-        container.setMaxWidth(800); // controla o tamanho aqui
-        return container;
+        card.getChildren().addAll(titulo, sep, blocoCompra, blocoVenda, dica);
+        return card;
     }
 
-    private VBox criarBotoesAcao() {
+
+
+    private VBox criarCardLucro() {
+        VBox card = new VBox(14);
+        card.setPadding(new Insets(18, 20, 18, 20));
+        card.setStyle(ESTILO_CARD);
+
+        Label titulo = new Label("Faixa de lucro bruto");
+        titulo.setFont(Font.font("System", FontWeight.BOLD, 13));
+        titulo.setStyle("-fx-text-fill: #c0c0c0;");
+
+        Separator sep = new Separator();
+        sep.setStyle("-fx-background-color: #333;");
+
+
+        Label lblMin = new Label("Lucro mínimo");
+        lblMin.setStyle("-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;");
+
+        labelLucroMin = new Label("0");
+        labelLucroMin.setStyle("-fx-text-fill: #5a8dee; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+        sliderLucroMin = new Slider(0, 10_000_000, 0);
+        sliderLucroMin.setBlockIncrement(100_000);
+        sliderLucroMin.setMajorTickUnit(1_000_000);
+        sliderLucroMin.setMaxWidth(Double.MAX_VALUE);
+        sliderLucroMin.setStyle("-fx-accent: #5a8dee;");
+        sliderLucroMin.valueProperty().addListener((obs, ant, novo) -> {
+            labelLucroMin.setText(formatarSlider(novo.longValue()));
+            // garante que min nao ultrapassa max
+            if (sliderLucroMax != null && novo.doubleValue() > sliderLucroMax.getValue()) {
+                sliderLucroMax.setValue(novo.doubleValue());
+            }
+        });
+
+        HBox linhaMin = new HBox(10, sliderLucroMin, labelLucroMin);
+        linhaMin.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(sliderLucroMin, Priority.ALWAYS);
+
+        // --- lucro máximo ---
+        Label lblMax = new Label("Lucro máximo  (0 = sem limite)");
+        lblMax.setStyle("-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;");
+
+        labelLucroMax = new Label("Sem limite");
+        labelLucroMax.setStyle("-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+        sliderLucroMax = new Slider(0, 10_000_000, 0);
+        sliderLucroMax.setBlockIncrement(100_000);
+        sliderLucroMax.setMajorTickUnit(1_000_000);
+        sliderLucroMax.setMaxWidth(Double.MAX_VALUE);
+        sliderLucroMax.setStyle("-fx-accent: #3dba6e;");
+        sliderLucroMax.valueProperty().addListener((obs, ant, novo) -> {
+            long val = novo.longValue();
+            labelLucroMax.setText(val == 0 ? "Sem limite" : formatarSlider(val));
+            // garante que max nao fica abaixo de min
+            if (val > 0 && val < sliderLucroMin.getValue()) {
+                sliderLucroMin.setValue(val);
+            }
+        });
+
+        HBox linhaMax = new HBox(10, sliderLucroMax, labelLucroMax);
+        linhaMax.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(sliderLucroMax, Priority.ALWAYS);
+
+        card.getChildren().addAll(titulo, sep, lblMin, linhaMin, lblMax, linhaMax);
+        return card;
+    }
+
+
+
+    private HBox criarBotoesAcao() {
         Button btnBuscar = new Button("Buscar Oportunidades");
-        btnBuscar.setPrefWidth(190);
-        btnBuscar.setPrefHeight(40);
-        btnBuscar.setStyle("-fx-background-color: #5a8dee; -fx-text-fill: white; "
-                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
+        btnBuscar.setPrefWidth(200);
+        btnBuscar.setPrefHeight(42);
+        btnBuscar.setStyle(
+                "-fx-background-color: #5a8dee; -fx-text-fill: white; " +
+                        "-fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 13px;");
+        btnBuscar.setOnMouseEntered(e -> btnBuscar.setStyle(
+                "-fx-background-color: #4a7ede; -fx-text-fill: white; " +
+                        "-fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 13px;"));
+        btnBuscar.setOnMouseExited(e -> btnBuscar.setStyle(
+                "-fx-background-color: #5a8dee; -fx-text-fill: white; " +
+                        "-fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 13px;"));
         btnBuscar.setOnAction(e -> onBuscar());
 
         Button btnVoltar = new Button("Voltar");
-        btnVoltar.setPrefWidth(190);
-        btnVoltar.setPrefHeight(40);
-        btnVoltar.setStyle("-fx-background-color: #3a3a3a; -fx-text-fill: #ccc; "
-                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-font-size: 14px;");
+        btnVoltar.setPrefWidth(120);
+        btnVoltar.setPrefHeight(42);
+        btnVoltar.setStyle(
+                "-fx-background-color: #2e2e2e; -fx-text-fill: #aaa; " +
+                        "-fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 13px; " +
+                        "-fx-border-color: #444; -fx-border-radius: 8; -fx-border-width: 1;");
         btnVoltar.setOnAction(e -> new TelaHome(palco).mostrar());
 
-        VBox vb = new VBox(8, btnBuscar, btnVoltar);
-        vb.setAlignment(Pos.CENTER);
-        vb.setPadding(new Insets(20, 0, 0, 0));
-        return vb;
+        HBox hb = new HBox(12, btnBuscar, btnVoltar);
+        hb.setAlignment(Pos.CENTER_LEFT);
+        hb.setPadding(new Insets(4, 0, 0, 0));
+        return hb;
     }
+
+
 
     private void onBuscar() {
-        int qualidade = parseQualidade(cbQualidade.getValue());
-        String tipoCompra = cbTipoCompra.getValue().equals("Pedido de Compra") ? "buy" : "sell";
-        String tipoVenda = cbTipoVenda.getValue().equals("Pedido de Venda") ? "buy" : "sell";
-        long lucroMinimo = parseLucroMinimo();
+        // "sell" = campo sell_price_min (compra direta / pedido de venda)
+        // "buy"  = campo buy_price_max  (pedido de compra / venda direta)
+        //
+        // Compra Direta: você paga o preço listado → usa sell_price_min → tipoCompra = "sell"
+        // Pedido de Compra: você coloca uma ordem → usa buy_price_max → tipoCompra = "buy"
+        // Venda Direta: você vende para ordem de compra existente → usa buy_price_max → tipoVenda = "buy"
+        // Pedido de Venda: você lista um preço → usa sell_price_min → tipoVenda = "sell"
 
-        new TelaFlip(palco, qualidade, tipoCompra, tipoVenda, lucroMinimo).mostrar();
+        String tipoCompra = cbTipoCompra.getValue().startsWith("Compra Direta") ? "sell" : "buy";
+        String tipoVenda  = cbTipoVenda.getValue().startsWith("Venda Direta")   ? "buy"  : "sell";
+
+        long lucroMin = (long) sliderLucroMin.getValue();
+        long lucroMax = (long) sliderLucroMax.getValue(); // 0 = sem limite
+
+        new TelaFlip(palco, tipoCompra, tipoVenda, lucroMin, lucroMax).mostrar();
     }
 
-    private int parseQualidade(String val) {
-        return switch (val) {
-            case "Normal" -> 1;
-            case "Boa" -> 2;
-            case "Notavel" -> 3;
-            case "Excelente" -> 4;
-            case "Obra-prima" -> 5;
-            default -> 0; // 0 = todas
-        };
-    }
 
-    private long parseLucroMinimo() {
-        return (long) sliderLucroMinimo.getValue();
-    }
 
-    private Label criarSecao(String texto) {
-        Label lbl = new Label(texto);
-        lbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11px; -fx-font-weight: bold;");
-        return lbl;
+    private String formatarSlider(long val) {
+        if (val >= 1_000_000) return String.format("%.1fM", val / 1_000_000.0);
+        if (val >= 1_000)     return String.format("%.0fK", val / 1_000.0);
+        return String.valueOf(val);
     }
 
     private void estilizarComboBox(ComboBox<?> cb) {
-        cb.setStyle("-fx-background-color: #2e2e2e; -fx-text-fill: #e0e0e0; "
-                + "-fx-border-color: #444; -fx-border-radius: 4; -fx-background-radius: 4;");
+        cb.setStyle(
+                "-fx-background-color: #1e1e1e; -fx-text-fill: #e0e0e0; " +
+                        "-fx-border-color: #404040; -fx-border-radius: 6; -fx-background-radius: 6;");
     }
 }
