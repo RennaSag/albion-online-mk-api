@@ -26,7 +26,7 @@ public class BancoDeDadosChangelog {
 
             new VersaoInfo(
                     "1.1.2",
-                    "19 de Maio, 2026",
+                    "19 de Maio de 2026",
                     "Craft com refino",
                     Arrays.asList(
 
