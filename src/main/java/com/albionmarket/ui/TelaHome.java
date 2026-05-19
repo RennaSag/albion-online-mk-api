@@ -34,6 +34,12 @@ public class TelaHome {
         Button btnRefinar = criarBotao("Refinar", "home-botao");
         Button btnOperacoes = criarBotao("Operacoes Ativas", "home-botao");
         Button btnFlip = criarBotao("Flip de Mercado", "home-botao");
+        Button btnCraftRefino = criarBotao("Craft e Refino", "home-botao");
+
+        btnCraftRefino.setOnAction(e -> {
+            Stage palco = (Stage) btnCraftRefino.getScene().getWindow();
+            new TelaCraftRefinoSelecao(palco).mostrar();
+        });
 
         btnFlip.setOnAction(e -> {
             Stage palco = (Stage) btnFlip.getScene().getWindow();
@@ -61,7 +67,7 @@ public class TelaHome {
             new TelaOperacoesAtivas(palco).mostrar();
         });
 
-        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnFlip, btnOperacoes);
+        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnCraftRefino, btnFlip, btnOperacoes);
         botoes.setAlignment(Pos.CENTER);
 
         Region espaco = new Region();
