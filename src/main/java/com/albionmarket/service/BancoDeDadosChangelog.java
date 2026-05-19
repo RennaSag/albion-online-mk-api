@@ -10,34 +10,32 @@ import java.util.List;
 
 /*
  * Tipos de mudança disponíveis:
- * TipoMudanca.NOVIDADE   →  ✦  (dourado)  — funcionalidade nova
- * TipoMudanca.MELHORIA   →  ↑  (azul)     — melhoria de algo existente
- * TipoMudanca.CORRECAO   →  ✓  (verde)    — bug corrigido
- * TipoMudanca.REMOCAO    →  ✗  (vermelho) — algo removido
+ * TipoMudanca.NOVIDADE   →  ✦  (dourado)  - funcionalidade nova
+ * TipoMudanca.MELHORIA   →  ↑  (azul)     - melhoria de algo existente
+ * TipoMudanca.CORRECAO   →  ✓  (verde)    - bug corrigido
+ * TipoMudanca.REMOCAO    →  ✗  (vermelho) - algo removido
  */
 public class BancoDeDadosChangelog {
 
 
-    public static final String APP_VERSAO_ATUAL = "1.1.1";
+    public static final String APP_VERSAO_ATUAL = "1.1.2";
 
 
     public static final List<VersaoInfo> VERSOES = Arrays.asList(
 
 
             new VersaoInfo(
-                    "1.1.1",
-                    "04 de Maio, 2026",
-                    "Adição dos diários de ferramenteiro",
+                    "1.1.2",
+                    "19 de Maio, 2026",
+                    "Craft com refino",
                     Arrays.asList(
 
-                            new Mudanca(TipoMudanca.NOVIDADE, "Um bom dia a todos"),
-                            new Mudanca(TipoMudanca.NOVIDADE, "Nessa nova versão, foi adicionado os diários de trabalhadores ferramenteiros, que até o momento estava faltando"),
-                            new Mudanca(TipoMudanca.MELHORIA, "Todos os diários pra outros itens como armas, armaduras e etc também já estão implementados"),
-                            new Mudanca(TipoMudanca.CORRECAO, "Também foram feitas algumas pequenas correções visuais e melhorias na parte de refino e no salvamento das operações ativas"),
-                            new Mudanca(TipoMudanca.NOVIDADE, "Espero que você esteja gostando do app e que lhe seja útil"),
-                            new Mudanca(TipoMudanca.REMOCAO, "Como sempre, se estiver tendo qualquer problema com o programa, tenha notado um bug ou queira sugerir melhorias, entre em contato com o email de suporte: rennasagcontato@gmail.com")
-
-                    )
+                            new Mudanca(TipoMudanca.NOVIDADE, "Olá a todos!"),
+                            new Mudanca(TipoMudanca.MELHORIA, "Nessa nova versão, foi implementada a feature para craft a partir de um refino, como havia sido pedido por algumas pessoas"),
+                            new Mudanca(TipoMudanca.CORRECAO, "A nova ferramenta de craft com refino ainda não foi testada nem validada, então recomendo tomarem cuidado por enquanto. Quando tudo estiver correto, vou gravar um vídeo mostrando. Ainda será melhorada para que fique tudo perfeito"),
+                            new Mudanca(TipoMudanca.REMOCAO, "Além disso, estou trabalhando na feature de flip de mercado, mas ainda sem sucesso. Estou com alguns problemas na requisição dos dados do flip pela API do Albion Data, mas futuramente tudo será resolvido"),
+                            new Mudanca(TipoMudanca.MELHORIA, "Se tiver qualquer problema, entre em contato com o suporte: rennasagcontato@gmail.com")
+                            )
             )
 
 
