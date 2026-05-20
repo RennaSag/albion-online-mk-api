@@ -34,6 +34,8 @@ public class TelaCraftRefino {
     private final String itemIdCompleto;
     private boolean possuiPremium = false;
 
+    private boolean modoEdicaoManual = false;
+
     private final EstadoSelecao estadoSelecao;
 
     private PriceEntry precoDiarioVazioEntryCache;
@@ -227,6 +229,38 @@ public class TelaCraftRefino {
         painel.getChildren().add(new Separator());
 
 
+        // switch inserir precos manualmente
+        javafx.scene.canvas.Canvas canvasSwitch = new javafx.scene.canvas.Canvas(44, 22);
+        final boolean[] estadoSwitch = {false};
+
+        Runnable desenharSwitch = () -> {
+            javafx.scene.canvas.GraphicsContext gc = canvasSwitch.getGraphicsContext2D();
+            gc.clearRect(0, 0, 44, 22);
+            gc.setFill(estadoSwitch[0]
+                    ? javafx.scene.paint.Color.web("#5a8dee")
+                    : javafx.scene.paint.Color.web("#555"));
+            gc.fillRoundRect(0, 0, 44, 22, 22, 22);
+            double bx = estadoSwitch[0] ? 24 : 2;
+            gc.setFill(javafx.scene.paint.Color.WHITE);
+            gc.fillOval(bx, 2, 18, 18);
+        };
+        desenharSwitch.run();
+
+        Label labelSwitch = new Label("Inserir precos manualmente");
+        labelSwitch.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
+
+        HBox switchBox = new HBox(8, canvasSwitch, labelSwitch);
+        switchBox.setAlignment(Pos.CENTER_LEFT);
+        switchBox.setCursor(javafx.scene.Cursor.HAND);
+        switchBox.setOnMouseClicked(ev -> {
+            estadoSwitch[0] = !estadoSwitch[0];
+            desenharSwitch.run();
+            modoEdicaoManual = estadoSwitch[0];
+            ativarEdicaoManual(estadoSwitch[0]);
+        });
+        painel.getChildren().add(switchBox);
+
+
         javafx.scene.canvas.Canvas canvasPremium = new javafx.scene.canvas.Canvas(44, 22);
         final boolean[] estadoPremium = {false};
 
@@ -313,7 +347,7 @@ public class TelaCraftRefino {
         );
 
 
-        Label tituloReceitaCraft = new Label("Receita de Craft (recursos refinados necessarios)");
+        Label tituloReceitaCraft = new Label("Receita de Craft");
         tituloReceitaCraft.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
         tituloReceitaCraft.setPadding(new Insets(12, 0, 6, 0));
 
@@ -1220,4 +1254,75 @@ public class TelaCraftRefino {
             return padrao;
         }
     }
+
+
+    private void ativarEdicaoManual(boolean ativo) {
+        // coluna de preco de venda na tabela de precos
+        for (TableColumn<LinhaPreco, ?> col : tabelaPrecos.getColumns()) {
+            if (!"Preco de Venda".equals(col.getText())) continue;
+            @SuppressWarnings("unchecked")
+            TableColumn<LinhaPreco, String> colStr = (TableColumn<LinhaPreco, String>) col;
+            if (ativo) {
+                colStr.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
+                colStr.setOnEditCommit(ev -> {
+                    LinhaPreco antiga = ev.getRowValue();
+                    int idx = tabelaPrecos.getItems().indexOf(antiga);
+                    tabelaPrecos.getItems().set(idx, new LinhaPreco(
+                            antiga.itemId, antiga.qualidade, antiga.cidade,
+                            antiga.corCidade, ev.getNewValue(), antiga.atualizado));
+                    atualizarCalculo();
+                });
+            } else {
+                colStr.setCellFactory(tc -> new TableCell<>() {
+                    @Override
+                    protected void updateItem(String v, boolean empty) {
+                        super.updateItem(v, empty);
+                        if (empty || v == null || "-".equals(v)) {
+                            setText("-");
+                            setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
+                        } else {
+                            setText(v);
+                            setStyle("-fx-text-fill: #e05555; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
+                        }
+                    }
+                });
+            }
+        }
+        tabelaPrecos.setEditable(ativo);
+
+        // coluna de preco de compra na tabela de materiais
+        for (TableColumn<LinhaMaterial, ?> col : tabelaMateriais.getColumns()) {
+            if (!"Preco de Compra".equals(col.getText())) continue;
+            @SuppressWarnings("unchecked")
+            TableColumn<LinhaMaterial, String> colStr = (TableColumn<LinhaMaterial, String>) col;
+            if (ativo) {
+                colStr.setCellFactory(javafx.scene.control.cell.TextFieldTableCell.forTableColumn());
+                colStr.setOnEditCommit(ev -> {
+                    LinhaMaterial antiga = ev.getRowValue();
+                    int idx = tabelaMateriais.getItems().indexOf(antiga);
+                    tabelaMateriais.getItems().set(idx, new LinhaMaterial(
+                            antiga.iconeUrl, antiga.nome, antiga.tipo, antiga.qtdTotal,
+                            antiga.cidade, antiga.corCidade, ev.getNewValue(), antiga.atualizado));
+                    atualizarCalculo();
+                });
+            } else {
+                colStr.setCellFactory(tc -> new TableCell<>() {
+                    @Override
+                    protected void updateItem(String v, boolean empty) {
+                        super.updateItem(v, empty);
+                        if (empty || v == null || "-".equals(v)) {
+                            setText("-");
+                            setStyle("-fx-text-fill: #666; -fx-alignment: CENTER-RIGHT;");
+                        } else {
+                            setText(v);
+                            setStyle("-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
+                        }
+                    }
+                });
+            }
+        }
+        tabelaMateriais.setEditable(ativo);
+    }
+
+
 }
