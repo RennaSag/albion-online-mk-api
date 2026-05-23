@@ -18,6 +18,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import com.albionmarket.service.OperacaoService;
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -312,12 +314,25 @@ public class TelaCraftRefino {
         Region espaco = new Region();
         VBox.setVgrow(espaco, Priority.ALWAYS);
 
+
+        Button btnSalvarOperacao = new Button("Salvar Operacao");
+        btnSalvarOperacao.setMaxWidth(Double.MAX_VALUE);
+        btnSalvarOperacao.setStyle("-fx-background-color: #3dba6e; -fx-text-fill: white; "
+                + "-fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 0;");
+        btnSalvarOperacao.setOnAction(ev -> {
+            salvarOperacao();
+            btnSalvarOperacao.setDisable(true);
+            btnSalvarOperacao.setText("Operacao Salva");
+        });
+
+
+
         Button btnVoltar = new Button("Voltar");
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
         btnVoltar.getStyleClass().add("home-botao");
         btnVoltar.setOnAction(v -> new TelaCraftRefinoSelecao(palco, estadoSelecao).mostrar());
 
-        painel.getChildren().addAll(btnAtualizar, espaco, btnVoltar);
+        painel.getChildren().addAll(btnAtualizar, espaco, btnSalvarOperacao, btnVoltar);
 
         ScrollPane scroll = new ScrollPane(painel);
         scroll.setFitToWidth(true);
@@ -1253,6 +1268,87 @@ public class TelaCraftRefino {
         } catch (Exception ex) {
             return padrao;
         }
+    }
+
+
+    private void salvarOperacao() {
+        try {
+            int t = AlbionIdUtil.tierEfetivo(tier);
+            int e = AlbionIdUtil.enchantEfetivo(enchant);
+
+            String melhorCidadeApiTemp = "-";
+            double melhorV = 0;
+            for (LinhaPreco lp : tabelaPrecos.getItems()) {
+                if ("Diario Cheio".equals(lp.itemId)) continue;
+                double v = FormatadorUtil.parseSilver(lp.sellMin);
+                if (v > melhorV) {
+                    melhorV = v;
+                    melhorCidadeApiTemp = lp.cidade;
+                }
+            }
+            final String melhorCidadeApi = melhorCidadeApiTemp;
+            String nomeCidadeVenda = BancoDeDadosItens.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(melhorCidadeApi))
+                    .map(CidadeInfo::getNome)
+                    .findFirst().orElse(melhorCidadeApi);
+
+            String locaisJson = cidadesPorMaterialJson();
+
+            double qtdInicial = parseDoubleSafe(campoQuantidade, 1.0);
+            double taxaRetorno = parseDoubleSafe(campoRetornoCraft, 15.2) / 100.0;
+            double qtdFinal = qtdInicial / (1.0 - taxaRetorno);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\n");
+            sb.append("  \"item\": \"").append(item.getNome().replace("\"", "\\\"")).append("\",\n");
+            sb.append("  \"itemId\": \"").append(itemIdCompleto).append("\",\n");
+            sb.append("  \"tier\": ").append(t).append(",\n");
+            sb.append("  \"encantamento\": ").append(e).append(",\n");
+            sb.append("  \"parametros\": {\n");
+            sb.append("    \"quantidade\": \"").append(campoQuantidade.getText()).append("\",\n");
+            sb.append("    \"taxaRetornoCraft\": \"").append(campoRetornoCraft.getText()).append("\",\n");
+            sb.append("    \"taxaBarracaCraft\": \"").append(campoBarracaCraft.getText()).append("\",\n");
+            sb.append("    \"taxaRetornoRefino\": \"").append(campoRetornoRefino.getText()).append("\",\n");
+            sb.append("    \"taxaBarracaRefino\": \"").append(campoBarracaRefino.getText()).append("\"\n");
+            sb.append("  },\n");
+            sb.append("  \"calculadora\": {\n");
+            sb.append("    \"Quantidade a craftar\": \"").append(FormatadorUtil.fmt(qtdInicial)).append(" un\",\n");
+            sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", qtdFinal)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(FormatadorUtil.fmtSilver(melhorV)).append("\",\n");
+            sb.append("    \"Local de venda\": \"").append(nomeCidadeVenda).append("\",\n");
+            sb.append("    \"Custo dos materiais\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
+            sb.append("    \"Local de compra dos materiais\": ").append(locaisJson).append(",\n");
+            sb.append("    \"Custo total\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
+            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroAtual >= 0 ? "+" : "").append(FormatadorUtil.fmtSilver(lucroAtual)).append("\"\n");
+            sb.append("  }\n");
+            sb.append("}\n");
+
+            String nomeArquivo = OperacaoService.salvar(itemIdCompleto, sb.toString());
+            labelStatus.setText("Operacao salva: " + nomeArquivo);
+
+        } catch (Exception ex) {
+            labelStatus.setText("Erro ao salvar: " + ex.getMessage());
+        }
+    }
+
+    private String cidadesPorMaterialJson() {
+        if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        boolean primeiro = true;
+        for (LinhaMaterial lm : tabelaMateriais.getItems()) {
+            if (!primeiro) sb.append(", ");
+            primeiro = false;
+            String nomeCidade = BancoDeDadosItens.CIDADES.stream()
+                    .filter(c -> c.getApiId().equals(lm.cidade))
+                    .map(CidadeInfo::getNome)
+                    .findFirst().orElse(lm.cidade != null ? lm.cidade : "-");
+            int qtdReal = lm.qtdTotal * parseIntSafe(campoQuantidade, 1);
+            sb.append("{\"material\": \"").append(lm.nome.replace("\"", "\\\""))
+                    .append("\", \"quantidade\": ").append(qtdReal)
+                    .append(", \"cidade\": \"").append(nomeCidade).append("\"}");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
 

@@ -735,12 +735,12 @@ public class BancoDeDadosItens {
                 new Subcategoria("Pelego e Couros", Arrays.asList(
                         item("HIDE", "Pelego", "pelego de "),
                         item("LEATHER", "Couro", "couros couro")
-                )),
+                ))
 
-                new Subcategoria("Pedras e Blocos", Arrays.asList(
+                /*new Subcategoria("Pedras e Blocos", Arrays.asList(
                         item("ROCK", "Pedra", "pedra "),
                         item("STONEBLOCK", "Blocos", "blocos de")
-                ))
+                ))*/
         )));
 
 
