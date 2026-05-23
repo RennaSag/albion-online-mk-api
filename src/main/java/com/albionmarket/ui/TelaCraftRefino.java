@@ -613,7 +613,7 @@ public class TelaCraftRefino {
         tabelaMateriais.setItems(FXCollections.emptyObservableList());
         receitasRefino.clear();
 
-        ExecutorService pool = Executors.newFixedThreadPool(4, r -> {
+        ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
             Thread t = new Thread(r);
             t.setDaemon(true);
             return t;
@@ -704,7 +704,7 @@ public class TelaCraftRefino {
 
                     final String idRefinado = mat.getUniqueName();
                     final String idRefinadoComEnch = (eEfetivo > 0)
-                            ? idRefinado + "_LEVEL" + eEfetivo
+                            ? idRefinado + "@" + eEfetivo
                             : idRefinado;
 
                     futures.add(CompletableFuture.runAsync(() -> {
@@ -737,17 +737,38 @@ public class TelaCraftRefino {
 
                                 try {
                                     List<PriceEntry> pMat;
-                                    if (!ehRetorno && eEfetivo > 0) {
-                                        pMat = apiService.buscarPrecos(sufMat + "_LEVEL" + eEfetivo, tMat, eEfetivo, -1, cidadesSemBM);
-                                    } else {
-                                        pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
-                                    }
+                                    pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
+
+
                                     synchronized (precosMateriais) {
                                         precosMateriais.computeIfAbsent(idMat, k ->
                                                 java.util.Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
                                     }
                                 } catch (Exception ex) {
-                                    System.out.println("ERRO ingrediente " + idMat + ": " + ex.getMessage());
+                                    if (ex.getMessage() != null && ex.getMessage().contains("429")) {
+                                        for (int tentativa = 1; tentativa <= 3; tentativa++) {
+                                            try {
+                                                Thread.sleep(tentativa * 2000L); // 2s, 4s, 6s
+                                                List<PriceEntry> pMat;
+                                                if (!ehRetorno && eEfetivo > 0) {
+                                                    pMat = apiService.buscarPrecos(sufMat, tMat, eEfetivo, -1, cidadesSemBM);
+                                                } else {
+                                                    pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
+                                                }
+                                                synchronized (precosMateriais) {
+                                                    precosMateriais.computeIfAbsent(idMat, k ->
+                                                            java.util.Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                                }
+                                                break; // sucesso, sai do loop
+
+
+                                            } catch (Exception ex2) {
+                                                if (tentativa == 3) {
+                                                    System.out.println("RETRY esgotado para " + idMat + ": " + ex2.getMessage());
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
@@ -921,7 +942,7 @@ public class TelaCraftRefino {
             boolean ehArtefato = mat.isArtefato();
 
             String iconeId = (!ehArtefato && eAtual > 0)
-                    ? idMat + "_LEVEL" + eAtual : idMat;
+                    ? idMat + "@" + eAtual : idMat;
             String iconeUrl = "https://render.albiononline.com/v1/item/" + iconeId + ".png";
 
             String sufixo = idMat.contains("_")
@@ -1011,6 +1032,8 @@ public class TelaCraftRefino {
             for (PriceEntry pe : entrada.getValue()) {
                 PriceEntry atual = melhorCompra.get(idMatChave);
 
+                System.out.println("BP achou pe: sellMin=" + (pe != null ? pe.getSellMin() : "null") + " buyMax=" + (pe != null ? pe.getBuyMax() : "null"));
+
                 if (atual == null) {
                     melhorCompra.put(idMatChave, pe); // guarda qualquer entrada, mesmo zerada
                 } else if (pe.getSellMin() > 0
@@ -1049,7 +1072,7 @@ public class TelaCraftRefino {
             System.out.println("buscando chave: " + idMat + " → achou: " + (pe != null ? pe.getSellMin() : "null"));
 
             String iconeId = (!ehRetorno && eAtual > 0)
-                    ? idMat + "_LEVEL" + eAtual : idMat;
+                    ? idMat + "@" + eAtual : idMat;
             String iconeUrl = "https://render.albiononline.com/v1/item/" + iconeId + ".png";
 
 

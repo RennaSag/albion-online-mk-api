@@ -35,7 +35,7 @@ public class BancoDeDadosChangelog {
                             new Mudanca(TipoMudanca.CORRECAO, "A nova ferramenta de craft com refino ainda não foi testada nem validada, então recomendo tomarem cuidado por enquanto. Quando tudo estiver correto, vou gravar um vídeo mostrando. Ainda será melhorada para que fique tudo perfeito"),
                             new Mudanca(TipoMudanca.REMOCAO, "Além disso, estou trabalhando na feature de flip de mercado, mas ainda sem sucesso. Estou com alguns problemas na requisição dos dados do flip pela API do Albion Data, mas futuramente tudo será resolvido"),
                             new Mudanca(TipoMudanca.MELHORIA, "Se tiver qualquer problema, entre em contato com o suporte: rennasagcontato@gmail.com")
-                            )
+                    )
             )
 
 
