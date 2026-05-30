@@ -804,7 +804,7 @@ public class BancoDeDadosItens {
 
         // diarios de ferramenteiro
         if (
-                        base.startsWith("2H_TOOL_AXE") ||
+                base.startsWith("2H_TOOL_AXE") ||
                         base.startsWith("2H_TOOL_AXE_AVALON") ||
                         base.startsWith("H_TOOL_HAMMER") ||
                         base.startsWith("H_TOOL_HAMMER_AVALON") ||

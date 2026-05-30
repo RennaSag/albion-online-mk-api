@@ -42,10 +42,8 @@ public class TelaCraftRefino {
 
     private PriceEntry precoDiarioVazioEntryCache;
 
-
     private final ApiService apiService = new ApiService();
     private final CraftService craftService = new CraftService();
-
 
     private TextField campoQuantidade;
     private TextField campoRetornoCraft;
@@ -53,10 +51,8 @@ public class TelaCraftRefino {
     private TextField campoRetornoRefino;
     private TextField campoBarracaRefino;
 
-
     private Label labelStatus;
     private ProgressIndicator progresso;
-
 
     private TableView<LinhaPreco> tabelaPrecos;
     private TableView<LinhaReceita> tabelaReceitaCraft;
@@ -67,13 +63,69 @@ public class TelaCraftRefino {
     private final Map<String, ReceitaCraft> receitasRefino = new LinkedHashMap<>();
     private long itemValue = 0;
 
-
     private double precoDiarioVazioApi = 0;
     private double precoDiarioCheioApi = 0;
 
     private double lucroAtual = 0;
     private double custoAtual = 0;
 
+    // =========================================================================
+    // Helpers de ID
+    // =========================================================================
+
+    /**
+     * Remove o sufixo "@N" de um ID. Ex: "T6_METALBAR@3" -> "T6_METALBAR"
+     */
+    private static String semEnchant(String id) {
+        if (id == null) return "";
+        int at = id.indexOf('@');
+        return at > 0 ? id.substring(0, at) : id;
+    }
+
+    /**
+     * Extrai o nivel de encantamento de um ID. Ex: "T6_METALBAR@3" -> 3
+     */
+    private static int enchantDeId(String id) {
+        if (id == null) return 0;
+        int at = id.indexOf('@');
+        if (at < 0) return 0;
+        try {
+            return Integer.parseInt(id.substring(at + 1));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Extrai o tier de um ID. Ex: "T6_METALBAR@3" -> 6
+     */
+    private static int tierDeId(String id, int fallback) {
+        if (id == null || id.length() < 2) return fallback;
+        String base = semEnchant(id);
+        if (base.charAt(0) == 'T' && Character.isDigit(base.charAt(1))) {
+            try {
+                return Integer.parseInt(base.substring(1, 2));
+            } catch (NumberFormatException e) {
+                return fallback;
+            }
+        }
+        return fallback;
+    }
+
+    /**
+     * Extrai o sufixo de um ID (parte apos "TX_"). Ex: "T6_METALBAR@3" -> "METALBAR"
+     */
+    private static String sufixoDeId(String id) {
+        String base = semEnchant(id);
+        String[] p = base.split("_", 2);
+        boolean temTier = p[0].length() == 2 && p[0].charAt(0) == 'T'
+                && Character.isDigit(p[0].charAt(1));
+        return (temTier && p.length > 1) ? p[1] : base;
+    }
+
+    // =========================================================================
+    // Modelos das linhas de tabela
+    // =========================================================================
 
     public static class LinhaPreco {
         public final String itemId, qualidade, cidade, corCidade, sellMin, atualizado;
@@ -88,7 +140,6 @@ public class TelaCraftRefino {
             this.atualizado = atualizado;
         }
     }
-
 
     public static class LinhaReceita {
         public final String iconeUrl, nome, tipo;
@@ -119,6 +170,9 @@ public class TelaCraftRefino {
         }
     }
 
+    // =========================================================================
+    // Construtor
+    // =========================================================================
 
     public TelaCraftRefino(Stage palco, ItemDefinition item, int tier, int enchant,
                            EstadoSelecao estadoSelecao) {
@@ -133,6 +187,9 @@ public class TelaCraftRefino {
         this.itemIdCompleto = AlbionIdUtil.buildApiId(item.getId(), t, e);
     }
 
+    // =========================================================================
+    // Mostrar
+    // =========================================================================
 
     public void mostrar() {
         BorderPane raiz = new BorderPane();
@@ -149,6 +206,9 @@ public class TelaCraftRefino {
         buscarTudo();
     }
 
+    // =========================================================================
+    // Cabecalho
+    // =========================================================================
 
     private HBox criarCabecalho() {
         Label titulo = new Label("Craft + Refino");
@@ -176,13 +236,15 @@ public class TelaCraftRefino {
         return cab;
     }
 
+    // =========================================================================
+    // Lateral
+    // =========================================================================
 
     private ScrollPane criarLateral() {
         VBox painel = new VBox(14);
         painel.setPadding(new Insets(16));
         painel.setPrefWidth(290);
         painel.setStyle("-fx-background-color: #252525;");
-
 
         ImageView icone = new ImageView();
         icone.setFitWidth(140);
@@ -206,7 +268,6 @@ public class TelaCraftRefino {
         boxIcone.setPadding(new Insets(0, 0, 10, 0));
         painel.getChildren().addAll(boxIcone, new Separator());
 
-
         painel.getChildren().add(secao("Parametros de Craft"));
         campoQuantidade = campoCampo("1");
         campoRetornoCraft = campoCampo("15.2");
@@ -214,43 +275,33 @@ public class TelaCraftRefino {
         painel.getChildren().addAll(
                 label("Quantidade a craftar"), campoQuantidade,
                 label("Retorno do craft (%)"), campoRetornoCraft,
-                label("Taxa da barraca craft"), campoBarracaCraft
-        );
+                label("Taxa da barraca craft"), campoBarracaCraft);
 
         painel.getChildren().add(new Separator());
-
 
         painel.getChildren().add(secao("Parametros de Refino"));
         campoRetornoRefino = campoCampo("36.7");
         campoBarracaRefino = campoCampo("3.0");
         painel.getChildren().addAll(
                 label("Retorno do refino (%)"), campoRetornoRefino,
-                label("Taxa da barraca refino"), campoBarracaRefino
-        );
+                label("Taxa da barraca refino"), campoBarracaRefino);
 
         painel.getChildren().add(new Separator());
-
 
         // switch inserir precos manualmente
         javafx.scene.canvas.Canvas canvasSwitch = new javafx.scene.canvas.Canvas(44, 22);
         final boolean[] estadoSwitch = {false};
-
         Runnable desenharSwitch = () -> {
             javafx.scene.canvas.GraphicsContext gc = canvasSwitch.getGraphicsContext2D();
             gc.clearRect(0, 0, 44, 22);
-            gc.setFill(estadoSwitch[0]
-                    ? javafx.scene.paint.Color.web("#5a8dee")
-                    : javafx.scene.paint.Color.web("#555"));
+            gc.setFill(estadoSwitch[0] ? javafx.scene.paint.Color.web("#5a8dee") : javafx.scene.paint.Color.web("#555"));
             gc.fillRoundRect(0, 0, 44, 22, 22, 22);
-            double bx = estadoSwitch[0] ? 24 : 2;
             gc.setFill(javafx.scene.paint.Color.WHITE);
-            gc.fillOval(bx, 2, 18, 18);
+            gc.fillOval(estadoSwitch[0] ? 24 : 2, 2, 18, 18);
         };
         desenharSwitch.run();
-
         Label labelSwitch = new Label("Inserir precos manualmente");
         labelSwitch.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
-
         HBox switchBox = new HBox(8, canvasSwitch, labelSwitch);
         switchBox.setAlignment(Pos.CENTER_LEFT);
         switchBox.setCursor(javafx.scene.Cursor.HAND);
@@ -262,26 +313,20 @@ public class TelaCraftRefino {
         });
         painel.getChildren().add(switchBox);
 
-
+        // switch premium
         javafx.scene.canvas.Canvas canvasPremium = new javafx.scene.canvas.Canvas(44, 22);
         final boolean[] estadoPremium = {false};
-
         Runnable desenharPremium = () -> {
             javafx.scene.canvas.GraphicsContext gc = canvasPremium.getGraphicsContext2D();
             gc.clearRect(0, 0, 44, 22);
-            gc.setFill(estadoPremium[0]
-                    ? javafx.scene.paint.Color.web("#e0b84a")
-                    : javafx.scene.paint.Color.web("#555"));
+            gc.setFill(estadoPremium[0] ? javafx.scene.paint.Color.web("#e0b84a") : javafx.scene.paint.Color.web("#555"));
             gc.fillRoundRect(0, 0, 44, 22, 22, 22);
-            double bx = estadoPremium[0] ? 24 : 2;
             gc.setFill(javafx.scene.paint.Color.WHITE);
-            gc.fillOval(bx, 2, 18, 18);
+            gc.fillOval(estadoPremium[0] ? 24 : 2, 2, 18, 18);
         };
         desenharPremium.run();
-
         Label labelPremium = new Label("Possui premium?");
         labelPremium.setStyle("-fx-text-fill: #ccc; -fx-font-size: 12px;");
-
         HBox switchPremium = new HBox(8, canvasPremium, labelPremium);
         switchPremium.setAlignment(Pos.CENTER_LEFT);
         switchPremium.setCursor(javafx.scene.Cursor.HAND);
@@ -293,7 +338,6 @@ public class TelaCraftRefino {
         });
         painel.getChildren().add(switchPremium);
         painel.getChildren().add(new Separator());
-
 
         progresso = new ProgressIndicator();
         progresso.setMaxSize(24, 24);
@@ -314,7 +358,6 @@ public class TelaCraftRefino {
         Region espaco = new Region();
         VBox.setVgrow(espaco, Priority.ALWAYS);
 
-
         Button btnSalvarOperacao = new Button("Salvar Operacao");
         btnSalvarOperacao.setMaxWidth(Double.MAX_VALUE);
         btnSalvarOperacao.setStyle("-fx-background-color: #3dba6e; -fx-text-fill: white; "
@@ -324,7 +367,6 @@ public class TelaCraftRefino {
             btnSalvarOperacao.setDisable(true);
             btnSalvarOperacao.setText("Operacao Salva");
         });
-
 
         Button btnVoltar = new Button("Voltar");
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
@@ -339,9 +381,11 @@ public class TelaCraftRefino {
         return scroll;
     }
 
+    // =========================================================================
+    // Area central
+    // =========================================================================
 
     private ScrollPane criarAreaCentral() {
-
         Label tituloPrecos = new Label("Precos no Mercado");
         tituloPrecos.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
 
@@ -350,16 +394,11 @@ public class TelaCraftRefino {
         tabelaPrecos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tabelaPrecos.setPlaceholder(new Label("Buscando precos..."));
         tabelaPrecos.setPrefHeight(180);
-
         tabelaPrecos.getColumns().addAll(
-                coluna("Qualidade", 110,
-                        r -> new javafx.beans.property.SimpleStringProperty(r.getValue().qualidade)),
+                coluna("Qualidade", 110, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().qualidade)),
                 criarColunaCidade(),
                 criarColunaPrecoVenda("Preco de Venda", 130),
-                coluna("Atualizacao", 100,
-                        r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado))
-        );
-
+                coluna("Atualizacao", 100, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado)));
 
         Label tituloReceitaCraft = new Label("Receita de Craft");
         tituloReceitaCraft.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
@@ -372,8 +411,7 @@ public class TelaCraftRefino {
 
         TableColumn<LinhaReceita, String> colIconeRC = new TableColumn<>("  ");
         colIconeRC.setPrefWidth(60);
-        colIconeRC.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().iconeUrl));
+        colIconeRC.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().iconeUrl));
         colIconeRC.setCellFactory(tc -> new TableCell<>() {
             private final ImageView iv = new ImageView();
 
@@ -397,8 +435,7 @@ public class TelaCraftRefino {
 
         TableColumn<LinhaReceita, String> colTipoRC = new TableColumn<>("Tipo");
         colTipoRC.setPrefWidth(80);
-        colTipoRC.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tipo));
+        colTipoRC.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tipo));
         colTipoRC.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
@@ -416,8 +453,7 @@ public class TelaCraftRefino {
 
         TableColumn<LinhaReceita, String> colQtdRC = new TableColumn<>("Qtd p/ 1");
         colQtdRC.setPrefWidth(80);
-        colQtdRC.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(String.valueOf(r.getValue().qtd)));
+        colQtdRC.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(String.valueOf(r.getValue().qtd)));
         colQtdRC.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
@@ -429,11 +465,8 @@ public class TelaCraftRefino {
 
         tabelaReceitaCraft.getColumns().addAll(
                 colIconeRC,
-                coluna("Material (refinado)", 180,
-                        r -> new javafx.beans.property.SimpleStringProperty(r.getValue().nome)),
-                colTipoRC, colQtdRC
-        );
-
+                coluna("Material (refinado)", 180, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().nome)),
+                colTipoRC, colQtdRC);
 
         Label tituloMateriais = new Label("Materiais Necessarios");
         tituloMateriais.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
@@ -446,8 +479,7 @@ public class TelaCraftRefino {
 
         TableColumn<LinhaMaterial, String> colIconeM = new TableColumn<>("  ");
         colIconeM.setPrefWidth(60);
-        colIconeM.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().iconeUrl));
+        colIconeM.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().iconeUrl));
         colIconeM.setCellFactory(tc -> new TableCell<>() {
             private final ImageView iv = new ImageView();
 
@@ -471,8 +503,7 @@ public class TelaCraftRefino {
 
         TableColumn<LinhaMaterial, String> colTipoM = new TableColumn<>("Tipo");
         colTipoM.setPrefWidth(90);
-        colTipoM.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tipo));
+        colTipoM.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().tipo));
         colTipoM.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
@@ -488,6 +519,7 @@ public class TelaCraftRefino {
                     case "Retorno" -> "#9b59b6";
                     case "Artefato" -> "#9b59b6";
                     case "Direto" -> "#e0b84a";
+                    case "Item especial" -> "#ccc";
                     default -> "#ccc";
                 };
                 setStyle("-fx-text-fill: " + cor + "; -fx-font-weight: bold;");
@@ -499,8 +531,7 @@ public class TelaCraftRefino {
         colQtdM.setCellValueFactory(r -> {
             LinhaMaterial lm = r.getValue();
             int qtdCraft = parseIntSafe(campoQuantidade, 1);
-            return new javafx.beans.property.SimpleStringProperty(
-                    String.valueOf(lm.qtdTotal * qtdCraft));
+            return new javafx.beans.property.SimpleStringProperty(String.valueOf(lm.qtdTotal * qtdCraft));
         });
         colQtdM.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -513,8 +544,7 @@ public class TelaCraftRefino {
 
         TableColumn<LinhaMaterial, String> colPrecoM = new TableColumn<>("Preco de Compra");
         colPrecoM.setPrefWidth(140);
-        colPrecoM.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().precoCompra));
+        colPrecoM.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().precoCompra));
         colPrecoM.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
@@ -531,8 +561,7 @@ public class TelaCraftRefino {
 
         TableColumn<LinhaMaterial, String> colCidadeM = new TableColumn<>("Local");
         colCidadeM.setPrefWidth(130);
-        colCidadeM.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().cidade));
+        colCidadeM.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().cidade));
         colCidadeM.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
@@ -556,13 +585,9 @@ public class TelaCraftRefino {
 
         tabelaMateriais.getColumns().addAll(
                 colIconeM,
-                coluna("Material", 180,
-                        r -> new javafx.beans.property.SimpleStringProperty(r.getValue().nome)),
+                coluna("Material", 180, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().nome)),
                 colTipoM, colQtdM, colPrecoM, colCidadeM,
-                coluna("Atualizacao", 100,
-                        r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado))
-        );
-
+                coluna("Atualizacao", 100, r -> new javafx.beans.property.SimpleStringProperty(r.getValue().atualizado)));
 
         Label tituloCalc = new Label("Calculadora de Lucro");
         tituloCalc.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
@@ -590,18 +615,19 @@ public class TelaCraftRefino {
         return scroll;
     }
 
+    // =========================================================================
+    // BUSCA PRINCIPAL
+    // =========================================================================
 
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null
                 && estadoSelecao.cidades != null
                 && !estadoSelecao.cidades.isEmpty())
                 ? estadoSelecao.cidades
-                : BancoDeDadosItens.CIDADES.stream()
-                .map(CidadeInfo::getApiId).collect(Collectors.toList());
+                : BancoDeDadosItens.CIDADES.stream().map(CidadeInfo::getApiId).collect(Collectors.toList());
 
         List<String> cidadesSemBM = cidades.stream()
-                .filter(c -> !c.equals("BlackMarket"))
-                .collect(Collectors.toList());
+                .filter(c -> !c.equals("BlackMarket")).collect(Collectors.toList());
 
         int tEfetivo = AlbionIdUtil.tierEfetivo(tier);
         int eEfetivo = AlbionIdUtil.enchantEfetivo(enchant);
@@ -613,7 +639,7 @@ public class TelaCraftRefino {
         tabelaMateriais.setItems(FXCollections.emptyObservableList());
         receitasRefino.clear();
 
-        ExecutorService pool = Executors.newFixedThreadPool(2, r -> {
+        ExecutorService pool = Executors.newFixedThreadPool(4, r -> {
             Thread t = new Thread(r);
             t.setDaemon(true);
             return t;
@@ -623,10 +649,8 @@ public class TelaCraftRefino {
 
             private List<PriceEntry> precos;
             private ReceitaCraft receita;
-
-            private final Map<String, List<PriceEntry>> precosMateriais = new java.util.concurrent.ConcurrentHashMap<>();
-
-
+            private final Map<String, List<PriceEntry>> precosMateriais =
+                    new java.util.concurrent.ConcurrentHashMap<>();
             private PriceEntry precoDiarioVazioEntry;
             private PriceEntry precoDiarioCheioEntry;
             private List<PriceEntry> precosDiarioCheioTodos;
@@ -634,29 +658,24 @@ public class TelaCraftRefino {
             @Override
             protected Void call() throws Exception {
 
+                CompletableFuture<List<PriceEntry>> futurePrecos = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return apiService.buscarPrecos(item.getId(), tEfetivo, eEfetivo, -1, cidades);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }, pool);
 
-                CompletableFuture<List<PriceEntry>> futurePrecos =
-                        CompletableFuture.supplyAsync(() -> {
-                            try {
-                                return apiService.buscarPrecos(
-                                        item.getId(), tEfetivo, eEfetivo, -1, cidades);
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }, pool);
+                CompletableFuture<ReceitaCraft> futureReceita = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return craftService.buscarReceita(itemIdCompleto);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }, pool);
 
-                CompletableFuture<ReceitaCraft> futureReceita =
-                        CompletableFuture.supplyAsync(() -> {
-                            try {
-                                return craftService.buscarReceita(itemIdCompleto);
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }, pool);
-
-                CompletableFuture<Long> futureItemValue =
-                        CompletableFuture.supplyAsync(
-                                () -> ItemValues.getValor(itemIdCompleto), pool);
+                CompletableFuture<Long> futureItemValue = CompletableFuture.supplyAsync(
+                        () -> ItemValues.getValor(itemIdCompleto), pool);
 
                 precos = futurePrecos.get();
                 receita = futureReceita.get();
@@ -664,177 +683,133 @@ public class TelaCraftRefino {
 
                 if (receita == null || receita.getMateriais().isEmpty()) return null;
 
-
                 List<CompletableFuture<Void>> futures = new ArrayList<>();
 
                 for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
 
-                    // artefato busca preco direto sem tentar receita de refino
-                    if (mat.isArtefato()) {
-                        final String idArtefato = mat.getUniqueName();
+                    // artefato: resolve via BancoDeDadosItens, ignora TOKEN_FAVOR da api
+                    if (ehMaterialArtefato(mat.getUniqueName())) {
+                        String rawArtefato = BancoDeDadosItens.getArtefatoSufixo(itemIdCompleto);
+                        final String sufArtefato;
+                        if (rawArtefato != null) {
+                            sufArtefato = rawArtefato.split(";;")[0];
+                        } else {
+                            sufArtefato = sufixoDeId(mat.getUniqueName());
+                        }
+
+                        final String chaveArtefato = "T" + tEfetivo + "_" + sufArtefato;
+
                         futures.add(CompletableFuture.runAsync(() -> {
-
-                            System.out.println("INICIANDO artefato: " + idArtefato);
-
                             try {
-                                String[] p = idArtefato.split("_", 2);
-                                int tMat = (p[0].startsWith("T") && p[0].length() == 2)
-                                        ? Integer.parseInt(p[0].substring(1)) : tEfetivo;
-                                String sufMat = p.length > 1 ? p[1] : idArtefato;
-                                List<PriceEntry> pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
-
-
-                                System.out.println("artefato: " + idArtefato + " | sufMat: " + sufMat + " | tMat: " + tMat + " | resultados: " + pMat.size());
-
+                                List<PriceEntry> pMat = apiService.buscarPrecos(
+                                        sufArtefato, tEfetivo, 0, -1, cidadesSemBM);
                                 synchronized (precosMateriais) {
                                     precosMateriais
-                                            .computeIfAbsent(idArtefato, k ->
-                                                    java.util.Collections.synchronizedList(new ArrayList<>()))
+                                            .computeIfAbsent(chaveArtefato, k ->
+                                                    Collections.synchronizedList(new ArrayList<>()))
                                             .addAll(pMat);
                                 }
-
-
-
                             } catch (Exception ex) {
-                                System.out.println("ERRO no artefato " + idArtefato + ": " + ex.getMessage());
+                                System.out.println("ERRO artefato " + sufArtefato + ": " + ex.getMessage());
                             }
                         }, pool));
                         continue;
                     }
 
-                    final String idRefinado = mat.getUniqueName();
-                    final String idRefinadoComEnch = (eEfetivo > 0)
-                            ? idRefinado + "@" + eEfetivo
-                            : idRefinado;
+                    // recompõe @N para buscar receita de refino e preços do encantado correto
+                    String idRefinadoBase = mat.getUniqueName();
+                    final String idRefinado = (eEfetivo > 0 && !idRefinadoBase.contains("@"))
+                            ? idRefinadoBase + "@" + eEfetivo
+                            : idRefinadoBase;
+
 
                     futures.add(CompletableFuture.runAsync(() -> {
                         try {
-                            ReceitaCraft recRefino = craftService.buscarReceita(idRefinadoComEnch);
+                            ReceitaCraft recRefino = craftService.buscarReceita(idRefinado);
 
                             if (recRefino == null) {
-                                String[] p = idRefinado.split("_", 2);
-                                int tMat = (p[0].startsWith("T") && p[0].length() == 2)
-                                        ? Integer.parseInt(p[0].substring(1)) : tEfetivo;
-                                String sufMat = p.length > 1 ? p[1] : idRefinado;
-                                List<PriceEntry> pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
+                                int tMat = tierDeId(idRefinado, tEfetivo);
+                                String sufBase = sufixoDeId(idRefinado);
+                                int eMat = enchantDeId(idRefinado);
+                                String sufBusca = eMat > 0 ? sufBase + "_LEVEL" + eMat : sufBase;
+                                List<PriceEntry> pMat = buscarComRetry(sufBusca, tMat, eMat, -1, cidadesSemBM);
                                 synchronized (precosMateriais) {
                                     precosMateriais.computeIfAbsent(idRefinado, k ->
-                                            java.util.Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                            Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
                                 }
                                 return;
                             }
+
                             synchronized (receitasRefino) {
                                 receitasRefino.put(idRefinado, recRefino);
                             }
 
+                            // sub-materiais: itera sobre a receita base (sem enchant)
+                            // mas grava precos com a chave encantada para bater com atualizarTabelaMateriais
                             for (ReceitaCraft.MaterialCraft matRefino : recRefino.getMateriais()) {
-                                final String idMat = matRefino.getUniqueName();
-                                final boolean ehRetorno = matRefino.isArtefato();
-                                final String[] p = idMat.split("_", 2);
-                                final int tMat = (p[0].startsWith("T") && p[0].length() == 2)
-                                        ? Integer.parseInt(p[0].substring(1)) : tEfetivo;
-                                final String sufMat = p.length > 1 ? p[1] : idMat;
+                                String idMatBase = matRefino.getUniqueName();
+                                // propaga @N — mesma lógica do atualizarTabelaMateriais
+                                final String idMat = (eEfetivo > 0 && !idMatBase.contains("@"))
+                                        ? idMatBase + "@" + eEfetivo
+                                        : idMatBase;
+
+                                int tMat = tierDeId(idMat, tEfetivo);
+                                String sufMat = sufixoDeId(idMat);
+                                int eMat = enchantDeId(idMat);
 
                                 try {
-                                    List<PriceEntry> pMat;
-                                    pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
-
-
+                                    String sufBusca = eMat > 0 ? sufMat + "_LEVEL" + eMat : sufMat;
+                                    List<PriceEntry> pMat = buscarComRetry(sufBusca, tMat, 0, -1, cidadesSemBM);
                                     synchronized (precosMateriais) {
+                                        // grava com chave idMat (ex: T6_ORE@3) para bater com atualizarTabelaMateriais
                                         precosMateriais.computeIfAbsent(idMat, k ->
-                                                java.util.Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                                Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                        // grava também sem enchant como fallback (ex: T6_ORE) caso a tabela use id limpo
+                                        precosMateriais.computeIfAbsent(idMatBase, k ->
+                                                Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
                                     }
                                 } catch (Exception ex) {
-                                    if (ex.getMessage() != null && ex.getMessage().contains("429")) {
-                                        for (int tentativa = 1; tentativa <= 3; tentativa++) {
-                                            try {
-                                                Thread.sleep(tentativa * 2000L); // 2s, 4s, 6s
-                                                List<PriceEntry> pMat;
-                                                if (!ehRetorno && eEfetivo > 0) {
-                                                    pMat = apiService.buscarPrecos(sufMat, tMat, eEfetivo, -1, cidadesSemBM);
-                                                } else {
-                                                    pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
-                                                }
-                                                synchronized (precosMateriais) {
-                                                    precosMateriais.computeIfAbsent(idMat, k ->
-                                                            java.util.Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
-                                                }
-                                                break; // sucesso, sai do loop
-
-
-                                            } catch (Exception ex2) {
-                                                if (tentativa == 3) {
-                                                    System.out.println("RETRY esgotado para " + idMat + ": " + ex2.getMessage());
-                                                }
-                                            }
-                                        }
-                                    }
+                                    System.out.println("Falha sub-material " + idMat + ": " + ex.getMessage());
                                 }
                             }
 
                         } catch (Exception ex) {
-                            // se for 429, aguarda e tenta de novo uma vez
-                            if (ex.getMessage() != null && ex.getMessage().contains("429")) {
-                                try {
-                                    Thread.sleep(1500);
-                                    String[] p = idRefinado.split("_", 2);
-                                    int tMat = (p[0].startsWith("T") && p[0].length() == 2)
-                                            ? Integer.parseInt(p[0].substring(1)) : tEfetivo;
-                                    String sufMat = p.length > 1 ? p[1] : idRefinado;
-                                    List<PriceEntry> pMat = apiService.buscarPrecos(sufMat, tMat, 0, -1, cidadesSemBM);
-                                    synchronized (precosMateriais) {
-                                        precosMateriais.computeIfAbsent(idRefinado, k ->
-                                                java.util.Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
-                                    }
-                                } catch (Exception ex2) {
-                                    System.out.println("RETRY falhou para " + idRefinado + ": " + ex2.getMessage());
-                                }
-                            }
+                            System.out.println("Falha refino " + idRefinado + ": " + ex.getMessage());
                         }
                     }, pool));
                 }
 
-
+                // diarios
                 String sufixoDiario = BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
                 CompletableFuture<Void> futureDiarios = CompletableFuture.completedFuture(null);
-
                 if (sufixoDiario != null && tEfetivo >= 2) {
                     futureDiarios = CompletableFuture.runAsync(() -> {
                         try {
-                            String sufVazio = sufixoDiario + "_EMPTY";
-                            String sufCheio = sufixoDiario + "_FULL";
-
-                            CompletableFuture<List<PriceEntry>> fVazio =
-                                    CompletableFuture.supplyAsync(() -> {
-                                        try {
-                                            return apiService.buscarPrecos(sufVazio, tEfetivo, 0, 1, cidadesSemBM);
-                                        } catch (Exception ex) {
-                                            return List.of();
-                                        }
-                                    }, pool);
-
-                            CompletableFuture<List<PriceEntry>> fCheio =
-                                    CompletableFuture.supplyAsync(() -> {
-                                        try {
-                                            return apiService.buscarPrecos(sufCheio, tEfetivo, 0, 1, cidadesSemBM);
-                                        } catch (Exception ex) {
-                                            return List.of();
-                                        }
-                                    }, pool);
-
+                            CompletableFuture<List<PriceEntry>> fVazio = CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return apiService.buscarPrecos(sufixoDiario + "_EMPTY", tEfetivo, 0, 1, cidadesSemBM);
+                                } catch (Exception ex) {
+                                    return List.of();
+                                }
+                            }, pool);
+                            CompletableFuture<List<PriceEntry>> fCheio = CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return apiService.buscarPrecos(sufixoDiario + "_FULL", tEfetivo, 0, 1, cidadesSemBM);
+                                } catch (Exception ex) {
+                                    return List.of();
+                                }
+                            }, pool);
                             List<PriceEntry> listaVazio = fVazio.get();
                             List<PriceEntry> listaCheio = fCheio.get();
-
                             precosDiarioCheioTodos = listaCheio;
                             precoDiarioVazioEntry = listaVazio.stream()
-                                    .filter(pe2 -> pe2.getSellMin() > 0)
-                                    .min(Comparator.comparingLong(PriceEntry::getSellMin))
-                                    .orElse(null);
+                                    .filter(p -> p.getSellMin() > 0)
+                                    .min(Comparator.comparingLong(PriceEntry::getSellMin)).orElse(null);
                             precoDiarioCheioEntry = listaCheio.stream()
-                                    .filter(pe2 -> pe2.getBuyMax() > 0)
-                                    .max(Comparator.comparingLong(PriceEntry::getBuyMax))
-                                    .orElse(null);
+                                    .filter(p -> p.getBuyMax() > 0)
+                                    .max(Comparator.comparingLong(PriceEntry::getBuyMax)).orElse(null);
                         } catch (Exception ex) {
+                            System.out.println("Erro diarios: " + ex.getMessage());
                         }
                     }, pool);
                 }
@@ -844,15 +819,27 @@ public class TelaCraftRefino {
                 return null;
             }
 
+            /** busca com retry automatico em 429 */
+            private List<PriceEntry> buscarComRetry(String suf, int t, int e,
+                                                    int qualidade, List<String> cids) throws Exception {
+                Exception ultimo = null;
+                for (int tentativa = 0; tentativa <= 3; tentativa++) {
+                    try {
+                        if (tentativa > 0) Thread.sleep(tentativa * 2000L);
+                        return apiService.buscarPrecos(suf, t, e, qualidade, cids);
+                    } catch (Exception ex) {
+                        ultimo = ex;
+                        if (ex.getMessage() == null || !ex.getMessage().contains("429")) break;
+                    }
+                }
+                throw ultimo != null ? ultimo : new RuntimeException("buscarPrecos falhou");
+            }
+
             @Override
             protected void succeeded() {
                 receitaCraft = receita;
-
-                precoDiarioVazioApi = precoDiarioVazioEntry != null
-                        ? (double) precoDiarioVazioEntry.getSellMin() : 0;
-                precoDiarioCheioApi = precoDiarioCheioEntry != null
-                        ? (double) precoDiarioCheioEntry.getBuyMax() : 0;
-
+                precoDiarioVazioApi = precoDiarioVazioEntry != null ? (double) precoDiarioVazioEntry.getSellMin() : 0;
+                precoDiarioCheioApi = precoDiarioCheioEntry != null ? (double) precoDiarioCheioEntry.getBuyMax() : 0;
                 precoDiarioVazioEntryCache = precoDiarioVazioEntry;
 
                 atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
@@ -875,28 +862,25 @@ public class TelaCraftRefino {
         new Thread(tarefa, "thread-craft-refino").start();
     }
 
+    // =========================================================================
+    // TABELA DE PRECOS DO ITEM FINAL
+    // =========================================================================
 
-    private void atualizarTabelaPrecos(List<PriceEntry> entradas,
-                                       List<PriceEntry> precosDiarioCheio) {
+    private void atualizarTabelaPrecos(List<PriceEntry> entradas, List<PriceEntry> precosDiarioCheio) {
         Map<String, PriceEntry> melhor = new LinkedHashMap<>();
         for (PriceEntry pe : entradas) {
             String chave = pe.getItemId() + "|" + pe.getCidade();
             PriceEntry atual = melhor.get(chave);
-            if (atual == null
-                    || (pe.getSellMin() > 0
-                    && (atual.getSellMin() == 0 || pe.getSellMin() < atual.getSellMin()))) {
+            if (atual == null || (pe.getSellMin() > 0 && (atual.getSellMin() == 0 || pe.getSellMin() < atual.getSellMin())))
                 melhor.put(chave, pe);
-            }
         }
-
         List<LinhaPreco> linhas = new ArrayList<>();
         for (PriceEntry pe : melhor.values()) {
             if (pe.getSellMin() == 0 && pe.getBuyMax() == 0) continue;
             String cor = BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888");
-            linhas.add(new LinhaPreco(
-                    pe.getItemId(),
+            linhas.add(new LinhaPreco(pe.getItemId(),
                     FormatadorUtil.nomeQualidade(pe.getQualidade()),
                     pe.getCidade(), cor,
                     FormatadorUtil.formatarPreco(pe.getSellMin()),
@@ -905,7 +889,6 @@ public class TelaCraftRefino {
                                     ? pe.getSellDate() : pe.getBuyDate())));
         }
         linhas.sort(Comparator.comparing(l -> l.cidade));
-
 
         int tEfetivo = AlbionIdUtil.tierEfetivo(tier);
         String sufixoDiario = BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
@@ -916,19 +899,21 @@ public class TelaCraftRefino {
                         .filter(c -> c.getApiId().equals(pd.getCidade()))
                         .map(CidadeInfo::getCor).findFirst().orElse("#888");
                 String nomeDiario = BancoDeDadosItens.getNomeDiario(sufixoDiario);
-                linhas.add(new LinhaPreco(
-                        "Diario Cheio",
+                linhas.add(new LinhaPreco("Diario Cheio",
                         "Diario de " + nomeDiario + " (cheio)",
                         pd.getCidade(), cor,
                         FormatadorUtil.formatarPreco(pd.getBuyMax()),
                         FormatadorUtil.formatarData(pd.getBuyDate())));
             }
         }
-
         tabelaPrecos.setItems(FXCollections.observableArrayList(linhas));
         tabelaPrecos.setPrefHeight(28.0 + linhas.size() * 40.0);
         tabelaPrecos.setMaxHeight(tabelaPrecos.getPrefHeight());
     }
+
+    // =========================================================================
+    // TABELA DE RECEITA DE CRAFT
+    // =========================================================================
 
     private void atualizarTabelaReceitaCraft(ReceitaCraft receita) {
         if (receita == null) return;
@@ -939,27 +924,42 @@ public class TelaCraftRefino {
         List<LinhaReceita> linhas = new ArrayList<>();
         for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
             String idMat = mat.getUniqueName();
-            boolean ehArtefato = mat.isArtefato();
+            boolean ehArtefato = ehMaterialArtefato(idMat);
 
-            String iconeId = (!ehArtefato && eAtual > 0)
-                    ? idMat + "@" + eAtual : idMat;
-            String iconeUrl = "https://render.albiononline.com/v1/item/" + iconeId + ".png";
+            String nomeExibir;
+            String urlIcone;
 
-            String sufixo = idMat.contains("_")
-                    ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
-            int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T'
-                    && Character.isDigit(idMat.charAt(1)))
-                    ? Character.getNumericValue(idMat.charAt(1)) : tAtual;
+            if (ehArtefato) {
+                String raw = BancoDeDadosItens.getArtefatoSufixo(itemIdCompleto);
+                if (raw != null) {
+                    String sufArtefato = raw.split(";;")[0];
+                    String nomeArtefato = raw.split(";;")[1];
+                    urlIcone = "https://render.albiononline.com/v1/item/T" + tAtual + "_" + sufArtefato + ".png";
+                    nomeExibir = nomeArtefato;
+                } else {
+                    urlIcone = "https://render.albiononline.com/v1/item/" + semEnchant(idMat) + ".png";
+                    nomeExibir = sufixoDeId(idMat);
+                }
+            } else {
+                String baseId = semEnchant(idMat);
+                // API não embute @N no uniqueName do material — usamos o enchant do item final
+                int eIcone = eAtual > 0 ? eAtual : 0;
+                urlIcone = eIcone > 0
+                        ? "https://render.albiononline.com/v1/item/" + baseId + "_LEVEL" + eIcone + ".png"
+                        : "https://render.albiononline.com/v1/item/" + baseId + ".png";
 
-            String nomeRec = BancoDeDadosItens.getNomeRecurso(sufixo, tierMat);
-            String nome = nomeRec != null ? nomeRec
-                    : BancoDeDadosItens.getTodosItens().stream()
-                    .filter(i -> i.getId().equals(sufixo))
-                    .map(ItemDefinition::getNome).findFirst().orElse(idMat);
-            String nomeExibir = (!ehArtefato && eAtual > 0) ? nome + " ." + eAtual : nome;
-            String tipo = ehArtefato ? "Artefato" : "Recurso";
+                String sufixo = sufixoDeId(idMat);
+                int tierMat = tierDeId(idMat, tAtual);
+                String nomeRec = BancoDeDadosItens.getNomeRecurso(sufixo, tierMat);
+                String nome = nomeRec != null ? nomeRec
+                        : BancoDeDadosItens.getTodosItens().stream()
+                        .filter(i -> i.getId().equals(sufixo))
+                        .map(ItemDefinition::getNome).findFirst().orElse(idMat);
+                nomeExibir = eIcone > 0 ? nome + " ." + eIcone : nome;
+            }
 
-            linhas.add(new LinhaReceita(iconeUrl, nomeExibir, tipo, mat.getCount()));
+            linhas.add(new LinhaReceita(urlIcone, nomeExibir,
+                    ehArtefato ? "Artefato" : "Recurso", mat.getCount()));
         }
 
         tabelaReceitaCraft.setItems(FXCollections.observableArrayList(linhas));
@@ -967,6 +967,9 @@ public class TelaCraftRefino {
         tabelaReceitaCraft.setMaxHeight(tabelaReceitaCraft.getPrefHeight());
     }
 
+    // =========================================================================
+    // TABELA DE MATERIAIS NECESSARIOS
+    // =========================================================================
 
     private void atualizarTabelaMateriais(ReceitaCraft receita,
                                           Map<String, List<PriceEntry>> precosMateriais,
@@ -976,41 +979,58 @@ public class TelaCraftRefino {
         int tAtual = AlbionIdUtil.tierEfetivo(tier);
         int eAtual = AlbionIdUtil.enchantEfetivo(enchant);
 
-
-        Set<String> sufixosRefinados = Set.of(
-                "CLOTH", "LEATHER", "PLANKS", "METALBAR", "STONEBLOCK");
-        Set<String> sufixosBrutos = Set.of(
-                "FIBER", "ORE", "WOOD", "HIDE", "ROCK");
-
+        Set<String> sufixosRefinados = Set.of("CLOTH", "LEATHER", "PLANKS", "METALBAR", "STONEBLOCK");
+        Set<String> sufixosBrutos = Set.of("FIBER", "ORE", "WOOD", "HIDE", "ROCK");
 
         Map<String, Integer> qtdPorId = new LinkedHashMap<>();
         Map<String, String> tipoPorId = new LinkedHashMap<>();
 
         for (ReceitaCraft.MaterialCraft matCraft : receita.getMateriais()) {
-            String idRefinado = matCraft.getUniqueName();
+            String idRefinadoBase = matCraft.getUniqueName();
+            // recompõe @N igual ao buscarTudo para que a chave bata em receitasRefino e precosMateriais
+            String idRefinado = (eAtual > 0 && !idRefinadoBase.contains("@"))
+                    ? idRefinadoBase + "@" + eAtual
+                    : idRefinadoBase;
             int qtdRefinado = matCraft.getCount();
 
-            // se for artefato real da receita de craft, adiciona direto sem buscar refino
-            if (matCraft.isArtefato()) {
-                qtdPorId.merge(idRefinado, qtdRefinado, Integer::sum);
-                tipoPorId.put(idRefinado, "Artefato");
+            if (ehMaterialArtefato(idRefinadoBase)) {
+                String raw = BancoDeDadosItens.getArtefatoSufixo(itemIdCompleto);
+                String sufArtefato = raw != null ? raw.split(";;")[0] : sufixoDeId(idRefinado);
+                String chave = "T" + tAtual + "_" + sufArtefato;
+                qtdPorId.merge(chave, qtdRefinado, Integer::sum);
+                tipoPorId.put(chave, "Artefato");
                 continue;
             }
 
             ReceitaCraft recRefino = receitasRefino.get(idRefinado);
 
-            // material sem receita de refino (ornamento, token de faccao, etc)
-            // tambem adiciona direto na tabela
             if (recRefino == null) {
+                // sem receita no cache — tenta montar localmente sem o @N
+                // (CraftService.montarReceitaRefino só aceita IDs sem enchant)
+                String idSemEnchant = semEnchant(idRefinado);
+                try {
+                    recRefino = craftService.buscarReceita(idSemEnchant);
+                } catch (Exception ex) {
+                    recRefino = null;
+                }
+            }
+
+            if (recRefino == null) {
+                // sem receita de refino de jeito nenhum -> entra direto
                 qtdPorId.merge(idRefinado, qtdRefinado, Integer::sum);
-                tipoPorId.put(idRefinado, "Item especial");
+                String sufCheck = sufixoDeId(idRefinado);
+                boolean ehRecursoNormal = sufixosRefinados.contains(sufCheck) || sufixosBrutos.contains(sufCheck);
+                tipoPorId.put(idRefinado, ehRecursoNormal ? "Direto" : "Item especial");
                 continue;
             }
 
             for (ReceitaCraft.MaterialCraft matRefino : recRefino.getMateriais()) {
-                String idMat = matRefino.getUniqueName();
-                String sufixo = idMat.contains("_")
-                        ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
+                String idMatBase = matRefino.getUniqueName();
+                // propaga @N inline, igual ao buscarTudo
+                String idMat = (eAtual > 0 && !idMatBase.contains("@"))
+                        ? idMatBase + "@" + eAtual
+                        : idMatBase;
+                String sufixo = sufixoDeId(idMat);
 
                 boolean ehRetorno = matRefino.isArtefato()
                         && !sufixosRefinados.contains(sufixo)
@@ -1018,27 +1038,23 @@ public class TelaCraftRefino {
                 boolean ehRefinado = sufixosRefinados.contains(sufixo);
 
                 String tipo = ehRetorno ? "Retorno" : ehRefinado ? "Refinado" : "Bruto";
-
                 int qtd = matRefino.getCount() * qtdRefinado;
                 qtdPorId.merge(idMat, qtd, Integer::sum);
                 tipoPorId.put(idMat, tipo);
             }
         }
 
-
+        // melhor preco de compra por chave
         Map<String, PriceEntry> melhorCompra = new LinkedHashMap<>();
         for (Map.Entry<String, List<PriceEntry>> entrada : precosMateriais.entrySet()) {
-            String idMatChave = entrada.getKey(); // usa o idMat como chave, não o itemId da API
+            String chave = entrada.getKey();
             for (PriceEntry pe : entrada.getValue()) {
-                PriceEntry atual = melhorCompra.get(idMatChave);
-
-                System.out.println("BP achou pe: sellMin=" + (pe != null ? pe.getSellMin() : "null") + " buyMax=" + (pe != null ? pe.getBuyMax() : "null"));
-
+                PriceEntry atual = melhorCompra.get(chave);
                 if (atual == null) {
-                    melhorCompra.put(idMatChave, pe); // guarda qualquer entrada, mesmo zerada
+                    melhorCompra.put(chave, pe);
                 } else if (pe.getSellMin() > 0
                         && (atual.getSellMin() == 0 || pe.getSellMin() < atual.getSellMin())) {
-                    melhorCompra.put(idMatChave, pe); // substitui se achou preço melhor
+                    melhorCompra.put(chave, pe);
                 }
             }
         }
@@ -1049,31 +1065,54 @@ public class TelaCraftRefino {
             int qtdTotal = entrada.getValue();
             String tipo = tipoPorId.getOrDefault(idMat, "Bruto");
 
-            String sufixo = idMat.contains("_")
-                    ? idMat.substring(idMat.indexOf('_') + 1) : idMat;
-            int tierMat = (idMat.length() > 1 && idMat.charAt(0) == 'T'
-                    && Character.isDigit(idMat.charAt(1)))
-                    ? Character.getNumericValue(idMat.charAt(1)) : tAtual;
+            String sufixo = sufixoDeId(idMat);
+            int tierMat = tierDeId(idMat, tAtual);
 
-            String nomeRec = BancoDeDadosItens.getNomeRecurso(sufixo, tierMat);
-            String nome = nomeRec != null ? nomeRec
-                    : BancoDeDadosItens.getTodosItens().stream()
-                    .filter(i -> i.getId().equals(sufixo))
-                    .map(ItemDefinition::getNome).findFirst().orElse(idMat);
+            String nomeExibir;
+            String urlIcone;
 
+            if ("Artefato".equals(tipo)) {
+                // resolve via BancoDeDadosItens igual TelaCraft
+                String raw = BancoDeDadosItens.getArtefatoSufixo(itemIdCompleto);
+                if (raw != null) {
+                    String sufArtefato = raw.split(";;")[0];
+                    String nomeArtefato = raw.split(";;")[1];
+                    urlIcone = "https://render.albiononline.com/v1/item/T" + tAtual + "_" + sufArtefato + ".png";
+                    nomeExibir = nomeArtefato;
+                } else {
+                    urlIcone = "https://render.albiononline.com/v1/item/" + semEnchant(idMat) + ".png";
+                    nomeExibir = sufixo;
+                }
+            } else {
+                String baseId = semEnchant(idMat);
+                int eMat = enchantDeId(idMat);
 
-            boolean ehRetorno = "Retorno".equals(tipo);
-            String nomeExibir = (eAtual > 0 && !ehRetorno) ? nome + " ." + eAtual : nome;
+                if ("Direto".equals(tipo)) {
+                    // refinado encantado comprado direto: usa _LEVEL igual TelaCraft
+                    int eIcone = eMat > 0 ? eMat : eAtual;
+                    urlIcone = eIcone > 0
+                            ? "https://render.albiononline.com/v1/item/" + baseId + "_LEVEL" + eIcone + ".png"
+                            : "https://render.albiononline.com/v1/item/" + baseId + ".png";
+                } else {
+                    // brutos e retornos: usa _LEVEL se encantado
+                    int eIcone = eMat > 0 ? eMat : 0;
+                    urlIcone = eIcone > 0
+                            ? "https://render.albiononline.com/v1/item/" + baseId + "_LEVEL" + eIcone + ".png"
+                            : "https://render.albiononline.com/v1/item/" + baseId + ".png";
+                }
 
+                String nomeRec = BancoDeDadosItens.getNomeRecurso(sufixo, tierMat);
+                String nome = nomeRec != null ? nomeRec
+                        : BancoDeDadosItens.getTodosItens().stream()
+                        .filter(i -> i.getId().equals(sufixo))
+                        .map(ItemDefinition::getNome).findFirst().orElse(idMat);
 
-            PriceEntry pe = melhorCompra.get(idMat);
+                // mostra enchant no nome para qualquer tipo que tenha @N
+                int eNome = eMat > 0 ? eMat : 0;
+                nomeExibir = eNome > 0 ? nome + " ." + eNome : nome;
+            }
 
-            System.out.println("chaves em melhorCompra: " + melhorCompra.keySet());
-            System.out.println("buscando chave: " + idMat + " → achou: " + (pe != null ? pe.getSellMin() : "null"));
-
-            String iconeId = (!ehRetorno && eAtual > 0)
-                    ? idMat + "@" + eAtual : idMat;
-            String iconeUrl = "https://render.albiononline.com/v1/item/" + iconeId + ".png";
+            PriceEntry pe = resolverPreco(melhorCompra, idMat);
 
 
             String preco = "-";
@@ -1081,53 +1120,44 @@ public class TelaCraftRefino {
                 long valor = pe.getSellMin() > 0 ? pe.getSellMin() : pe.getBuyMax();
                 preco = FormatadorUtil.formatarPreco(valor);
             }
-
-
             String cidade = pe != null ? pe.getCidade() : "-";
             String cor = pe != null
                     ? BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
-                    .map(CidadeInfo::getCor).findFirst().orElse("#888")
-                    : "#888";
+                    .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             String data = pe != null ? FormatadorUtil.formatarData(
                     (pe.getSellDate() != null && !pe.getSellDate().startsWith("0001"))
                             ? pe.getSellDate() : pe.getBuyDate()) : "-";
 
-            linhas.add(new LinhaMaterial(iconeUrl, nomeExibir, tipo, qtdTotal,
-                    cidade, cor, preco, data));
+            linhas.add(new LinhaMaterial(urlIcone, nomeExibir, tipo, qtdTotal, cidade, cor, preco, data));
         }
 
-
+        // diario vazio
         int tierDiario = AlbionIdUtil.tierEfetivo(tier);
         String sufixoDiario = BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
         if (sufixoDiario != null && tierDiario >= 2 && precoDiarioVazio != null) {
             String idVazio = "T" + tierDiario + "_" + sufixoDiario + "_EMPTY";
             String iconeVazio = "https://render.albiononline.com/v1/item/" + idVazio + ".png";
             String nomeDiario = BancoDeDadosItens.getNomeDiario(sufixoDiario);
-
-            String precoVazioStr = FormatadorUtil.formatarPreco(precoDiarioVazio.getSellMin());
             String cidadeVazio = precoDiarioVazio.getCidade();
             String corVazio = BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(cidadeVazio))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888");
-            String dataVazio = FormatadorUtil.formatarData(precoDiarioVazio.getSellDate());
-
-            linhas.add(new LinhaMaterial(
-                    iconeVazio,
-                    "Diario de " + nomeDiario + " (vazio)",
-                    "Diario",
-                    1,
+            linhas.add(new LinhaMaterial(iconeVazio,
+                    "Diario de " + nomeDiario + " (vazio)", "Diario", 1,
                     cidadeVazio, corVazio,
-                    precoVazioStr,
-                    dataVazio));
+                    FormatadorUtil.formatarPreco(precoDiarioVazio.getSellMin()),
+                    FormatadorUtil.formatarData(precoDiarioVazio.getSellDate())));
         }
-
 
         tabelaMateriais.setItems(FXCollections.observableArrayList(linhas));
         tabelaMateriais.setPrefHeight(28.0 + linhas.size() * 40.0);
         tabelaMateriais.setMaxHeight(tabelaMateriais.getPrefHeight());
     }
 
+    // =========================================================================
+    // CALCULADORA DE LUCRO
+    // =========================================================================
 
     private void atualizarCalculo() {
         if (painelCalculo == null) return;
@@ -1138,25 +1168,20 @@ public class TelaCraftRefino {
         double retRefino = parseDoubleSafe(campoRetornoRefino, 36.7) / 100.0;
         double barracaRefino = parseDoubleSafe(campoBarracaRefino, 3.0);
 
-
         double qtdFinalCraft = qtdCraft / (1.0 - retCraft);
-
 
         double custoMateriais = 0;
         if (tabelaMateriais != null) {
             for (LinhaMaterial lm : tabelaMateriais.getItems()) {
                 if ("Retorno".equals(lm.tipo)) continue;
                 double preco = FormatadorUtil.parseSilver(lm.precoCompra);
-
                 double qtdEfetiva = lm.qtdTotal * qtdFinalCraft * (1.0 - retRefino);
                 custoMateriais += preco * qtdEfetiva;
             }
         }
 
-
         double nutricaoRefino = itemValue * qtdFinalCraft * 0.1125;
         double taxaBarracaRefinoValor = (barracaRefino * nutricaoRefino) / 100.0;
-
 
         double melhorVenda = 0;
         String melhorCidadeTemp = "-";
@@ -1169,11 +1194,9 @@ public class TelaCraftRefino {
             }
         }
         final String melhorCidadeApi = melhorCidadeTemp;
-
         String nomeCidadeVenda = BancoDeDadosItens.CIDADES.stream()
                 .filter(c -> c.getApiId().equals(melhorCidadeApi))
                 .map(CidadeInfo::getNome).findFirst().orElse(melhorCidadeApi);
-
 
         CalculadoraService.ResultadoCalculo calc = CalculadoraService.calcular(
                 qtdCraft, retCraft, barracaCraft,
@@ -1183,31 +1206,25 @@ public class TelaCraftRefino {
         double custoComTaxa = calc.custoMateriais;
         double taxaCraft = calc.taxaBarraca;
         double receitaTotal = calc.receitaTotal;
-
         double custoTotal = custoComTaxa + taxaCraft + taxaBarracaRefinoValor;
         double taxaMercado = calc.taxaMercado;
         double lucroBase = receitaTotal - custoTotal - taxaMercado;
-
 
         int tEfetivo = AlbionIdUtil.tierEfetivo(tier);
         int eEfetivo = AlbionIdUtil.enchantEfetivo(enchant);
         int qtdMatNaoArtefato = (receitaCraft == null) ? 0
                 : receitaCraft.getMateriais().stream()
                 .filter(m -> !m.isArtefato())
-                .mapToInt(ReceitaCraft.MaterialCraft::getCount)
-                .sum();
+                .mapToInt(ReceitaCraft.MaterialCraft::getCount).sum();
 
         double diariosCompletos = CalculadoraService.calcularDiarios(
                 tEfetivo, eEfetivo, qtdMatNaoArtefato, qtdFinal);
-
         double lucroDiarios = CalculadoraService.calcularLucroDiarios(
                 diariosCompletos, precoDiarioVazioApi, precoDiarioCheioApi);
-
         double lucroComDiarios = lucroBase + lucroDiarios;
 
         lucroAtual = lucroComDiarios;
         custoAtual = custoTotal;
-
 
         List<String[]> metricas = new ArrayList<>();
         metricas.add(new String[]{"Qtd a craftar", FormatadorUtil.fmt(qtdCraft) + " un"});
@@ -1222,8 +1239,7 @@ public class TelaCraftRefino {
 
         FlowPane fluxo = new FlowPane(10, 10);
         fluxo.setPrefWrapLength(Double.MAX_VALUE);
-        for (String[] m : metricas)
-            fluxo.getChildren().add(criarCard(m[0], m[1], "#e0e0e0", "#2a2a2a"));
+        for (String[] m : metricas) fluxo.getChildren().add(criarCard(m[0], m[1], "#e0e0e0", "#2a2a2a"));
 
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #444;");
@@ -1242,16 +1258,17 @@ public class TelaCraftRefino {
         HBox.setHgrow(cardReceita, Priority.ALWAYS);
         HBox.setHgrow(cardLucro, Priority.ALWAYS);
         destaque.getChildren().addAll(cardCusto, cardReceita, cardLucro);
-
         painelCalculo.getChildren().setAll(fluxo, sep, destaque);
     }
 
+    // =========================================================================
+    // Factories de colunas e componentes
+    // =========================================================================
 
     private TableColumn<LinhaPreco, String> criarColunaCidade() {
         TableColumn<LinhaPreco, String> col = new TableColumn<>("Cidade");
         col.setPrefWidth(130);
-        col.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().cidade));
+        col.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().cidade));
         col.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
@@ -1264,8 +1281,7 @@ public class TelaCraftRefino {
                 LinhaPreco lp = getTableView().getItems().get(getIndex());
                 Circle ponto = new Circle(5, Color.web(lp.corCidade));
                 String nome = BancoDeDadosItens.CIDADES.stream()
-                        .filter(c -> c.getApiId().equals(v))
-                        .map(CidadeInfo::getNome).findFirst().orElse(v);
+                        .filter(c -> c.getApiId().equals(v)).map(CidadeInfo::getNome).findFirst().orElse(v);
                 HBox hb = new HBox(6, ponto, new Label(nome));
                 hb.setAlignment(Pos.CENTER_LEFT);
                 setGraphic(hb);
@@ -1278,8 +1294,7 @@ public class TelaCraftRefino {
     private TableColumn<LinhaPreco, String> criarColunaPrecoVenda(String titulo, double largura) {
         TableColumn<LinhaPreco, String> col = new TableColumn<>(titulo);
         col.setPrefWidth(largura);
-        col.setCellValueFactory(
-                r -> new javafx.beans.property.SimpleStringProperty(r.getValue().sellMin));
+        col.setCellValueFactory(r -> new javafx.beans.property.SimpleStringProperty(r.getValue().sellMin));
         col.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(String v, boolean empty) {
@@ -1296,10 +1311,9 @@ public class TelaCraftRefino {
         return col;
     }
 
-    private <T> TableColumn<T, String> coluna(
-            String titulo, double largura,
-            javafx.util.Callback<TableColumn.CellDataFeatures<T, String>,
-                    javafx.beans.value.ObservableValue<String>> callback) {
+    private <T> TableColumn<T, String> coluna(String titulo, double largura,
+                                              javafx.util.Callback<TableColumn.CellDataFeatures<T, String>,
+                                                      javafx.beans.value.ObservableValue<String>> callback) {
         TableColumn<T, String> col = new TableColumn<>(titulo);
         col.setPrefWidth(largura);
         col.setCellValueFactory(callback);
@@ -1356,7 +1370,6 @@ public class TelaCraftRefino {
         return tf;
     }
 
-
     private double parseDoubleSafe(TextField campo, double padrao) {
         try {
             return Double.parseDouble(campo.getText().trim().replace(",", "."));
@@ -1373,6 +1386,9 @@ public class TelaCraftRefino {
         }
     }
 
+    // =========================================================================
+    // Salvar operacao
+    // =========================================================================
 
     private void salvarOperacao() {
         try {
@@ -1392,11 +1408,9 @@ public class TelaCraftRefino {
             final String melhorCidadeApi = melhorCidadeApiTemp;
             String nomeCidadeVenda = BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(melhorCidadeApi))
-                    .map(CidadeInfo::getNome)
-                    .findFirst().orElse(melhorCidadeApi);
+                    .map(CidadeInfo::getNome).findFirst().orElse(melhorCidadeApi);
 
             String locaisJson = cidadesPorMaterialJson();
-
             double qtdInicial = parseDoubleSafe(campoQuantidade, 1.0);
             double taxaRetorno = parseDoubleSafe(campoRetornoCraft, 15.2) / 100.0;
             double qtdFinal = qtdInicial / (1.0 - taxaRetorno);
@@ -1422,13 +1436,13 @@ public class TelaCraftRefino {
             sb.append("    \"Custo dos materiais\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
             sb.append("    \"Local de compra dos materiais\": ").append(locaisJson).append(",\n");
             sb.append("    \"Custo total\": \"").append(FormatadorUtil.fmtSilver(custoAtual)).append("\",\n");
-            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroAtual >= 0 ? "+" : "").append(FormatadorUtil.fmtSilver(lucroAtual)).append("\"\n");
+            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroAtual >= 0 ? "+" : "")
+                    .append(FormatadorUtil.fmtSilver(lucroAtual)).append("\"\n");
             sb.append("  }\n");
             sb.append("}\n");
 
             String nomeArquivo = OperacaoService.salvar(itemIdCompleto, sb.toString());
             labelStatus.setText("Operacao salva: " + nomeArquivo);
-
         } catch (Exception ex) {
             labelStatus.setText("Erro ao salvar: " + ex.getMessage());
         }
@@ -1443,8 +1457,8 @@ public class TelaCraftRefino {
             primeiro = false;
             String nomeCidade = BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(lm.cidade))
-                    .map(CidadeInfo::getNome)
-                    .findFirst().orElse(lm.cidade != null ? lm.cidade : "-");
+                    .map(CidadeInfo::getNome).findFirst()
+                    .orElse(lm.cidade != null ? lm.cidade : "-");
             int qtdReal = lm.qtdTotal * parseIntSafe(campoQuantidade, 1);
             sb.append("{\"material\": \"").append(lm.nome.replace("\"", "\\\""))
                     .append("\", \"quantidade\": ").append(qtdReal)
@@ -1454,9 +1468,11 @@ public class TelaCraftRefino {
         return sb.toString();
     }
 
+    // =========================================================================
+    // Edicao manual de precos
+    // =========================================================================
 
     private void ativarEdicaoManual(boolean ativo) {
-        // coluna de preco de venda na tabela de precos
         for (TableColumn<LinhaPreco, ?> col : tabelaPrecos.getColumns()) {
             if (!"Preco de Venda".equals(col.getText())) continue;
             @SuppressWarnings("unchecked")
@@ -1489,7 +1505,6 @@ public class TelaCraftRefino {
         }
         tabelaPrecos.setEditable(ativo);
 
-        // coluna de preco de compra na tabela de materiais
         for (TableColumn<LinhaMaterial, ?> col : tabelaMateriais.getColumns()) {
             if (!"Preco de Compra".equals(col.getText())) continue;
             @SuppressWarnings("unchecked")
@@ -1521,6 +1536,42 @@ public class TelaCraftRefino {
             }
         }
         tabelaMateriais.setEditable(ativo);
+    }
+
+
+    /**
+     * Verifica se um material da receita de craft é o artefato do item.
+     * Não depende de isArtefato() (que sempre vem false da API).
+     * Regra: se o item tem artefato cadastrado E o uniqueName do material
+     * não é um recurso refinado padrão, então é o artefato.
+     */
+    private boolean ehMaterialArtefato(String uniqueName) {
+        if (uniqueName == null) return false;
+        String suf = sufixoDeId(uniqueName);
+        // recursos refinados padrão nunca são artefatos
+        Set<String> refinados = Set.of("CLOTH", "LEATHER", "PLANKS", "METALBAR", "STONEBLOCK");
+        if (refinados.contains(suf)) return false;
+        // se o item tem artefato no banco e o sufixo não é recurso normal, é artefato
+        return BancoDeDadosItens.getArtefatoSufixo(itemIdCompleto) != null;
+    }
+
+
+    /**
+     * Busca o melhor PriceEntry para um material, tentando múltiplos formatos de chave.
+     * Ex: "T6_ORE@3" -> tenta "T6_ORE@3", "T6_ORE_LEVEL3", "T6_ORE"
+     */
+    private PriceEntry resolverPreco(Map<String, PriceEntry> melhorCompra, String idMat) {
+        PriceEntry pe = melhorCompra.get(idMat);
+        if (pe != null) return pe;
+
+        int eMatLocal = enchantDeId(idMat);
+        if (eMatLocal > 0) {
+            String chaveApi = semEnchant(idMat) + "_LEVEL" + eMatLocal;
+            pe = melhorCompra.get(chaveApi);
+            if (pe != null) return pe;
+        }
+
+        return melhorCompra.get(semEnchant(idMat));
     }
 
 

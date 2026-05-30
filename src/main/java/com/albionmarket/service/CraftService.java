@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import java.util.Map;
 
 import java.io.IOException;
@@ -45,10 +46,10 @@ public class CraftService {
     }
 
     private static final Map<String, String> BRUTOS = Map.of(
-            "CLOTH",      "FIBER",
-            "LEATHER",    "HIDE",
-            "METALBAR",   "ORE",
-            "PLANKS",     "WOOD",
+            "CLOTH", "FIBER",
+            "LEATHER", "HIDE",
+            "METALBAR", "ORE",
+            "PLANKS", "WOOD",
             "STONEBLOCK", "ROCK"
     );
 

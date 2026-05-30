@@ -673,7 +673,6 @@ public class TelaCraft {
     }
 
 
-
     // logica principal com busca por threads
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null && estadoSelecao.cidades != null && !estadoSelecao.cidades.isEmpty())
@@ -690,7 +689,7 @@ public class TelaCraft {
         tabelaReceita.setItems(FXCollections.emptyObservableList());
         if (tabelaMateriais != null) tabelaMateriais.setItems(FXCollections.emptyObservableList());
 
-        int tierEfetivo   = (tier   == -1) ? 4 : tier;
+        int tierEfetivo = (tier == -1) ? 4 : tier;
         int enchantEfetivo = (enchant == -1) ? 0 : enchant;
 
         // pool dedicado pra essa busca — descartado ao terminar
@@ -703,12 +702,12 @@ public class TelaCraft {
         Task<Void> tarefa = new Task<>() {
 
             // resultados coletados entre as etapas
-            private List<PriceEntry>  precos;
-            private ReceitaCraft      receita;
-            private List<PriceEntry>  precosMateirais;
-            private PriceEntry        precoDiarioVazioEntry;
-            private PriceEntry        precoDiarioCheioEntry;
-            private List<PriceEntry>  precosDiarioCheioTodos;
+            private List<PriceEntry> precos;
+            private ReceitaCraft receita;
+            private List<PriceEntry> precosMateirais;
+            private PriceEntry precoDiarioVazioEntry;
+            private PriceEntry precoDiarioCheioEntry;
+            private List<PriceEntry> precosDiarioCheioTodos;
 
             @Override
             protected Void call() throws Exception {
@@ -734,7 +733,7 @@ public class TelaCraft {
                         () -> ItemValues.getValor(itemIdCompleto), pool);
 
                 // aguarda precos e receita antes de continuar
-                precos  = futurePrecos.get();
+                precos = futurePrecos.get();
                 receita = futureReceita.get();
                 itemValue = futureItemValue.get();
 
@@ -777,13 +776,17 @@ public class TelaCraft {
                             CompletableFuture<List<PriceEntry>> fVazio = CompletableFuture.supplyAsync(() -> {
                                 try {
                                     return apiService.buscarPrecos(sufixoDiarioVazio, tierEfetivo, 0, 1, cidadesSemBM);
-                                } catch (Exception ex) { return List.of(); }
+                                } catch (Exception ex) {
+                                    return List.of();
+                                }
                             }, pool);
 
                             CompletableFuture<List<PriceEntry>> fCheio = CompletableFuture.supplyAsync(() -> {
                                 try {
                                     return apiService.buscarPrecos(sufixoDiarioCheio, tierEfetivo, 0, 1, cidadesSemBM);
-                                } catch (Exception ex) { return List.of(); }
+                                } catch (Exception ex) {
+                                    return List.of();
+                                }
                             }, pool);
 
                             List<PriceEntry> listaVazio = fVazio.get();
@@ -1027,8 +1030,8 @@ public class TelaCraft {
             //String precoCheioStr = diarioCheio != null ? FormatadorUtil.formatarPreco(diarioCheio.getBuyMax()) : "-";
             String cidadeCheio = diarioCheio != null ? diarioCheio.getCidade() : "-";
             //String corCheio = diarioCheio != null
-               //     ? BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeCheio))
-              //      .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
+            //     ? BancoDeDadosItens.CIDADES.stream().filter(c -> c.getApiId().equals(cidadeCheio))
+            //      .map(CidadeInfo::getCor).findFirst().orElse("#888") : "#888";
             //String dataCheio = diarioCheio != null ? FormatadorUtil.formatarData(diarioCheio.getBuyMax() > 0 ? diarioCheio.getBuyDate() : "-") : "-";
 
             String sufixoDiarioNome = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
@@ -1326,9 +1329,6 @@ public class TelaCraft {
         lucroAtual = lucroComDiarios;
         custoAtual = custoTotal;
         receitaAtual2 = receitaTotal;
-
-
-
 
 
         // funcoes auxiliares de nome e cidade
