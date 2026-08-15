@@ -46,6 +46,10 @@ public class TelaCraftRefino {
     private final ApiService apiService = new ApiService();
     private final CraftService craftService = new CraftService();
 
+    // pool da busca em andamento — cancelada antes de comecar uma nova busca
+    // ou ao sair da tela, pra nao deixar buscas antigas rodando em paralelo
+    private ExecutorService poolBusca;
+
     private TextField campoQuantidade;
     private TextField campoRetornoCraft;
     private TextField campoBarracaCraft;
@@ -230,7 +234,10 @@ public class TelaCraftRefino {
         btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;");
         btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-opacity: 0.7;"));
         btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;"));
-        btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
+        btnHome.setOnMouseClicked(e -> {
+            if (poolBusca != null) poolBusca.shutdownNow();
+            new TelaHome(palco).mostrar();
+        });
 
         HBox cab = new HBox(textos, espacador, btnHome);
         cab.setAlignment(Pos.CENTER_LEFT);
@@ -254,7 +261,7 @@ public class TelaCraftRefino {
         icone.setFitHeight(90);
         icone.setPreserveRatio(true);
         icone.setSmooth(true);
-        icone.setImage(new Image(
+        icone.setImage(IconeCacheService.obterIcone(
                 "https://render.albiononline.com/v1/item/" + itemIdCompleto + ".png", true));
 
         Label nomeItem = new Label(item.getNome());
@@ -374,7 +381,10 @@ public class TelaCraftRefino {
         Button btnVoltar = new Button("Voltar");
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
         btnVoltar.getStyleClass().add("home-botao");
-        btnVoltar.setOnAction(v -> new TelaCraftRefinoSelecao(palco, estadoSelecao).mostrar());
+        btnVoltar.setOnAction(v -> {
+            if (poolBusca != null) poolBusca.shutdownNow();
+            new TelaCraftRefinoSelecao(palco, estadoSelecao).mostrar();
+        });
 
         painel.getChildren().addAll(btnAtualizar, espaco, btnSalvarOperacao, btnVoltar);
 
@@ -431,7 +441,7 @@ public class TelaCraftRefino {
                     setGraphic(null);
                     return;
                 }
-                iv.setImage(new Image(url, 28, 28, true, true, true));
+                iv.setImage(IconeCacheService.obterIcone(url, 28, 28, true, true, true));
                 setGraphic(iv);
             }
         });
@@ -499,7 +509,7 @@ public class TelaCraftRefino {
                     setGraphic(null);
                     return;
                 }
-                iv.setImage(new Image(url, 28, 28, true, true, true));
+                iv.setImage(IconeCacheService.obterIcone(url, 28, 28, true, true, true));
                 setGraphic(iv);
             }
         });
@@ -534,7 +544,12 @@ public class TelaCraftRefino {
         colQtdM.setCellValueFactory(r -> {
             LinhaMaterial lm = r.getValue();
             int qtdCraft = parseIntSafe(campoQuantidade, 1);
-            return new javafx.beans.property.SimpleStringProperty(String.valueOf(lm.qtdTotal * qtdCraft));
+            double retRefino = parseDoubleSafe(campoRetornoRefino, 36.7) / 100.0;
+            double retCraft = parseDoubleSafe(campoRetornoCraft, 15.2) / 100.0;
+            double qtdFinalCraft = qtdCraft / (1.0 - retCraft);
+            double qtdEfetiva = qtdEfetivaMaterial(lm, qtdCraft, retRefino, qtdFinalCraft);
+            return new javafx.beans.property.SimpleStringProperty(
+                    String.valueOf((long) Math.ceil(qtdEfetiva)));
         });
         colQtdM.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -646,6 +661,10 @@ public class TelaCraftRefino {
         tabelaMateriais.setItems(FXCollections.emptyObservableList());
         receitasRefino.clear();
 
+        // cancela qualquer busca anterior ainda em andamento (ex: clicou em
+        // "Atualizar Valores" de novo) pra nao rodar duas em paralelo
+        if (poolBusca != null) poolBusca.shutdownNow();
+
         // pool elastico igual TelaCraft — com pool fixo pequeno, as buscas de
         // sub-materiais do refino (aninhadas dentro da busca de cada material)
         // ficavam esperando thread livre, deixando a tela bem mais lenta pra carregar
@@ -654,6 +673,7 @@ public class TelaCraftRefino {
             t.setDaemon(true);
             return t;
         });
+        poolBusca = pool;
 
         Task<Void> tarefa = new Task<>() {
 
@@ -1237,21 +1257,19 @@ public class TelaCraftRefino {
 
         double qtdFinalCraft = qtdCraft / (1.0 - retCraft);
 
-        // custo dos materiais: segue o mesmo modelo da TelaCraft (preco * qtdNecessaria * qtdCraft,
-        // ou seja, por TENTATIVA de craft, nao pela quantidade final ja com retorno aplicado —
-        // o retorno so entra na conta pra achar a receita/qtd final, nunca dobrado aqui tambem).
-        // "Retorno" (catalisador do refino) e "Diario" (vasilha vazia) tem custo tratado a parte.
+        // custo dos materiais: ver qtdEfetivaMaterial() pra regra de cada tipo.
+        // "Retorno" (o bonus do refino em si) e "Diario" (vasilha vazia) tem custo tratado a parte.
         double custoMateriais = 0;
         if (tabelaMateriais != null) {
             for (LinhaMaterial lm : tabelaMateriais.getItems()) {
                 if ("Retorno".equals(lm.tipo) || "Diario".equals(lm.tipo)) continue;
                 double preco = FormatadorUtil.parseSilver(lm.precoCompra);
-                // materiais "Bruto" passam pela etapa de refino, entao o retorno do refino
-                // reduz a quantidade efetiva comprada; materiais comprados prontos (Artefato,
-                // Direto, Item especial) nao passam por refino e nao levam esse desconto
-                double qtdEfetiva = "Bruto".equals(lm.tipo)
-                        ? lm.qtdTotal * qtdCraft * (1.0 - retRefino)
-                        : lm.qtdTotal * qtdCraft;
+                // "Bruto" e "Refinado" (catalisador do tier anterior) passam pela etapa
+                // de refino e sao devolvidos por ela, entao o retorno do refino reduz a
+                // quantidade efetiva comprada. "Artefato" nunca e devolvido — precisa de
+                // 1 unidade por item FINAL, entao escala pela quantidade final do craft
+                // (com o retorno do craft ja aplicado), nao pela quantidade inicial.
+                double qtdEfetiva = qtdEfetivaMaterial(lm, qtdCraft, retRefino, qtdFinalCraft);
                 custoMateriais += preco * qtdEfetiva;
             }
         }
@@ -1462,6 +1480,26 @@ public class TelaCraftRefino {
         }
     }
 
+    /**
+     * Quantidade efetiva de um material, considerando quem e devolvido e quem nao e:
+     * - Bruto/Refinado: passam pela etapa de refino, entao o retorno DO REFINO reduz
+     *   quanto precisa ser comprado (o catalisador de tier anterior tambem e devolvido).
+     * - Artefato: nunca e devolvido, entao precisa de 1 unidade por item FINAL —
+     *   ou seja, escala pela quantidade final do craft (ja com o retorno do craft
+     *   aplicado), nao pela quantidade inicial digitada.
+     * - Direto/Item especial (e qualquer outro tipo comprado pronto pro craft):
+     *   escala pela quantidade inicial, igual ao modelo da TelaCraft.
+     */
+    private double qtdEfetivaMaterial(LinhaMaterial lm, double qtdCraft, double retRefino, double qtdFinalCraft) {
+        if ("Bruto".equals(lm.tipo) || "Refinado".equals(lm.tipo)) {
+            return lm.qtdTotal * qtdCraft * (1.0 - retRefino);
+        }
+        if ("Artefato".equals(lm.tipo)) {
+            return lm.qtdTotal * qtdFinalCraft;
+        }
+        return lm.qtdTotal * qtdCraft;
+    }
+
     // =========================================================================
     // Salvar operacao
     // =========================================================================
@@ -1526,6 +1564,12 @@ public class TelaCraftRefino {
 
     private String cidadesPorMaterialJson() {
         if (tabelaMateriais == null || tabelaMateriais.getItems().isEmpty()) return "[]";
+
+        double qtdCraft = parseDoubleSafe(campoQuantidade, 1.0);
+        double retRefino = parseDoubleSafe(campoRetornoRefino, 36.7) / 100.0;
+        double retCraft = parseDoubleSafe(campoRetornoCraft, 15.2) / 100.0;
+        double qtdFinalCraft = qtdCraft / (1.0 - retCraft);
+
         StringBuilder sb = new StringBuilder("[");
         boolean primeiro = true;
         for (LinhaMaterial lm : tabelaMateriais.getItems()) {
@@ -1535,7 +1579,7 @@ public class TelaCraftRefino {
                     .filter(c -> c.getApiId().equals(lm.cidade))
                     .map(CidadeInfo::getNome).findFirst()
                     .orElse(lm.cidade != null ? lm.cidade : "-");
-            int qtdReal = lm.qtdTotal * parseIntSafe(campoQuantidade, 1);
+            long qtdReal = (long) Math.ceil(qtdEfetivaMaterial(lm, qtdCraft, retRefino, qtdFinalCraft));
             sb.append("{\"material\": \"").append(lm.nome.replace("\"", "\\\""))
                     .append("\", \"quantidade\": ").append(qtdReal)
                     .append(", \"cidade\": \"").append(nomeCidade).append("\"}");

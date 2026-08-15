@@ -7,6 +7,7 @@ import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.model.Subcategoria;
 import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.BuscaService;
+import com.albionmarket.service.IconeCacheService;
 import com.albionmarket.util.AlbionIdUtil;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -296,7 +297,7 @@ public class TelaCraftSelecao {
             return;
         }
         String url = "https://render.albiononline.com/v1/item/" + itemId + ".png";
-        iconItem.setImage(new javafx.scene.image.Image(url, true));
+        iconItem.setImage(IconeCacheService.obterIcone(url, true));
     }
 
     private void onBuscaTexto(String texto) {

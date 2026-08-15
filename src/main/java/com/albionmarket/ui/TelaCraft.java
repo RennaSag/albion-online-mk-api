@@ -48,6 +48,10 @@ public class TelaCraft {
     private final ApiService apiService = new ApiService();
     private final CraftService craftService = new CraftService();
 
+    // pool da busca em andamento — cancelada antes de comecar uma nova busca
+    // ou ao sair da tela, pra nao deixar buscas antigas rodando em paralelo
+    private ExecutorService poolBusca;
+
     // controles da lateral
     // private final List<CheckBox> checksCidades = new ArrayList<>();
     private Label labelStatus;
@@ -266,7 +270,10 @@ public class TelaCraft {
         btnHome.setTooltip(new Tooltip("Voltar para Home"));
         btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-opacity: 0.7;"));
         btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;"));
-        btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
+        btnHome.setOnMouseClicked(e -> {
+            if (poolBusca != null) poolBusca.shutdownNow();
+            new TelaHome(palco).mostrar();
+        });
 
         HBox cab = new HBox(textos, espacador, btnHome);
         cab.setAlignment(Pos.CENTER_LEFT);
@@ -288,7 +295,8 @@ public class TelaCraft {
         icone.setFitHeight(100);
         icone.setPreserveRatio(true);
         icone.setSmooth(true);
-        icone.setImage(new Image("https://render.albiononline.com/v1/item/" + itemIdCompleto + ".png", true));
+        icone.setImage(IconeCacheService.obterIcone(
+                "https://render.albiononline.com/v1/item/" + itemIdCompleto + ".png", true));
 
         Label nomeItem = new Label(item.getNome());
         nomeItem.setStyle("-fx-text-fill: #e0e0e0; -fx-font-weight: bold; -fx-font-size: 13px;");
@@ -417,9 +425,10 @@ public class TelaCraft {
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
         btnVoltar.getStyleClass().add("home-botao");
 
-        btnVoltar.setOnAction(v ->
-                new TelaCraftSelecao(palco, estadoSelecao).mostrar()
-        );
+        btnVoltar.setOnAction(v -> {
+            if (poolBusca != null) poolBusca.shutdownNow();
+            new TelaCraftSelecao(palco, estadoSelecao).mostrar();
+        });
 
         Button btnIniciarOperacao = new Button("Salvar Operação");
         btnIniciarOperacao.setMaxWidth(Double.MAX_VALUE);
@@ -490,7 +499,7 @@ public class TelaCraft {
                     setGraphic(null);
                     return;
                 }
-                Image img = new Image(url, 32, 32, true, true, true);
+                Image img = IconeCacheService.obterIcone(url, 32, 32, true, true, true);
                 img.errorProperty().addListener((obs, ant, erro) -> {
 
                 });
@@ -596,7 +605,7 @@ public class TelaCraft {
                 } else if ("Artefato".equals(lm.tipo)) {
                     double qtdP = parseDoubleSafe(campoQuantidade, 1.0);
                     double taxaR = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
-                    exibir = String.format("%.2f", qtdP / (1.0 - taxaR));
+                    exibir = String.format("%.2f", lm.qtdNecessaria * (qtdP / (1.0 - taxaR)));
                 } else {
                     exibir = String.valueOf(lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1));
                 }
@@ -697,12 +706,17 @@ public class TelaCraft {
         int tierEfetivo = (tier == -1) ? 4 : tier;
         int enchantEfetivo = (enchant == -1) ? 0 : enchant;
 
+        // cancela qualquer busca anterior ainda em andamento (ex: clicou em
+        // "Atualizar Valores" de novo) pra nao rodar duas em paralelo
+        if (poolBusca != null) poolBusca.shutdownNow();
+
         // pool dedicado pra essa busca — descartado ao terminar
         ExecutorService pool = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r);
             t.setDaemon(true);
             return t;
         });
+        poolBusca = pool;
 
         Task<Void> tarefa = new Task<>() {
 
@@ -1307,9 +1321,13 @@ public class TelaCraft {
         double qtdProduzir = parseDoubleSafe(campoQuantidade, 1.0);
         double taxaRetorno = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
         double taxaBarraca = parseDoubleSafe(campoSinergiaBarraca, 3.0);
+        double qtdFinalMateriais = qtdProduzir / (1.0 - taxaRetorno);
 
 
-        // soma custo dos materiais das tabelas
+        // soma custo dos materiais das tabelas.
+        // "Artefato" nunca e devolvido pelo retorno, entao precisa de 1 unidade por
+        // item FINAL (qtdFinalMateriais, ja com o retorno aplicado) — os demais tipos
+        // (Recurso) escalam pela quantidade inicial digitada, igual ja fazia antes.
         double custoMateriais = 0;
         double precoDiarioVazioTabela = 0;
         int qtdDiariosTabela = 1;
@@ -1319,14 +1337,18 @@ public class TelaCraft {
                 if ("Diario".equals(lm.tipo)) {
                     precoDiarioVazioTabela = FormatadorUtil.parseSilver(lm.buyMax);
                     qtdDiariosTabela = lm.qtdNecessaria;
+                } else if ("Artefato".equals(lm.tipo)) {
+                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdFinalMateriais;
                 } else {
                     custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtdNecessaria * qtdProduzir;
                 }
             }
         } else if (tabelaReceita != null) {
-            for (LinhaMaterial lm : tabelaReceita.getItems())
-                if (!"Diario".equals(lm.tipo))
-                    custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtd;
+            for (LinhaMaterial lm : tabelaReceita.getItems()) {
+                if ("Diario".equals(lm.tipo)) continue;
+                double qtdEscala = "Artefato".equals(lm.tipo) ? qtdFinalMateriais : qtdProduzir;
+                custoMateriais += FormatadorUtil.parseSilver(lm.buyMax) * lm.qtd * qtdEscala;
+            }
         }
 
         // melhor preço de venda
@@ -1660,7 +1682,7 @@ public class TelaCraft {
             } else if ("Artefato".equals(lm.tipo)) {
                 double qtdP = parseDoubleSafe(campoQuantidade, 1.0);
                 double taxaR = parseDoubleSafe(campoRetorno, 15.2) / 100.0;
-                qtdReal = (int) Math.ceil(qtdP / (1.0 - taxaR));
+                qtdReal = (int) Math.ceil(lm.qtdNecessaria * (qtdP / (1.0 - taxaR)));
             } else {
                 qtdReal = lm.qtdNecessaria * parseIntSafe(campoQuantidade, 1);
             }

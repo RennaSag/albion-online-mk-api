@@ -3,6 +3,7 @@ package com.albionmarket.ui;
 import com.albionmarket.model.CidadeInfo;
 import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.service.BancoDeDadosItens;
+import com.albionmarket.service.IconeCacheService;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -295,7 +296,7 @@ public class TelaFlip {
                 lblBadges.setText("T" + tierCh + "  ."+enchant + "  " + nomeQualidade(l.qualidade));
 
                 try {
-                    iv.setImage(new javafx.scene.image.Image(
+                    iv.setImage(IconeCacheService.obterIcone(
                             "https://render.albiononline.com/v1/item/" + id + ".png?size=48",
                             48, 48, true, true, true));
                 } catch (Exception ignored) {}

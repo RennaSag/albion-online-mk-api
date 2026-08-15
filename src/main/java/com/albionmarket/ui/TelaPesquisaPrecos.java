@@ -4,6 +4,7 @@ import com.albionmarket.model.*;
 import com.albionmarket.service.ApiService;
 import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.BuscaService;
+import com.albionmarket.service.IconeCacheService;
 import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
 import javafx.collections.FXCollections;
@@ -95,7 +96,7 @@ public class TelaPesquisaPrecos {
             return;
         }
         String url = "https://render.albiononline.com/v1/item/" + itemId + ".png";
-        iconItem.setImage(new javafx.scene.image.Image(url, true));
+        iconItem.setImage(IconeCacheService.obterIcone(url, true));
     }
 
 

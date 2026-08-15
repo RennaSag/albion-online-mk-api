@@ -59,8 +59,9 @@ public class CalculadoraService {
         double nutricao = (itemValue * qtdFinal) * 0.1125;
         double taxaBarraca = (taxaBarracaPct * nutricao) / 100.0;
 
-        double taxaCompra = possuiPremium ? 0.03 : 0.05;
-        double taxaVenda = possuiPremium ? 0.025 : 0.05;
+        // taxa de mercado (compra e venda): 10% sem premium, 5% com premium
+        double taxaCompra = possuiPremium ? 0.05 : 0.10;
+        double taxaVenda = possuiPremium ? 0.05 : 0.10;
 
         // custoMateriais chega por unidade, escala pela quantidade e aplica taxa de compra
         double custoMatComTaxa = custoMateriais * (1.0 + taxaCompra);

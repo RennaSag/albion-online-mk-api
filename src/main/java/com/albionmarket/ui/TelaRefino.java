@@ -48,6 +48,10 @@ public class TelaRefino {
     private final ApiService apiService = new ApiService();
     private final CraftService craftService = new CraftService();
 
+    // pool da busca em andamento — cancelada antes de comecar uma nova busca
+    // ou ao sair da tela, pra nao deixar buscas antigas rodando em paralelo
+    private ExecutorService poolBusca;
+
     // controles da lateral
     private Label labelStatus;
     private ProgressIndicator progresso;
@@ -196,7 +200,10 @@ public class TelaRefino {
         btnHome.setTooltip(new Tooltip("Voltar para Home"));
         btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand; -fx-opacity: 0.7;"));
         btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 15px; -fx-cursor: hand;"));
-        btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
+        btnHome.setOnMouseClicked(e -> {
+            if (poolBusca != null) poolBusca.shutdownNow();
+            new TelaHome(palco).mostrar();
+        });
 
         HBox cab = new HBox(textos, espacador, btnHome);
         cab.setAlignment(Pos.CENTER_LEFT);
@@ -218,7 +225,8 @@ public class TelaRefino {
         icone.setFitHeight(100);
         icone.setPreserveRatio(true);
         icone.setSmooth(true);
-        icone.setImage(new Image("https://render.albiononline.com/v1/item/" + itemIdRender + ".png", true));
+        icone.setImage(IconeCacheService.obterIcone(
+                "https://render.albiononline.com/v1/item/" + itemIdRender + ".png", true));
         Label nomeItem = new Label(item.getNome());
         nomeItem.setStyle("-fx-text-fill: #e0e0e0; -fx-font-weight: bold; -fx-font-size: 13px;");
         nomeItem.setWrapText(true);
@@ -346,7 +354,10 @@ public class TelaRefino {
         Button btnVoltar = new Button("Voltar");
         btnVoltar.setMaxWidth(Double.MAX_VALUE);
         btnVoltar.getStyleClass().add("home-botao");
-        btnVoltar.setOnAction(v -> new TelaRefinoSelecao(palco, estadoSelecao).mostrar());
+        btnVoltar.setOnAction(v -> {
+            if (poolBusca != null) poolBusca.shutdownNow();
+            new TelaRefinoSelecao(palco, estadoSelecao).mostrar();
+        });
 
         painel.getChildren().addAll(btnAtualizar, espaco, btnSalvarOperacao, btnVoltar);
 
@@ -406,7 +417,7 @@ public class TelaRefino {
                     setGraphic(null);
                     return;
                 }
-                Image img = new Image(url, 32, 32, true, true, true);
+                Image img = IconeCacheService.obterIcone(url, 32, 32, true, true, true);
                 img.errorProperty().addListener((obs, ant, erro) -> {
                     if (erro) System.out.println("ERRO ao carregar: " + url + " | " + img.getException());
                 });
@@ -580,11 +591,16 @@ public class TelaRefino {
         int tierEfetivo    = (tier    == -1) ? 4 : tier;
         int enchantEfetivo = (enchant == -1) ? 0 : enchant;
 
+        // cancela qualquer busca anterior ainda em andamento (ex: clicou em
+        // "Atualizar Valores" de novo) pra nao rodar duas em paralelo
+        if (poolBusca != null) poolBusca.shutdownNow();
+
         ExecutorService pool = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r);
             t.setDaemon(true);
             return t;
         });
+        poolBusca = pool;
 
         Task<Void> tarefa = new Task<>() {
 
@@ -988,8 +1004,9 @@ public class TelaRefino {
         double qtdFinal = qtdProduzir / (1.0 - taxaRetorno);
         double nutricao = (itemValue * qtdFinal) * 0.1125;
         double taxaCraftTotal = (taxaBarraca * nutricao) / 100.0;
-        double taxaCompra = possuiPremium ? 0.03 : 0.05;
-        double taxaVenda = possuiPremium ? 0.025 : 0.05;
+        // taxa de mercado (compra e venda): 10% sem premium, 5% com premium
+        double taxaCompra = possuiPremium ? 0.05 : 0.10;
+        double taxaVenda = possuiPremium ? 0.05 : 0.10;
 
         // custo dos brutos — retorno não entra
         double custoMateriais = 0;

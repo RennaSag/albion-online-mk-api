@@ -3,6 +3,7 @@ package com.albionmarket.ui;
 import com.albionmarket.model.*;
 import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.BuscaService;
+import com.albionmarket.service.IconeCacheService;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -394,7 +395,7 @@ public class TelaRefinoSelecao {
 
         String url = "https://render.albiononline.com/v1/item/" + itemId + ".png";
 
-        javafx.scene.image.Image img = new javafx.scene.image.Image(url, true);
+        javafx.scene.image.Image img = IconeCacheService.obterIcone(url, true);
 
         img.errorProperty().addListener((obs, oldVal, erro) -> {
             if (erro) {
@@ -404,7 +405,7 @@ public class TelaRefinoSelecao {
                         : itemId;
 
                 String fallbackUrl = "https://render.albiononline.com/v1/item/" + semEnchant + ".png";
-                iconItem.setImage(new javafx.scene.image.Image(fallbackUrl, true));
+                iconItem.setImage(IconeCacheService.obterIcone(fallbackUrl, true));
             }
         });
 

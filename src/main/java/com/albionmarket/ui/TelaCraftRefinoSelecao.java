@@ -6,6 +6,7 @@ import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.model.Subcategoria;
 import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.BuscaService;
+import com.albionmarket.service.IconeCacheService;
 import com.albionmarket.util.AlbionIdUtil;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -352,7 +353,7 @@ public class TelaCraftRefinoSelecao {
 
     private void atualizarIconeItem(String itemId) {
         if (itemId == null || itemId.isBlank()) { iconItem.setImage(null); return; }
-        iconItem.setImage(new javafx.scene.image.Image(
+        iconItem.setImage(IconeCacheService.obterIcone(
                 "https://render.albiononline.com/v1/item/" + itemId + ".png", true));
     }
 
