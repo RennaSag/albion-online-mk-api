@@ -11,9 +11,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 /**
  * serviço responsável por consultar preços na Albion Online Data API.
@@ -24,7 +26,15 @@ public class ApiService {
     private static final String API_BASE = "https://west.albion-online-data.com";
     private static final int BATCH_SIZE = 40; // máximo de IDs por requisição, de acordo com a documentação albion-data
 
+    // limita quantas requisicoes ficam em voo ao mesmo tempo por instancia de ApiService.
+    // sem isso, telas com muitos materiais (ex: TelaCraftRefino com sub-materiais de
+    // refino aninhados) disparavam dezenas de requisicoes simultaneas e a api comecava
+    // a devolver 429/timeout pra boa parte delas.
+    private static final int MAX_REQUISICOES_SIMULTANEAS = 6;
+    private static final int MAX_TENTATIVAS = 3;
+
     private final HttpClient cliente;
+    private final Semaphore semaforo = new Semaphore(MAX_REQUISICOES_SIMULTANEAS);
 
     public ApiService() {
         this.cliente = HttpClient.newBuilder()
@@ -89,25 +99,47 @@ public class ApiService {
 
     /**
      * executa uma requisição HTTP e parseia o array JSON retornado.
+     * limita requisições simultâneas via semáforo e tenta de novo em caso de
+     * timeout ou rate limit (429), com um pequeno atraso entre tentativas.
      */
     private List<PriceEntry> executarRequisicao(String url)
             throws IOException, InterruptedException {
 
         HttpRequest requisicao = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .timeout(Duration.ofSeconds(15))
+                .timeout(Duration.ofSeconds(20))
                 .header("Accept", "application/json")
                 .GET()
                 .build();
 
-        HttpResponse<String> resposta = cliente.send(requisicao,
-                HttpResponse.BodyHandlers.ofString());
+        semaforo.acquire();
+        try {
+            Exception ultimoErro = null;
+            for (int tentativa = 0; tentativa < MAX_TENTATIVAS; tentativa++) {
+                try {
+                    if (tentativa > 0) Thread.sleep(tentativa * 1000L);
 
-        if (resposta.statusCode() != 200) {
-            throw new IOException("Erro HTTP " + resposta.statusCode() + " para URL: " + url);
+                    HttpResponse<String> resposta = cliente.send(requisicao,
+                            HttpResponse.BodyHandlers.ofString());
+
+                    if (resposta.statusCode() == 429) {
+                        ultimoErro = new IOException("Erro HTTP 429 (rate limit) para URL: " + url);
+                        continue;
+                    }
+                    if (resposta.statusCode() != 200) {
+                        throw new IOException("Erro HTTP " + resposta.statusCode() + " para URL: " + url);
+                    }
+
+                    return parsearResposta(resposta.body());
+                } catch (HttpTimeoutException ex) {
+                    ultimoErro = ex;
+                }
+            }
+            throw ultimoErro instanceof IOException ? (IOException) ultimoErro
+                    : new IOException("Falha ao buscar " + url, ultimoErro);
+        } finally {
+            semaforo.release();
         }
-
-        return parsearResposta(resposta.body());
     }
 
 

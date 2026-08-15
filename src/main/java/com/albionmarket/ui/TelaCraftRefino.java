@@ -4,6 +4,7 @@ import com.albionmarket.model.*;
 import com.albionmarket.service.*;
 import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -60,7 +61,9 @@ public class TelaCraftRefino {
     private VBox painelCalculo;
 
     private ReceitaCraft receitaCraft;
-    private final Map<String, ReceitaCraft> receitasRefino = new LinkedHashMap<>();
+    // ConcurrentHashMap: agora e lido na thread da UI progressivamente enquanto
+    // ainda pode estar sendo escrito pelas threads de busca em background.
+    private final Map<String, ReceitaCraft> receitasRefino = new java.util.concurrent.ConcurrentHashMap<>();
     private long itemValue = 0;
 
     private double precoDiarioVazioApi = 0;
@@ -619,6 +622,10 @@ public class TelaCraftRefino {
     // BUSCA PRINCIPAL
     // =========================================================================
 
+    private static void log(String msg) {
+        System.out.println("[TelaCraftRefino] " + msg);
+    }
+
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null
                 && estadoSelecao.cidades != null
@@ -658,24 +665,57 @@ public class TelaCraftRefino {
             private PriceEntry precoDiarioCheioEntry;
             private List<PriceEntry> precosDiarioCheioTodos;
 
+            // chamado apos cada material (ou diario) resolver — atualiza a tabela
+            // de materiais com o que ja foi encontrado ate agora, sem esperar o resto.
+            private void renderizarMateriais() {
+                Platform.runLater(() -> {
+                    atualizarTabelaMateriais(receita, precosMateriais, precoDiarioVazioEntry);
+                    atualizarCalculo();
+                });
+            }
+
             @Override
             protected Void call() throws Exception {
 
+                // preco do item e receita em paralelo — cada um atualiza a interface
+                // assim que chega, sem esperar o outro.
                 CompletableFuture<List<PriceEntry>> futurePrecos = CompletableFuture.supplyAsync(() -> {
                     try {
-                        return apiService.buscarPrecos(item.getId(), tEfetivo, eEfetivo, -1, cidades);
+                        List<PriceEntry> r = apiService.buscarPrecos(item.getId(), tEfetivo, eEfetivo, -1, cidades);
+                        log("preco do item " + itemIdCompleto + ": " + r.size() + " cotacoes encontradas");
+                        return r;
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 }, pool);
 
+                futurePrecos.thenAccept(lista -> {
+                    precos = lista;
+                    Platform.runLater(() -> {
+                        atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
+                        atualizarCalculo();
+                    });
+                });
+
                 CompletableFuture<ReceitaCraft> futureReceita = CompletableFuture.supplyAsync(() -> {
                     try {
-                        return craftService.buscarReceita(itemIdCompleto);
+                        ReceitaCraft r = craftService.buscarReceita(itemIdCompleto);
+                        log("receita de " + itemIdCompleto + ": " + (r == null || r.getMateriais().isEmpty()
+                                ? "nao encontrada" : r.getMateriais().size() + " materiais"));
+                        return r;
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 }, pool);
+
+                futureReceita.thenAccept(r -> {
+                    receita = r;
+                    Platform.runLater(() -> {
+                        receitaCraft = r;
+                        atualizarTabelaReceitaCraft(r);
+                        atualizarCalculo();
+                    });
+                });
 
                 CompletableFuture<Long> futureItemValue = CompletableFuture.supplyAsync(
                         () -> ItemValues.getValor(itemIdCompleto), pool);
@@ -706,16 +746,17 @@ public class TelaCraftRefino {
                             try {
                                 List<PriceEntry> pMat = buscarComRetry(
                                         sufArtefato, tEfetivo, 0, -1, cidadesSemBM);
+                                log("preco do artefato " + chaveArtefato + ": " + pMat.size() + " cotacoes encontradas");
                                 synchronized (precosMateriais) {
                                     precosMateriais
                                             .computeIfAbsent(chaveArtefato, k ->
-                                                    Collections.synchronizedList(new ArrayList<>()))
+                                                    new java.util.concurrent.CopyOnWriteArrayList<>())
                                             .addAll(pMat);
                                 }
                             } catch (Exception ex) {
-                                System.out.println("ERRO artefato " + sufArtefato + ": " + ex.getMessage());
+                                log("erro artefato " + sufArtefato + ": " + ex.getMessage());
                             }
-                        }, pool));
+                        }, pool).thenRun(this::renderizarMateriais));
                         continue;
                     }
 
@@ -729,6 +770,9 @@ public class TelaCraftRefino {
                     futures.add(CompletableFuture.runAsync(() -> {
                         try {
                             ReceitaCraft recRefino = craftService.buscarReceita(idRefinado);
+                            log("receita de refino de " + idRefinado + ": " + (recRefino == null
+                                    ? "nao encontrada, buscando preco direto"
+                                    : recRefino.getMateriais().size() + " sub-materiais"));
 
                             if (recRefino == null) {
                                 int tMat = tierDeId(idRefinado, tEfetivo);
@@ -736,16 +780,15 @@ public class TelaCraftRefino {
                                 int eMat = enchantDeId(idRefinado);
                                 String sufBusca = eMat > 0 ? sufBase + "_LEVEL" + eMat : sufBase;
                                 List<PriceEntry> pMat = buscarComRetry(sufBusca, tMat, eMat, -1, cidadesSemBM);
+                                log("preco direto de " + idRefinado + ": " + pMat.size() + " cotacoes encontradas");
                                 synchronized (precosMateriais) {
                                     precosMateriais.computeIfAbsent(idRefinado, k ->
-                                            Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                            new java.util.concurrent.CopyOnWriteArrayList<>()).addAll(pMat);
                                 }
                                 return;
                             }
 
-                            synchronized (receitasRefino) {
-                                receitasRefino.put(idRefinado, recRefino);
-                            }
+                            receitasRefino.put(idRefinado, recRefino);
 
                             // sub-materiais: itera sobre a receita base (sem enchant)
                             // mas grava precos com a chave encantada para bater com atualizarTabelaMateriais
@@ -772,25 +815,26 @@ public class TelaCraftRefino {
                                         // certo com o id "T5_HIDE_LEVEL2@2" completo — so o "_LEVEL2"
                                         // sem o "@2" bate num item sem oferta nenhuma (preco sempre 0)
                                         List<PriceEntry> pMat = buscarComRetry(sufBusca, tMat, eMat, -1, cidadesSemBM);
+                                        log("preco do sub-material " + idMat + ": " + pMat.size() + " cotacoes encontradas");
                                         synchronized (precosMateriais) {
                                             // grava com chave idMat (ex: T6_ORE@3) para bater com atualizarTabelaMateriais
                                             precosMateriais.computeIfAbsent(idMat, k ->
-                                                    Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                                    new java.util.concurrent.CopyOnWriteArrayList<>()).addAll(pMat);
                                             // grava também sem enchant como fallback (ex: T6_ORE) caso a tabela use id limpo
                                             precosMateriais.computeIfAbsent(idMatBase, k ->
-                                                    Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                                    new java.util.concurrent.CopyOnWriteArrayList<>()).addAll(pMat);
                                         }
                                     } catch (Exception ex) {
-                                        System.out.println("Falha sub-material " + idMat + ": " + ex.getMessage());
+                                        log("falha sub-material " + idMat + ": " + ex.getMessage());
                                     }
-                                }, pool));
+                                }, pool).thenRun(this::renderizarMateriais));
                             }
                             CompletableFuture.allOf(subFutures.toArray(new CompletableFuture[0])).join();
 
                         } catch (Exception ex) {
-                            System.out.println("Falha refino " + idRefinado + ": " + ex.getMessage());
+                            log("falha refino " + idRefinado + ": " + ex.getMessage());
                         }
-                    }, pool));
+                    }, pool).thenRun(this::renderizarMateriais));
                 }
 
                 // diarios
@@ -803,14 +847,14 @@ public class TelaCraftRefino {
                                 try {
                                     return apiService.buscarPrecos(sufixoDiario + "_EMPTY", tEfetivo, 0, 1, cidadesSemBM);
                                 } catch (Exception ex) {
-                                    return List.of();
+                                    return List.<PriceEntry>of();
                                 }
                             }, pool);
                             CompletableFuture<List<PriceEntry>> fCheio = CompletableFuture.supplyAsync(() -> {
                                 try {
                                     return apiService.buscarPrecos(sufixoDiario + "_FULL", tEfetivo, 0, 1, cidadesSemBM);
                                 } catch (Exception ex) {
-                                    return List.of();
+                                    return List.<PriceEntry>of();
                                 }
                             }, pool);
                             List<PriceEntry> listaVazio = fVazio.get();
@@ -822,8 +866,21 @@ public class TelaCraftRefino {
                             precoDiarioCheioEntry = listaCheio.stream()
                                     .filter(p -> p.getBuyMax() > 0)
                                     .max(Comparator.comparingLong(PriceEntry::getBuyMax)).orElse(null);
+
+                            log("diario (" + sufixoDiario + "): vazio " + listaVazio.size()
+                                    + " cotacoes, cheio " + listaCheio.size() + " cotacoes");
+
+                            precoDiarioVazioApi = precoDiarioVazioEntry != null ? (double) precoDiarioVazioEntry.getSellMin() : 0;
+                            precoDiarioCheioApi = precoDiarioCheioEntry != null ? (double) precoDiarioCheioEntry.getBuyMax() : 0;
+                            precoDiarioVazioEntryCache = precoDiarioVazioEntry;
+
+                            Platform.runLater(() -> {
+                                atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
+                                atualizarTabelaMateriais(receita, precosMateriais, precoDiarioVazioEntry);
+                                atualizarCalculo();
+                            });
                         } catch (Exception ex) {
-                            System.out.println("Erro diarios: " + ex.getMessage());
+                            log("erro diarios: " + ex.getMessage());
                         }
                     }, pool);
                 }
@@ -851,15 +908,7 @@ public class TelaCraftRefino {
 
             @Override
             protected void succeeded() {
-                receitaCraft = receita;
-                precoDiarioVazioApi = precoDiarioVazioEntry != null ? (double) precoDiarioVazioEntry.getSellMin() : 0;
-                precoDiarioCheioApi = precoDiarioCheioEntry != null ? (double) precoDiarioCheioEntry.getBuyMax() : 0;
-                precoDiarioVazioEntryCache = precoDiarioVazioEntry;
-
-                atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
-                atualizarTabelaReceitaCraft(receita);
-                atualizarTabelaMateriais(receita, precosMateriais, precoDiarioVazioEntry);
-                atualizarCalculo();
+                // as tabelas ja foram preenchidas progressivamente ao longo do call()
                 progresso.setVisible(false);
                 labelStatus.setText(receita != null && !receita.getMateriais().isEmpty()
                         ? "Dados atualizados."

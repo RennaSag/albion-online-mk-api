@@ -25,16 +25,15 @@ public class TelaHome {
         Label titulo = new Label("O que vamos fazer hoje?");
         titulo.getStyleClass().add("home-titulo");
 
-        // contador de expiracao
-        Label labelExpiracao = new Label(obterTextoExpiracao());
-        labelExpiracao.setStyle("-fx-text-fill: " + obterCorExpiracao() + "; -fx-font-size: 12px;");
+        // contador de expiracao — vira um banner destacado quando perto de expirar
+        Label labelExpiracao = criarLabelExpiracao();
 
-        Button btnPesquisar = criarBotao("Pesquisar", "home-botao");
-        Button btnCraftar = criarBotao("Craftar", "home-botao");
-        Button btnRefinar = criarBotao("Refinar", "home-botao");
-        Button btnOperacoes = criarBotao("Operacoes Ativas", "home-botao");
-        Button btnFlip = criarBotao("Flip de Mercado", "home-botao");
-        Button btnCraftRefino = criarBotao("Craft com Refino", "home-botao");
+        Button btnPesquisar = criarBotao("🔍 Pesquisar", "home-botao");
+        Button btnCraftar = criarBotao("🔨 Craftar", "home-botao");
+        Button btnRefinar = criarBotao("🔥 Refinar", "home-botao");
+        Button btnOperacoes = criarBotao("📋 Operacoes Ativas", "home-botao");
+        Button btnFlip = criarBotao("⇄ Flip de Mercado", "home-botao");
+        Button btnCraftRefino = criarBotao("🛠 Craft com Refino", "home-botao");
 
         btnCraftRefino.setOnAction(e -> {
             Stage palco = (Stage) btnCraftRefino.getScene().getWindow();
@@ -67,7 +66,7 @@ public class TelaHome {
             new TelaOperacoesAtivas(palco).mostrar();
         });
 
-        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnCraftRefino, btnOperacoes);
+        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnCraftRefino, btnFlip, btnOperacoes);
         botoes.setAlignment(Pos.CENTER);
 
         Region espaco = new Region();
@@ -89,6 +88,23 @@ public class TelaHome {
 
         palco.setTitle("Analisador de Mercado de Albion Online");
         palco.getScene().setRoot(raiz);
+    }
+
+    private Label criarLabelExpiracao() {
+        String texto = obterTextoExpiracao();
+        String cor = obterCorExpiracao();
+        Label label = new Label(texto);
+
+        boolean critico = cor.equals("#e05555") || cor.equals("#e0b84a");
+        if (critico) {
+            label.setStyle(
+                    "-fx-text-fill: #1a1a1a; -fx-background-color: " + cor + "; " +
+                            "-fx-font-size: 13px; -fx-font-weight: bold; " +
+                            "-fx-padding: 8 20; -fx-background-radius: 6;");
+        } else {
+            label.setStyle("-fx-text-fill: " + cor + "; -fx-font-size: 12px;");
+        }
+        return label;
     }
 
     private String obterTextoExpiracao() {

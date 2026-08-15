@@ -19,8 +19,8 @@ public class TelaFlipSelecao {
 
     private ComboBox<String> cbTipoCompra;
     private ComboBox<String> cbTipoVenda;
-    private Slider sliderLucroMin;
-    private Slider sliderLucroMax;
+    private TextField campoLucroMin;
+    private TextField campoLucroMax;
     private Label labelLucroMin;
     private Label labelLucroMax;
 
@@ -188,57 +188,50 @@ public class TelaFlipSelecao {
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #333;");
 
-
-        Label lblMin = new Label("Lucro mínimo");
+        // --- lucro minimo ---
+        Label lblMin = new Label("Lucro mínimo (prata)");
         lblMin.setStyle("-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;");
 
-        labelLucroMin = new Label("0");
-        labelLucroMin.setStyle("-fx-text-fill: #5a8dee; -fx-font-weight: bold; -fx-font-size: 14px;");
+        campoLucroMin = campoNumero("0");
+        labelLucroMin = new Label("Sem mínimo");
+        labelLucroMin.setStyle("-fx-text-fill: #5a8dee; -fx-font-weight: bold; -fx-font-size: 13px;");
+        campoLucroMin.textProperty().addListener((obs, ant, novo) ->
+                labelLucroMin.setText(formatarResumo(novo, "Sem mínimo")));
 
-        sliderLucroMin = new Slider(0, 10_000_000, 0);
-        sliderLucroMin.setBlockIncrement(100_000);
-        sliderLucroMin.setMajorTickUnit(1_000_000);
-        sliderLucroMin.setMaxWidth(Double.MAX_VALUE);
-        sliderLucroMin.setStyle("-fx-accent: #5a8dee;");
-        sliderLucroMin.valueProperty().addListener((obs, ant, novo) -> {
-            labelLucroMin.setText(formatarSlider(novo.longValue()));
-            // garante que min nao ultrapassa max
-            if (sliderLucroMax != null && novo.doubleValue() > sliderLucroMax.getValue()) {
-                sliderLucroMax.setValue(novo.doubleValue());
-            }
-        });
-
-        HBox linhaMin = new HBox(10, sliderLucroMin, labelLucroMin);
+        HBox linhaMin = new HBox(10, campoLucroMin, labelLucroMin);
         linhaMin.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(sliderLucroMin, Priority.ALWAYS);
 
         // --- lucro máximo ---
-        Label lblMax = new Label("Lucro máximo  (0 = sem limite)");
+        Label lblMax = new Label("Lucro máximo (prata, 0 = sem limite)");
         lblMax.setStyle("-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;");
 
+        campoLucroMax = campoNumero("0");
         labelLucroMax = new Label("Sem limite");
-        labelLucroMax.setStyle("-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-font-size: 14px;");
+        labelLucroMax.setStyle("-fx-text-fill: #3dba6e; -fx-font-weight: bold; -fx-font-size: 13px;");
+        campoLucroMax.textProperty().addListener((obs, ant, novo) ->
+                labelLucroMax.setText(formatarResumo(novo, "Sem limite")));
 
-        sliderLucroMax = new Slider(0, 10_000_000, 0);
-        sliderLucroMax.setBlockIncrement(100_000);
-        sliderLucroMax.setMajorTickUnit(1_000_000);
-        sliderLucroMax.setMaxWidth(Double.MAX_VALUE);
-        sliderLucroMax.setStyle("-fx-accent: #3dba6e;");
-        sliderLucroMax.valueProperty().addListener((obs, ant, novo) -> {
-            long val = novo.longValue();
-            labelLucroMax.setText(val == 0 ? "Sem limite" : formatarSlider(val));
-            // garante que max nao fica abaixo de min
-            if (val > 0 && val < sliderLucroMin.getValue()) {
-                sliderLucroMin.setValue(val);
-            }
-        });
-
-        HBox linhaMax = new HBox(10, sliderLucroMax, labelLucroMax);
+        HBox linhaMax = new HBox(10, campoLucroMax, labelLucroMax);
         linhaMax.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(sliderLucroMax, Priority.ALWAYS);
 
         card.getChildren().addAll(titulo, sep, lblMin, linhaMin, lblMax, linhaMax);
         return card;
+    }
+
+    // campo de texto numerico (so aceita digitos) — usado no lugar do slider,
+    // que nao permitia escolher um valor exato de lucro
+    private TextField campoNumero(String valorPadrao) {
+        TextField tf = new TextField(valorPadrao);
+        tf.setPromptText("0");
+        tf.setPrefWidth(160);
+        tf.setMaxWidth(160);
+        tf.setStyle(
+                "-fx-background-color: #1e1e1e; -fx-text-fill: #e0e0e0; " +
+                        "-fx-border-color: #404040; -fx-border-radius: 6; -fx-background-radius: 6; " +
+                        "-fx-font-size: 13px; -fx-padding: 8 10;");
+        tf.setTextFormatter(new javafx.scene.control.TextFormatter<String>(mudanca ->
+                mudanca.getControlNewText().matches("\\d{0,9}") ? mudanca : null));
+        return tf;
     }
 
 
@@ -287,15 +280,25 @@ public class TelaFlipSelecao {
         String tipoCompra = cbTipoCompra.getValue().startsWith("Compra Direta") ? "sell" : "buy";
         String tipoVenda  = cbTipoVenda.getValue().startsWith("Venda Direta")   ? "buy"  : "sell";
 
-        long lucroMin = (long) sliderLucroMin.getValue();
-        long lucroMax = (long) sliderLucroMax.getValue(); // 0 = sem limite
+        long lucroMin = parseLongSafe(campoLucroMin.getText());
+        long lucroMax = parseLongSafe(campoLucroMax.getText()); // 0 = sem limite
 
         new TelaFlip(palco, tipoCompra, tipoVenda, lucroMin, lucroMax).mostrar();
     }
 
 
 
-    private String formatarSlider(long val) {
+    private long parseLongSafe(String texto) {
+        try {
+            return (texto == null || texto.isBlank()) ? 0 : Long.parseLong(texto.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private String formatarResumo(String texto, String textoSeZero) {
+        long val = parseLongSafe(texto);
+        if (val <= 0) return textoSeZero;
         if (val >= 1_000_000) return String.format("%.1fM", val / 1_000_000.0);
         if (val >= 1_000)     return String.format("%.0fK", val / 1_000.0);
         return String.valueOf(val);

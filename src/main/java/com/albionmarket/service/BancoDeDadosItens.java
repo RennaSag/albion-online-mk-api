@@ -436,7 +436,7 @@ public class BancoDeDadosItens {
                         item("HEAD_LEATHER_HELL", "Capuz Inferial", "Capuz inferial"),
                         item("HEAD_LEATHER_UNDEAD", "Capuz Espectral", "Capuz espectral"),
                         item("HEAD_LEATHER_FEY", "Capuz de Andarilho da Névoa", "Capuz de andarilho da nevoa"),
-                        item("EAD_LEATHER_AVALON", "Capuz da Tenacidade", "Capuz da tenacidade")
+                        item("HEAD_LEATHER_AVALON", "Capuz da Tenacidade", "Capuz da tenacidade")
                 )),
 
                 new Subcategoria("Elmo de Placa", Arrays.asList(
@@ -470,11 +470,11 @@ public class BancoDeDadosItens {
                         item("ARMOR_LEATHER_SET1", "Casaco de Mercenário", "casaco de mercenario"),
                         item("ARMOR_LEATHER_SET2", "Casaco de Caçador", "casaco de cacador caçador"),
                         item("ARMOR_LEATHER_SET3", "Casaco de Assassino", "casaco de assassino"),
-                        item("RMOR_LEATHER_MORGANA", "Casaco de Espreitador", "casaco de espreitador"),
+                        item("ARMOR_LEATHER_MORGANA", "Casaco de Espreitador", "casaco de espreitador"),
                         item("ARMOR_LEATHER_HELL", "Casaco Inferial", "casaco inferial"),
                         item("ARMOR_LEATHER_UNDEAD", "Casaco Espectral", "casaco espectral"),
                         item("ARMOR_LEATHER_FEY", "Casaco de Andarilho da Névoa", "casaco de andarilho da nevoa"),
-                        item("", "Casaco da Tenacidade", "casaco da tenacidade")
+                        item("ARMOR_LEATHER_AVALON", "Casaco da Tenacidade", "casaco da tenacidade")
                 )),
 
                 new Subcategoria("Armadura de Placa", Arrays.asList(
@@ -557,7 +557,7 @@ public class BancoDeDadosItens {
                         item("OFF_TORCH", "Tocha", "tocha"),
                         item("OFF_HORN_KEEPER", "Brumário", "brumario"),
                         item("OFF_TALISMAN_AVALON", "Cetro Sagrado", "cetro sagrado"),
-                        item("OFF_LAMP_UNDEA", "Lume Críptico", "lume"),
+                        item("OFF_LAMP_UNDEAD", "Lume Críptico", "lume"),
                         item("OFF_JESTERCANE_HELL", "Bengala Maligna", "bengala"),
                         item("OFF_TORCH_CRYSTAL", "Tocha Chama Azul", "tocha chama azul")
                 ))
@@ -697,8 +697,8 @@ public class BancoDeDadosItens {
                 )),
 
                 new Subcategoria("Pedra", Arrays.asList(
-                        item("H_TOOL_HAMMER", "Martelo de Pedra", "martelo de pedra"),
-                        item("H_TOOL_HAMMER_AVALON", "Martelo de Pedra Avaloniano", "martelo de pedra avaloniano"),
+                        item("2H_TOOL_HAMMER", "Martelo de Pedra", "martelo de pedra"),
+                        item("2H_TOOL_HAMMER_AVALON", "Martelo de Pedra Avaloniano", "martelo de pedra avaloniano"),
                         item("HEAD_GATHERER_ROCK", "Chapéu do Cavouqueiro", ""),
                         item("ARMOR_GATHERER_ROCK", "Traje do Cavouqueiro", "traje do cavouqueiro"),
                         item("SHOES_GATHERER_ROCK", "Botas do Cavouqueiro", "botas do cavouqueiro"),
@@ -775,6 +775,7 @@ public class BancoDeDadosItens {
         if (base.startsWith("HEAD_LEATHER") || base.startsWith("ARMOR_LEATHER") || base.startsWith("SHOES_LEATHER")
                 || base.startsWith("2H_BOW") || base.startsWith("2H_WARBOW") || base.startsWith("2H_LONGBOW")
                 || base.startsWith("2H_CROSSBOW") || base.startsWith("MAIN_1HCROSSBOW")
+                || base.startsWith("2H_DUALCROSSBOW") || base.startsWith("2H_REPEATINGCROSSBOW")
                 || base.startsWith("MAIN_DAGGER") || base.startsWith("2H_DAGGER") || base.startsWith("2H_CLAWS")
                 || base.startsWith("2H_DUALSICKLE") || base.startsWith("MAIN_RAPIER")
                 || base.startsWith("2H_QUARTERSTAFF") || base.startsWith("2H_IRONCLADEDSTAFF")
@@ -807,8 +808,8 @@ public class BancoDeDadosItens {
         if (
                 base.startsWith("2H_TOOL_AXE") ||
                         base.startsWith("2H_TOOL_AXE_AVALON") ||
-                        base.startsWith("H_TOOL_HAMMER") ||
-                        base.startsWith("H_TOOL_HAMMER_AVALON") ||
+                        base.startsWith("2H_TOOL_HAMMER") ||
+                        base.startsWith("2H_TOOL_HAMMER_AVALON") ||
                         base.startsWith("2H_TOOL_PICK") ||
                         base.startsWith("2H_TOOL_PICK_AVALON") ||
                         base.startsWith("2H_TOOL_KNIFE") ||

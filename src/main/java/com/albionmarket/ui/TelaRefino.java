@@ -5,6 +5,7 @@ import com.albionmarket.model.*;
 import com.albionmarket.service.*;
 import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -556,6 +557,10 @@ public class TelaRefino {
         return scroll;
     }
 
+    private static void log(String msg) {
+        System.out.println("[TelaRefino] " + msg);
+    }
+
     // logica principal igual ao craft, busca precos e receita da api
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null && estadoSelecao.cidades != null && !estadoSelecao.cidades.isEmpty())
@@ -590,43 +595,76 @@ public class TelaRefino {
             @Override
             protected Void call() throws Exception {
 
-                // etapa 1: precos do refinado e receita em paralelo
+                precosMateirais = Collections.synchronizedList(new ArrayList<>());
+
+                // etapa 1: precos do refinado e receita em paralelo — cada um
+                // atualiza a interface assim que chega, sem esperar o outro.
                 String sufixoBusca = enchantEfetivo > 0
                         ? item.getId() + "_LEVEL" + enchantEfetivo
                         : item.getId();
 
                 CompletableFuture<List<PriceEntry>> futurePrecos = CompletableFuture.supplyAsync(() -> {
                     try {
-                        return apiService.buscarPrecos(sufixoBusca, tierEfetivo, enchantEfetivo, -1, cidades);
+                        List<PriceEntry> r = apiService.buscarPrecos(sufixoBusca, tierEfetivo, enchantEfetivo, -1, cidades);
+                        log("preco do refinado " + itemIdApi + ": " + r.size() + " cotacoes encontradas");
+                        return r;
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 }, pool);
+
+                futurePrecos.thenAccept(lista -> {
+                    precos = lista;
+                    Platform.runLater(() -> {
+                        atualizarTabelaPrecos(precos);
+                        atualizarTabelaCalculo();
+                    });
+                });
 
                 CompletableFuture<ReceitaCraft> futureReceita = CompletableFuture.supplyAsync(() -> {
                     try {
                         String itemIdSemEnchant = itemIdApi.contains("@") ? itemIdApi.split("@")[0] : itemIdApi;
-                        return craftService.buscarReceita(itemIdSemEnchant);
+                        ReceitaCraft r = craftService.buscarReceita(itemIdSemEnchant);
+                        log("receita de " + itemIdSemEnchant + ": " + (r == null || r.getMateriais().isEmpty()
+                                ? "nao encontrada" : r.getMateriais().size() + " materiais"));
+                        return r;
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 }, pool);
 
+                futureReceita.thenAccept(r -> {
+                    receita = r;
+                    Platform.runLater(() -> {
+                        receitaAtual = r;
+                        atualizarTabelaReceita(r, precosMateirais);
+                        atualizarTabelaMateriais(r, precosMateirais);
+                        atualizarTabelaCalculo();
+                    });
+                });
+
                 CompletableFuture<Long> futureItemValue = CompletableFuture.supplyAsync(
                         () -> ItemValues.getValor(itemIdApi), pool);
 
-                // aguarda as tres antes de continuar
+                futureItemValue.thenAccept(v -> {
+                    itemValue = v;
+                    Platform.runLater(() -> labelItemValue.setText(
+                            itemValue > 0 ? String.format("%,d", itemValue) : "nao cadastrado"));
+                });
+
+                // aguarda as tres antes de continuar pros materiais
                 precos    = futurePrecos.get();
                 receita   = futureReceita.get();
                 itemValue = futureItemValue.get();
 
                 if (receita == null || receita.getMateriais().isEmpty()) return null;
 
-                // etapa 2: cada material em paralelo
-                List<CompletableFuture<List<PriceEntry>>> futuresMateriais = new ArrayList<>();
+                // etapa 2: cada material busca seu preco em paralelo, atualizando
+                // a tela assim que cada um chega, sem esperar os outros.
+                List<CompletableFuture<Void>> futuresMateriais = new ArrayList<>();
 
                 for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
-                    futuresMateriais.add(CompletableFuture.supplyAsync(() -> {
+                    CompletableFuture<Void> fm = CompletableFuture.supplyAsync(() -> {
                         try {
                             String idMat = mat.getUniqueName();
                             String[] partes = idMat.split("_", 2);
@@ -634,40 +672,41 @@ public class TelaRefino {
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
 
-                            if (enchantEfetivo == 0) {
-                                return apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM);
-                            } else {
-                                String sufixoLevel = sufixo + "_LEVEL" + enchantEfetivo;
-                                return apiService.buscarPrecos(sufixoLevel, tMat, enchantEfetivo, -1, cidadesSemBM);
-                            }
+                            List<PriceEntry> r = (enchantEfetivo == 0)
+                                    ? apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM)
+                                    : apiService.buscarPrecos(sufixo + "_LEVEL" + enchantEfetivo, tMat, enchantEfetivo, -1, cidadesSemBM);
+                            log("preco do material " + idMat + ": " + r.size() + " cotacoes encontradas");
+                            return r;
                         } catch (Exception ex) {
-                            return List.of();
+                            log("erro ao buscar preco do material " + mat.getUniqueName() + ": " + ex.getMessage());
+                            return List.<PriceEntry>of();
                         }
-                    }, pool));
+                    }, pool).thenAccept(lista -> {
+                        precosMateirais.addAll(lista);
+                        List<PriceEntry> snapshot;
+                        synchronized (precosMateirais) {
+                            snapshot = new ArrayList<>(precosMateirais);
+                        }
+                        Platform.runLater(() -> {
+                            atualizarTabelaReceita(receita, snapshot);
+                            atualizarTabelaMateriais(receita, snapshot);
+                            atualizarTabelaCalculo();
+                        });
+                    });
+                    futuresMateriais.add(fm);
                 }
 
-                // aguarda todos os materiais
+                // aguarda todos os materiais antes de encerrar a task
                 CompletableFuture.allOf(
                         futuresMateriais.toArray(new CompletableFuture[0])
                 ).get();
-
-                // agrega resultados
-                precosMateirais = new ArrayList<>();
-                for (CompletableFuture<List<PriceEntry>> f : futuresMateriais) {
-                    precosMateirais.addAll(f.get());
-                }
 
                 return null;
             }
 
             @Override
             protected void succeeded() {
-                receitaAtual = receita;
-                atualizarTabelaPrecos(precos);
-                atualizarTabelaReceita(receita, precosMateirais);
-                atualizarTabelaMateriais(receita, precosMateirais);
-                atualizarTabelaCalculo();
-                labelItemValue.setText(itemValue > 0 ? String.format("%,d", itemValue) : "nao cadastrado");
+                // as tabelas ja foram preenchidas progressivamente ao longo do call()
                 progresso.setVisible(false);
                 labelStatus.setText("Dados atualizados.");
                 pool.shutdown();

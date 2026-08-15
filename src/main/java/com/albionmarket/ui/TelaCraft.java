@@ -4,6 +4,7 @@ import com.albionmarket.model.*;
 import com.albionmarket.service.*;
 import com.albionmarket.util.AlbionIdUtil;
 import com.albionmarket.util.FormatadorUtil;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -673,6 +674,10 @@ public class TelaCraft {
     }
 
 
+    private static void log(String msg) {
+        System.out.println("[TelaCraft] " + msg);
+    }
+
     // logica principal com busca por threads
     private void buscarTudo() {
         List<String> cidades = (estadoSelecao != null && estadoSelecao.cidades != null && !estadoSelecao.cidades.isEmpty())
@@ -712,38 +717,72 @@ public class TelaCraft {
             @Override
             protected Void call() throws Exception {
 
-                // etapa 1: precos do item e receita em paralelo — nenhum depende do outro
+                precosMateirais = Collections.synchronizedList(new ArrayList<>());
+
+                // etapa 1: precos do item e receita em paralelo — nenhum depende do outro.
+                // cada um atualiza a interface assim que chega, sem esperar o resto.
                 CompletableFuture<List<PriceEntry>> futurePrecos = CompletableFuture.supplyAsync(() -> {
                     try {
-                        return apiService.buscarPrecos(item.getId(), tierEfetivo, enchantEfetivo, -1, cidades);
+                        List<PriceEntry> r = apiService.buscarPrecos(item.getId(), tierEfetivo, enchantEfetivo, -1, cidades);
+                        log("preco do item " + itemIdCompleto + ": " + r.size() + " cotacoes encontradas");
+                        return r;
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 }, pool);
 
+                futurePrecos.thenAccept(lista -> {
+                    precos = lista;
+                    Platform.runLater(() -> {
+                        atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
+                        atualizarTabelaCalculo();
+                    });
+                });
+
                 CompletableFuture<ReceitaCraft> futureReceita = CompletableFuture.supplyAsync(() -> {
                     try {
-                        return craftService.buscarReceita(itemIdCompleto);
+                        ReceitaCraft r = craftService.buscarReceita(itemIdCompleto);
+                        log("receita de " + itemIdCompleto + ": " + (r == null || r.getMateriais().isEmpty()
+                                ? "nao encontrada" : r.getMateriais().size() + " materiais"));
+                        return r;
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
                     }
                 }, pool);
+
+                futureReceita.thenAccept(r -> {
+                    receita = r;
+                    Platform.runLater(() -> {
+                        receitaAtual = r;
+                        atualizarTabelaPrecos(precos != null ? precos : List.of(), precosDiarioCheioTodos);
+                        atualizarTabelaReceita(r, precosMateirais, precoDiarioVazioEntry, precoDiarioCheioEntry);
+                        atualizarTabelaMateriais(r, precosMateirais, precoDiarioVazioEntry);
+                        atualizarTabelaCalculo();
+                    });
+                });
 
                 CompletableFuture<Long> futureItemValue = CompletableFuture.supplyAsync(
                         () -> ItemValues.getValor(itemIdCompleto), pool);
 
-                // aguarda precos e receita antes de continuar
+                futureItemValue.thenAccept(v -> {
+                    itemValue = v;
+                    Platform.runLater(() -> labelItemValue.setText(
+                            itemValue > 0 ? String.format("%,d", itemValue) : "nao cadastrado"));
+                });
+
+                // aguarda precos e receita antes de continuar pros materiais
                 precos = futurePrecos.get();
                 receita = futureReceita.get();
                 itemValue = futureItemValue.get();
 
                 if (receita == null || receita.getMateriais().isEmpty()) return null;
 
-                // etapa 2: cada material e os diarios em paralelo
-                List<CompletableFuture<List<PriceEntry>>> futuresMateriais = new ArrayList<>();
+                // etapa 2: cada material busca seu preco em paralelo, atualizando a
+                // tela assim que cada um chega, sem esperar os outros materiais.
+                List<CompletableFuture<Void>> futuresMateriais = new ArrayList<>();
 
                 for (ReceitaCraft.MaterialCraft mat : receita.getMateriais()) {
-                    futuresMateriais.add(CompletableFuture.supplyAsync(() -> {
+                    CompletableFuture<Void> fm = CompletableFuture.supplyAsync(() -> {
                         try {
                             String idMat = mat.getUniqueName();
                             String[] partes = idMat.split("_", 2);
@@ -751,19 +790,31 @@ public class TelaCraft {
                                     ? Integer.parseInt(partes[0].substring(1)) : 4;
                             String sufixo = partes.length > 1 ? partes[1] : idMat;
 
-                            if (mat.isArtefato() || enchantEfetivo == 0) {
-                                return apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM);
-                            } else {
-                                String sufixoLevel = sufixo + "_LEVEL" + enchantEfetivo;
-                                return apiService.buscarPrecos(sufixoLevel, tMat, enchantEfetivo, -1, cidadesSemBM);
-                            }
+                            List<PriceEntry> r = (mat.isArtefato() || enchantEfetivo == 0)
+                                    ? apiService.buscarPrecos(sufixo, tMat, 0, -1, cidadesSemBM)
+                                    : apiService.buscarPrecos(sufixo + "_LEVEL" + enchantEfetivo, tMat, enchantEfetivo, -1, cidadesSemBM);
+                            log("preco do material " + idMat + ": " + r.size() + " cotacoes encontradas");
+                            return r;
                         } catch (Exception ex) {
-                            return List.of(); // ignora material com erro
+                            log("erro ao buscar preco do material " + mat.getUniqueName() + ": " + ex.getMessage());
+                            return List.<PriceEntry>of(); // ignora material com erro
                         }
-                    }, pool));
+                    }, pool).thenAccept(lista -> {
+                        precosMateirais.addAll(lista);
+                        List<PriceEntry> snapshot;
+                        synchronized (precosMateirais) {
+                            snapshot = new ArrayList<>(precosMateirais);
+                        }
+                        Platform.runLater(() -> {
+                            atualizarTabelaReceita(receita, snapshot, precoDiarioVazioEntry, precoDiarioCheioEntry);
+                            atualizarTabelaMateriais(receita, snapshot, precoDiarioVazioEntry);
+                            atualizarTabelaCalculo();
+                        });
+                    });
+                    futuresMateriais.add(fm);
                 }
 
-                // diarios em paralelo com os materiais
+                // diarios em paralelo com os materiais — tambem atualiza a tela assim que chega
                 String sufixoDiario = com.albionmarket.service.BancoDeDadosItens.getDiarioSufixo(itemIdCompleto);
                 CompletableFuture<Void> futureDiarios = CompletableFuture.completedFuture(null);
 
@@ -777,7 +828,7 @@ public class TelaCraft {
                                 try {
                                     return apiService.buscarPrecos(sufixoDiarioVazio, tierEfetivo, 0, 1, cidadesSemBM);
                                 } catch (Exception ex) {
-                                    return List.of();
+                                    return List.<PriceEntry>of();
                                 }
                             }, pool);
 
@@ -785,7 +836,7 @@ public class TelaCraft {
                                 try {
                                     return apiService.buscarPrecos(sufixoDiarioCheio, tierEfetivo, 0, 1, cidadesSemBM);
                                 } catch (Exception ex) {
-                                    return List.of();
+                                    return List.<PriceEntry>of();
                                 }
                             }, pool);
 
@@ -802,39 +853,41 @@ public class TelaCraft {
                                     .max(java.util.Comparator.comparingLong(PriceEntry::getBuyMax))
                                     .orElse(null);
 
+                            log("diario (" + sufixoDiario + "): vazio " + listaVazio.size()
+                                    + " cotacoes, cheio " + listaCheio.size() + " cotacoes");
+
+                            precoDiarioVazioApi = precoDiarioVazioEntry != null ? (double) precoDiarioVazioEntry.getSellMin() : 0;
+                            precoDiarioCheioApi = precoDiarioCheioEntry != null ? (double) precoDiarioCheioEntry.getBuyMax() : 0;
+
+                            List<PriceEntry> snapshot;
+                            synchronized (precosMateirais) {
+                                snapshot = new ArrayList<>(precosMateirais);
+                            }
+                            Platform.runLater(() -> {
+                                atualizarTabelaPrecos(precos != null ? precos : List.of(), precosDiarioCheioTodos);
+                                atualizarTabelaReceita(receita, snapshot, precoDiarioVazioEntry, precoDiarioCheioEntry);
+                                atualizarTabelaMateriais(receita, snapshot, precoDiarioVazioEntry);
+                                atualizarTabelaCalculo();
+                            });
+
                         } catch (Exception ex) {
-                            // ignora erro de diario
+                            log("erro ao buscar precos do diario: " + ex.getMessage());
                         }
                     }, pool);
                 }
 
-                // aguarda todos os materiais e os diarios
+                // aguarda todos os materiais e os diarios antes de encerrar a task
                 CompletableFuture.allOf(
                         futuresMateriais.toArray(new CompletableFuture[0])
                 ).get();
                 futureDiarios.get();
-
-                // agrega resultados dos materiais
-                precosMateirais = new ArrayList<>();
-                for (CompletableFuture<List<PriceEntry>> f : futuresMateriais) {
-                    precosMateirais.addAll(f.get());
-                }
 
                 return null;
             }
 
             @Override
             protected void succeeded() {
-                receitaAtual = receita;
-
-                precoDiarioVazioApi = precoDiarioVazioEntry != null ? (double) precoDiarioVazioEntry.getSellMin() : 0;
-                precoDiarioCheioApi = precoDiarioCheioEntry != null ? (double) precoDiarioCheioEntry.getBuyMax() : 0;
-
-                atualizarTabelaPrecos(precos, precosDiarioCheioTodos);
-                atualizarTabelaReceita(receita, precosMateirais, precoDiarioVazioEntry, precoDiarioCheioEntry);
-                atualizarTabelaMateriais(receita, precosMateirais, precoDiarioVazioEntry);
-                atualizarTabelaCalculo();
-                labelItemValue.setText(itemValue > 0 ? String.format("%,d", itemValue) : "nao cadastrado");
+                // as tabelas ja foram preenchidas progressivamente ao longo do call()
                 progresso.setVisible(false);
                 labelStatus.setText("Dados atualizados.");
                 pool.shutdown();

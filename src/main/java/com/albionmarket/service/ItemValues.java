@@ -300,8 +300,8 @@ public class ItemValues {
         reg("SHOES_GATHERER_ORE", 4, 128);
         reg("BACKPACK_GATHERER_ORE", 4, 128);
 
-        reg("H_TOOL_HAMMER", 3, 64);
-        reg("H_TOOL_HAMMER_AVALON", 4, 1408);
+        reg("2H_TOOL_HAMMER", 3, 64);
+        reg("2H_TOOL_HAMMER_AVALON", 4, 1408);
         reg("HEAD_GATHERER_ROCK", 4, 128);
         reg("ARMOR_GATHERER_ROCK", 4, 256);
         reg("SHOES_GATHERER_ROCK", 4, 128);

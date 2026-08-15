@@ -7,9 +7,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -199,11 +201,13 @@ public class TelaFlip {
         VBox statusBox = new VBox(2, labelContagem, labelStatus);
         statusBox.setAlignment(Pos.CENTER_RIGHT);
 
-        Label btnVoltar = new Label("Voltar");
-        btnVoltar.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee;");
-        btnVoltar.setOnMouseEntered(e -> btnVoltar.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 0.7;"));
-        btnVoltar.setOnMouseExited (e -> btnVoltar.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 1;"));
-        btnVoltar.setOnMouseClicked(e -> {
+        Button btnVoltar = new Button("Voltar");
+        String estiloVoltar = "-fx-background-color: transparent; -fx-font-size: 13px; " +
+                "-fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-border-width: 0; -fx-padding: 4 6;";
+        btnVoltar.setStyle(estiloVoltar);
+        btnVoltar.setOnMouseEntered(e -> btnVoltar.setStyle(estiloVoltar + " -fx-opacity: 0.7;"));
+        btnVoltar.setOnMouseExited (e -> btnVoltar.setStyle(estiloVoltar));
+        btnVoltar.setOnAction(e -> {
             pool.shutdownNow();
             new TelaFlipSelecao(palco).mostrar();
         });
@@ -229,7 +233,12 @@ public class TelaFlip {
     // -------------------------------------------------------------------------
     @SuppressWarnings("unchecked")
     private VBox criarTabela() {
-        tabela = new TableView<>(linhas);
+        tabela = new TableView<>();
+        // SortedList vinculada ao comparator da tabela: mantem a ordenacao
+        // escolhida pelo usuario mesmo com linhas chegando progressivamente da API.
+        SortedList<LinhaFlip> ordenada = new SortedList<>(linhas);
+        ordenada.comparatorProperty().bind(tabela.comparatorProperty());
+        tabela.setItems(ordenada);
         tabela.setStyle("-fx-background-color: #1a1a1a; -fx-table-cell-border-color: #2a2a2a;");
         tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tabela.setEditable(true);
@@ -475,11 +484,17 @@ public class TelaFlip {
             private final Button btnSalvar = new Button("Salvar");
             private final VBox   vb        = new VBox(2, lblLucro, lblPct, lblCusto, btnSalvar);
 
+            private static final String ESTILO_SALVAR =
+                    "-fx-background-color: #1a3a26; -fx-text-fill: #3dba6e; " +
+                            "-fx-font-weight: bold; -fx-background-radius: 5; -fx-font-size: 10px; " +
+                            "-fx-border-color: #2a5a3a; -fx-border-radius: 5; -fx-border-width: 1; -fx-padding: 3 8;";
+            private static final String ESTILO_SALVO =
+                    "-fx-background-color: #3dba6e; -fx-text-fill: #0f1f16; " +
+                            "-fx-font-weight: bold; -fx-background-radius: 5; -fx-font-size: 10px; " +
+                            "-fx-border-color: #2a5a3a; -fx-border-radius: 5; -fx-border-width: 1; -fx-padding: 3 8;";
+
             {
-                btnSalvar.setStyle(
-                        "-fx-background-color: #1a3a26; -fx-text-fill: #3dba6e; " +
-                                "-fx-font-weight: bold; -fx-background-radius: 5; -fx-font-size: 10px; " +
-                                "-fx-border-color: #2a5a3a; -fx-border-radius: 5; -fx-border-width: 1; -fx-padding: 3 8;");
+                btnSalvar.setStyle(ESTILO_SALVAR);
                 lblCusto.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
                 vb.setPadding(new Insets(4, 0, 4, 0));
             }
@@ -506,12 +521,38 @@ public class TelaFlip {
                 atualizar(l);
                 l.lblLucroRef = lblLucro;
                 l.lblCustoRef = lblCusto;
-                btnSalvar.setOnAction(e -> salvar(l));
+                btnSalvar.setDisable(false);
+                btnSalvar.setText("Salvar");
+                btnSalvar.setStyle(ESTILO_SALVAR);
+                btnSalvar.setOnAction(e -> {
+                    boolean ok = salvar(l);
+                    btnSalvar.setText(ok ? "✓ Salvo" : "Erro");
+                    btnSalvar.setStyle(ok ? ESTILO_SALVO : ESTILO_SALVAR);
+                    btnSalvar.setDisable(true);
+                    PauseTransition pausa = new PauseTransition(javafx.util.Duration.seconds(1.5));
+                    pausa.setOnFinished(ev -> {
+                        btnSalvar.setText("Salvar");
+                        btnSalvar.setStyle(ESTILO_SALVAR);
+                        btnSalvar.setDisable(false);
+                    });
+                    pausa.play();
+                });
                 setGraphic(vb);
             }
         });
 
+        colItem.setComparator(Comparator.comparing((LinhaFlip l) -> l.nomeItem, String.CASE_INSENSITIVE_ORDER));
+        colCompra.setComparator(Comparator.comparingLong((LinhaFlip l) -> l.precoCompra));
+        colVenda.setComparator(Comparator.comparingLong((LinhaFlip l) -> l.precoVenda));
+        colCusto.setComparator(Comparator.comparingLong((LinhaFlip l) -> l.precoCompra + Math.round(l.precoVenda * 0.05)));
+        colQtd.setComparator(Comparator.comparingInt((LinhaFlip l) -> l.quantidade));
+        colLucro.setComparator(Comparator.comparingDouble((LinhaFlip l) -> l.lucroPercentual));
+
         tabela.getColumns().addAll(colItem, colCompra, colVenda, colCusto, colQtd, colLucro);
+
+        // ordenacao padrao: melhor oportunidade (maior lucro %) primeiro
+        colLucro.setSortType(TableColumn.SortType.DESCENDING);
+        tabela.getSortOrder().setAll(colLucro);
 
         VBox area = new VBox(tabela);
         VBox.setVgrow(tabela, Priority.ALWAYS);
@@ -649,37 +690,53 @@ public class TelaFlip {
             String itemId = entradas.get(0).get("item_id").getAsString();
             int    qual   = entradas.get(0).get("quality").getAsInt();
 
-            JsonObject melhorCompra = null;
-            long       menorPreco   = Long.MAX_VALUE;
-            for (JsonObject o : entradas) {
-                long p = o.get(campoCompra).getAsLong();
-                if (p > 0 && p < menorPreco) { menorPreco = p; melhorCompra = o; }
-            }
-            if (melhorCompra == null) continue;
+            // testa TODO par de cidades distintas (no maximo 6 cidades -> 30 pares, e barato)
+            // pra achar o par de compra/venda com o maior lucro de verdade.
+            // Antes pegava so a cidade com o MENOR preco de compra global e so depois
+            // procurava a melhor venda entre as cidades restantes — isso perde a melhor
+            // oportunidade sempre que a cidade mais barata pra comprar tambem e a que tem
+            // a melhor venda (o codigo excluia ela da comparacao de venda por ser a mesma
+            // cidade da compra escolhida, mesmo sem checar se outro par de cidades dava
+            // mais lucro no total).
+            JsonObject melhorCompra = null, melhorVenda = null;
+            long precoCompraFinal = 0, precoVendaFinal = 0;
+            long melhorLucro = Long.MIN_VALUE;
 
-            JsonObject melhorVenda = null;
-            long       maiorPreco  = Long.MIN_VALUE;
-            String     cidadeC     = melhorCompra.get("city").getAsString();
-            for (JsonObject o : entradas) {
-                if (o.get("city").getAsString().equals(cidadeC)) continue;
-                long p = o.get(campoVenda).getAsLong();
-                if (p > 0 && p > maiorPreco) { maiorPreco = p; melhorVenda = o; }
-            }
-            if (melhorVenda == null) continue;
+            for (JsonObject compra : entradas) {
+                long pCompra = compra.get(campoCompra).getAsLong();
+                if (pCompra <= 0) continue;
+                String cidadeCompra = compra.get("city").getAsString();
 
-            long lucroBruto = maiorPreco - menorPreco;
+                for (JsonObject venda : entradas) {
+                    if (venda.get("city").getAsString().equals(cidadeCompra)) continue;
+                    long pVenda = venda.get(campoVenda).getAsLong();
+                    if (pVenda <= 0) continue;
+
+                    long lucro = pVenda - pCompra;
+                    if (lucro > melhorLucro) {
+                        melhorLucro = lucro;
+                        melhorCompra = compra;
+                        melhorVenda = venda;
+                        precoCompraFinal = pCompra;
+                        precoVendaFinal = pVenda;
+                    }
+                }
+            }
+            if (melhorCompra == null || melhorVenda == null) continue;
+
+            long lucroBruto = precoVendaFinal - precoCompraFinal;
             if (lucroBruto < lucroMin) continue;
             if (lucroMax > 0 && lucroBruto > lucroMax) continue;
 
-            double lucroPerc = menorPreco > 0
-                    ? Math.round((lucroBruto * 10000.0) / menorPreco) / 100.0 : 0;
+            double lucroPerc = precoCompraFinal > 0
+                    ? Math.round((lucroBruto * 10000.0) / precoCompraFinal) / 100.0 : 0;
 
             resultado.add(new LinhaFlip(
                     itemId,
                     resolverNome(itemId),
                     qual,
-                    cidadeC,   menorPreco,
-                    melhorVenda.get("city").getAsString(), maiorPreco,
+                    melhorCompra.get("city").getAsString(), precoCompraFinal,
+                    melhorVenda.get("city").getAsString(),  precoVendaFinal,
                     lucroBruto, lucroPerc,
                     obterCampo(melhorCompra, campoDataCompra),
                     obterCampo(melhorVenda,  campoDataVenda)
@@ -691,7 +748,7 @@ public class TelaFlip {
     // -------------------------------------------------------------------------
     // Salvar operacao em JSON
     // -------------------------------------------------------------------------
-    private void salvar(LinhaFlip l) {
+    private boolean salvar(LinhaFlip l) {
         try {
             String nomeArquivo = "flip_"
                     + java.time.LocalDateTime.now().format(
@@ -721,8 +778,10 @@ public class TelaFlip {
             java.nio.file.Files.createDirectories(dir);
             java.nio.file.Files.writeString(dir.resolve(nomeArquivo), json);
             labelStatus.setText("Salvo: " + nomeArquivo);
+            return true;
         } catch (Exception ex) {
             labelStatus.setText("Erro ao salvar: " + ex.getMessage());
+            return false;
         }
     }
 
