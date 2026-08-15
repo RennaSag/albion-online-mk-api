@@ -115,10 +115,12 @@ public class TelaCraft {
             int t = AlbionIdUtil.tierEfetivo(tier);
             int e = AlbionIdUtil.enchantEfetivo(enchant);
 
-            // pega melhor cidade de venda da tabela
+            // pega melhor cidade de venda da tabela (ignora a linha do Diário
+            // Cheio, que fica na mesma tabela mas nao e preco de venda do item)
             String melhorCidadeApiTemp = "-";
             double melhorV = 0;
             for (LinhaPreco lp : tabelaPrecos.getItems()) {
+                if ("Diário Cheio".equals(lp.itemId)) continue;
                 double v = FormatadorUtil.parseSilver(lp.sellMin);
                 if (v > melhorV) {
                     melhorV = v;
@@ -1351,10 +1353,13 @@ public class TelaCraft {
             }
         }
 
-        // melhor preço de venda
+        // melhor preço de venda (ignora a linha do Diário Cheio, que fica na
+        // mesma tabela mas nao e preco de venda do item — isso e tratado a
+        // parte no bloco "Lucro c/ diarios")
         double melhorVenda = 0;
         String melhorCidadeTemp = "-";
         for (LinhaPreco lp : tabelaPrecos.getItems()) {
+            if ("Diário Cheio".equals(lp.itemId)) continue;
             double v = FormatadorUtil.parseSilver(lp.sellMin);
             if (v > melhorVenda) {
                 melhorVenda = v;

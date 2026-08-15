@@ -4,6 +4,8 @@ import com.albionmarket.model.CidadeInfo;
 import com.albionmarket.model.ItemDefinition;
 import com.albionmarket.service.BancoDeDadosItens;
 import com.albionmarket.service.IconeCacheService;
+import com.albionmarket.service.OperacaoService;
+import com.albionmarket.util.FormatadorUtil;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -749,35 +751,41 @@ public class TelaFlip {
     // -------------------------------------------------------------------------
     // Salvar operacao em JSON
     // -------------------------------------------------------------------------
+    // salva no mesmo formato/local que TelaCraft, TelaRefino e TelaCraftRefino usam
+    // (arquivo "operacao_*.json" via OperacaoService) pra aparecer em TelaOperacoesAtivas
     private boolean salvar(LinhaFlip l) {
         try {
-            String nomeArquivo = "flip_"
-                    + java.time.LocalDateTime.now().format(
-                    java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-                    + ".json";
+            String id = l.itemId;
+            String tier = (id.length() > 1 && id.startsWith("T")) ? String.valueOf(id.charAt(1)) : "4";
+            String enchant = id.contains("@") ? id.substring(id.indexOf('@') + 1) : "0";
 
-            String json = "{\n" +
-                    "  \"tipo\": \"flip\",\n" +
-                    "  \"tipo_compra\": \""       + tipoCompra                     + "\",\n" +
-                    "  \"tipo_venda\": \""         + tipoVenda                      + "\",\n" +
-                    "  \"item_id\": \""            + l.itemId                       + "\",\n" +
-                    "  \"nome_item\": \""          + l.nomeItem                     + "\",\n" +
-                    "  \"qualidade\": "            + l.qualidade                    + ",\n"  +
-                    "  \"cidade_compra\": \""      + l.cidadeCompra                 + "\",\n" +
-                    "  \"preco_compra\": "         + l.precoCompra                  + ",\n"  +
-                    "  \"cidade_venda\": \""       + l.cidadeVenda                  + "\",\n" +
-                    "  \"preco_venda\": "          + l.precoVenda                   + ",\n"  +
-                    "  \"quantidade\": "           + l.quantidade                   + ",\n"  +
-                    "  \"custo_total\": "          + (l.precoCompra * l.quantidade) + ",\n"  +
-                    "  \"lucro_bruto_unitario\": " + l.lucroBruto                   + ",\n"  +
-                    "  \"lucro_total\": "          + (l.lucroBruto * l.quantidade)  + ",\n"  +
-                    "  \"data_registro\": \""      + java.time.Instant.now()        + "\"\n" +
-                    "}\n";
+            double custoTotal = (double) l.precoCompra * l.quantidade;
+            double lucroTotal = (double) l.lucroBruto * l.quantidade;
 
-            java.nio.file.Path dir = java.nio.file.Paths.get(
-                    System.getenv("LOCALAPPDATA"), "AlbionMarket", "operacoes");
-            java.nio.file.Files.createDirectories(dir);
-            java.nio.file.Files.writeString(dir.resolve(nomeArquivo), json);
+            String locaisJson = "[{\"material\": \"" + l.nomeItem.replace("\"", "\\\"")
+                    + "\", \"quantidade\": " + l.quantidade
+                    + ", \"cidade\": \"" + nomeCidade(l.cidadeCompra) + "\"}]";
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\n");
+            sb.append("  \"item\": \"").append(l.nomeItem.replace("\"", "\\\"")).append("\",\n");
+            sb.append("  \"itemId\": \"").append(l.itemId).append("\",\n");
+            sb.append("  \"tier\": ").append(tier).append(",\n");
+            sb.append("  \"encantamento\": ").append(enchant).append(",\n");
+            sb.append("  \"calculadora\": {\n");
+            sb.append("    \"Quantidade a craftar\": \"").append(l.quantidade).append(" un\",\n");
+            sb.append("    \"Qtd final craftada\": \"").append(String.format("%.2f un", (double) l.quantidade)).append("\",\n");
+            sb.append("    \"Melhor preco de venda\": \"").append(FormatadorUtil.fmtSilver(l.precoVenda)).append("\",\n");
+            sb.append("    \"Local de venda\": \"").append(nomeCidade(l.cidadeVenda)).append("\",\n");
+            sb.append("    \"Custo dos materiais\": \"").append(FormatadorUtil.fmtSilver(custoTotal)).append("\",\n");
+            sb.append("    \"Local de compra dos materiais\": ").append(locaisJson).append(",\n");
+            sb.append("    \"Custo total\": \"").append(FormatadorUtil.fmtSilver(custoTotal)).append("\",\n");
+            sb.append("    \"Lucro/Prejuizo\": \"").append(lucroTotal >= 0 ? "+" : "")
+                    .append(FormatadorUtil.fmtSilver(lucroTotal)).append("\"\n");
+            sb.append("  }\n");
+            sb.append("}\n");
+
+            String nomeArquivo = OperacaoService.salvar(l.itemId, sb.toString());
             labelStatus.setText("Salvo: " + nomeArquivo);
             return true;
         } catch (Exception ex) {
