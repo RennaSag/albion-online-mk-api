@@ -49,6 +49,7 @@ public class BancoDeDadosItens {
             */
 
     // mapeia itemId -> sufixo correto do artefato
+    //id do item -> id do artefato desse item -> nome desse artefato
     // ids dos artefatos com os nomes deles pra ser usado separadamente
     public static String getArtefatoSufixo(String itemId) {
         String base = itemId.replaceAll("^T\\d_", "").replaceAll("@\\d$", "");

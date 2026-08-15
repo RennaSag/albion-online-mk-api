@@ -56,9 +56,35 @@ public class CraftService {
     private static final int[] QTD_BRUTOS = {0, 0, 1, 2, 2, 3, 4, 5, 6};
 
     private ReceitaCraft montarReceitaRefino(String itemId) {
-        // aceita T4_CLOTH ou T4_CLOTH_LEVEL1
-        String id = itemId.contains("_LEVEL") ? itemId.split("_LEVEL")[0] : itemId;
-        if (id == null || !id.startsWith("T") || id.length() < 3) return null;
+        if (itemId == null) return null;
+
+        // aceita T4_CLOTH, T4_CLOTH_LEVEL1 ou T4_CLOTH@1 (encantado) — precisa tirar
+        // o "@N"/"_LEVELN" antes de separar o tipo, senao o tipo vem tipo "CLOTH@1"
+        // e nunca bate com o mapa BRUTOS, fazendo a receita de refino de material
+        // encantado sempre falhar (e o app cair pro fallback sem preco de material)
+        String id = itemId;
+        int enchant = 0;
+
+        int arroba = id.indexOf('@');
+        if (arroba > 0) {
+            try {
+                enchant = Integer.parseInt(id.substring(arroba + 1));
+            } catch (NumberFormatException ignored) {
+            }
+            id = id.substring(0, arroba);
+        }
+        int nivel = id.indexOf("_LEVEL");
+        if (nivel > 0) {
+            if (enchant == 0) {
+                try {
+                    enchant = Integer.parseInt(id.substring(nivel + 6));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            id = id.substring(0, nivel);
+        }
+
+        if (!id.startsWith("T") || id.length() < 3) return null;
         try {
             int tier = Character.getNumericValue(id.charAt(1));
             String tipo = id.split("_", 2)[1];
@@ -67,11 +93,15 @@ public class CraftService {
 
             int qtd = QTD_BRUTOS[tier];
             List<ReceitaCraft.MaterialCraft> materiais = new ArrayList<>();
-            // bruto principal (não é artefato)
-            materiais.add(new ReceitaCraft.MaterialCraft("T" + tier + "_" + tipoBruto, qtd, false));
+            // bruto principal (não é artefato) — precisa do mesmo encantamento do refinado
+            String bruto = "T" + tier + "_" + tipoBruto + (enchant > 0 ? "@" + enchant : "");
+            materiais.add(new ReceitaCraft.MaterialCraft(bruto, qtd, false));
             // retorno = refinado do tier anterior (marcado como artefato pra aparecer em roxo)
+            // o catalisador de retorno tambem leva o mesmo encantamento do recurso sendo
+            // refinado (ex: refinar Barra 5.1 pede minerio 5.1 + Barra 4.1 como catalisador)
             if (tier > 2) {
-                materiais.add(new ReceitaCraft.MaterialCraft("T" + (tier - 1) + "_" + tipo, 1, true));
+                String retorno = "T" + (tier - 1) + "_" + tipo + (enchant > 0 ? "@" + enchant : "");
+                materiais.add(new ReceitaCraft.MaterialCraft(retorno, 1, true));
             }
             return new ReceitaCraft(itemId, 0, 0, materiais);
         } catch (Exception e) {
@@ -100,13 +130,30 @@ public class CraftService {
     }
 
     //execucao da requisicao http da url pra eu trazer esses dados do json da api
+    // com retry curto pra falhas passageiras (timeout, 429, 5xx), que antes
+    // faziam a receita simplesmente nao ser encontrada naquela tentativa
     private HttpResponse<String> executarGet(String url) throws IOException, InterruptedException {
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(15))
                 .header("Accept", "application/json")
                 .GET().build();
-        return cliente.send(req, HttpResponse.BodyHandlers.ofString());
+
+        IOException ultimaFalha = null;
+        for (int tentativa = 0; tentativa <= 2; tentativa++) {
+            try {
+                HttpResponse<String> resp = cliente.send(req, HttpResponse.BodyHandlers.ofString());
+                if ((resp.statusCode() == 429 || resp.statusCode() >= 500) && tentativa < 2) {
+                    Thread.sleep(400L * (tentativa + 1));
+                    continue;
+                }
+                return resp;
+            } catch (IOException ex) {
+                ultimaFalha = ex;
+                if (tentativa < 2) Thread.sleep(400L * (tentativa + 1));
+            }
+        }
+        throw ultimaFalha != null ? ultimaFalha : new IOException("Falha ao conectar em " + url);
     }
 
     //aqui ele me traz as informações da receira do elemento rotulado como "craftingRequirements"

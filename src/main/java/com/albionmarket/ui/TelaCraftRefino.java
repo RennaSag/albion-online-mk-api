@@ -639,7 +639,10 @@ public class TelaCraftRefino {
         tabelaMateriais.setItems(FXCollections.emptyObservableList());
         receitasRefino.clear();
 
-        ExecutorService pool = Executors.newFixedThreadPool(4, r -> {
+        // pool elastico igual TelaCraft — com pool fixo pequeno, as buscas de
+        // sub-materiais do refino (aninhadas dentro da busca de cada material)
+        // ficavam esperando thread livre, deixando a tela bem mais lenta pra carregar
+        ExecutorService pool = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r);
             t.setDaemon(true);
             return t;
@@ -701,7 +704,7 @@ public class TelaCraftRefino {
 
                         futures.add(CompletableFuture.runAsync(() -> {
                             try {
-                                List<PriceEntry> pMat = apiService.buscarPrecos(
+                                List<PriceEntry> pMat = buscarComRetry(
                                         sufArtefato, tEfetivo, 0, -1, cidadesSemBM);
                                 synchronized (precosMateriais) {
                                     precosMateriais
@@ -746,32 +749,43 @@ public class TelaCraftRefino {
 
                             // sub-materiais: itera sobre a receita base (sem enchant)
                             // mas grava precos com a chave encantada para bater com atualizarTabelaMateriais
+                            // busca cada sub-material em paralelo (antes era sequencial e somava a
+                            // latencia de cada requisicao, deixando o carregamento bem mais lento)
+                            List<CompletableFuture<Void>> subFutures = new ArrayList<>();
                             for (ReceitaCraft.MaterialCraft matRefino : recRefino.getMateriais()) {
                                 String idMatBase = matRefino.getUniqueName();
-                                // propaga @N — mesma lógica do atualizarTabelaMateriais
+                                // o catalisador de retorno (tier anterior) tambem e encantado no
+                                // mesmo nivel do recurso que esta sendo refinado (ex: refinar
+                                // Barra 5.1 pede Barra 4.1 como catalisador, nao Barra 4.0)
                                 final String idMat = (eEfetivo > 0 && !idMatBase.contains("@"))
                                         ? idMatBase + "@" + eEfetivo
                                         : idMatBase;
 
-                                int tMat = tierDeId(idMat, tEfetivo);
-                                String sufMat = sufixoDeId(idMat);
-                                int eMat = enchantDeId(idMat);
+                                subFutures.add(CompletableFuture.runAsync(() -> {
+                                    int tMat = tierDeId(idMat, tEfetivo);
+                                    String sufMat = sufixoDeId(idMat);
+                                    int eMat = enchantDeId(idMat);
 
-                                try {
-                                    String sufBusca = eMat > 0 ? sufMat + "_LEVEL" + eMat : sufMat;
-                                    List<PriceEntry> pMat = buscarComRetry(sufBusca, tMat, 0, -1, cidadesSemBM);
-                                    synchronized (precosMateriais) {
-                                        // grava com chave idMat (ex: T6_ORE@3) para bater com atualizarTabelaMateriais
-                                        precosMateriais.computeIfAbsent(idMat, k ->
-                                                Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
-                                        // grava também sem enchant como fallback (ex: T6_ORE) caso a tabela use id limpo
-                                        precosMateriais.computeIfAbsent(idMatBase, k ->
-                                                Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                    try {
+                                        String sufBusca = eMat > 0 ? sufMat + "_LEVEL" + eMat : sufMat;
+                                        // precisa passar eMat aqui (nao 0): a api so acha o preco
+                                        // certo com o id "T5_HIDE_LEVEL2@2" completo — so o "_LEVEL2"
+                                        // sem o "@2" bate num item sem oferta nenhuma (preco sempre 0)
+                                        List<PriceEntry> pMat = buscarComRetry(sufBusca, tMat, eMat, -1, cidadesSemBM);
+                                        synchronized (precosMateriais) {
+                                            // grava com chave idMat (ex: T6_ORE@3) para bater com atualizarTabelaMateriais
+                                            precosMateriais.computeIfAbsent(idMat, k ->
+                                                    Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                            // grava também sem enchant como fallback (ex: T6_ORE) caso a tabela use id limpo
+                                            precosMateriais.computeIfAbsent(idMatBase, k ->
+                                                    Collections.synchronizedList(new ArrayList<>())).addAll(pMat);
+                                        }
+                                    } catch (Exception ex) {
+                                        System.out.println("Falha sub-material " + idMat + ": " + ex.getMessage());
                                     }
-                                } catch (Exception ex) {
-                                    System.out.println("Falha sub-material " + idMat + ": " + ex.getMessage());
-                                }
+                                }, pool));
                             }
+                            CompletableFuture.allOf(subFutures.toArray(new CompletableFuture[0])).join();
 
                         } catch (Exception ex) {
                             System.out.println("Falha refino " + idRefinado + ": " + ex.getMessage());
@@ -847,7 +861,9 @@ public class TelaCraftRefino {
                 atualizarTabelaMateriais(receita, precosMateriais, precoDiarioVazioEntry);
                 atualizarCalculo();
                 progresso.setVisible(false);
-                labelStatus.setText("Dados atualizados.");
+                labelStatus.setText(receita != null && !receita.getMateriais().isEmpty()
+                        ? "Dados atualizados."
+                        : "Receita nao encontrada para este item. Tente atualizar novamente.");
                 pool.shutdown();
             }
 
@@ -1026,13 +1042,15 @@ public class TelaCraftRefino {
 
             for (ReceitaCraft.MaterialCraft matRefino : recRefino.getMateriais()) {
                 String idMatBase = matRefino.getUniqueName();
-                // propaga @N inline, igual ao buscarTudo
+                boolean ehRetornoFlag = matRefino.isArtefato();
+                // o catalisador de retorno (tier anterior) tambem e encantado no mesmo
+                // nivel do recurso que esta sendo refinado
                 String idMat = (eAtual > 0 && !idMatBase.contains("@"))
                         ? idMatBase + "@" + eAtual
                         : idMatBase;
                 String sufixo = sufixoDeId(idMat);
 
-                boolean ehRetorno = matRefino.isArtefato()
+                boolean ehRetorno = ehRetornoFlag
                         && !sufixosRefinados.contains(sufixo)
                         && !sufixosBrutos.contains(sufixo);
                 boolean ehRefinado = sufixosRefinados.contains(sufixo);
@@ -1170,12 +1188,21 @@ public class TelaCraftRefino {
 
         double qtdFinalCraft = qtdCraft / (1.0 - retCraft);
 
+        // custo dos materiais: segue o mesmo modelo da TelaCraft (preco * qtdNecessaria * qtdCraft,
+        // ou seja, por TENTATIVA de craft, nao pela quantidade final ja com retorno aplicado —
+        // o retorno so entra na conta pra achar a receita/qtd final, nunca dobrado aqui tambem).
+        // "Retorno" (catalisador do refino) e "Diario" (vasilha vazia) tem custo tratado a parte.
         double custoMateriais = 0;
         if (tabelaMateriais != null) {
             for (LinhaMaterial lm : tabelaMateriais.getItems()) {
-                if ("Retorno".equals(lm.tipo)) continue;
+                if ("Retorno".equals(lm.tipo) || "Diario".equals(lm.tipo)) continue;
                 double preco = FormatadorUtil.parseSilver(lm.precoCompra);
-                double qtdEfetiva = lm.qtdTotal * qtdFinalCraft * (1.0 - retRefino);
+                // materiais "Bruto" passam pela etapa de refino, entao o retorno do refino
+                // reduz a quantidade efetiva comprada; materiais comprados prontos (Artefato,
+                // Direto, Item especial) nao passam por refino e nao levam esse desconto
+                double qtdEfetiva = "Bruto".equals(lm.tipo)
+                        ? lm.qtdTotal * qtdCraft * (1.0 - retRefino)
+                        : lm.qtdTotal * qtdCraft;
                 custoMateriais += preco * qtdEfetiva;
             }
         }
