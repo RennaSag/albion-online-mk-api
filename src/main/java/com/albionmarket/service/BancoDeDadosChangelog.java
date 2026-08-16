@@ -18,26 +18,26 @@ import java.util.List;
 public class BancoDeDadosChangelog {
 
 
-    public static final String APP_VERSAO_ATUAL = "1.1.2";
+    public static final String APP_VERSAO_ATUAL = "1.1.3";
 
 
     public static final List<VersaoInfo> VERSOES = Arrays.asList(
 
 
             new VersaoInfo(
-                    "1.1.2",
-                    "19 de Maio de 2026",
-                    "Craft com refino",
+                    "1.1.3",
+                    "15 de Agosto de 2026",
+                    "Telas mais rápidas e otimizações",
                     Arrays.asList(
 
-                            new Mudanca(TipoMudanca.NOVIDADE, "Olá a todos!"),
-                            new Mudanca(TipoMudanca.MELHORIA, "Nessa nova versão, foi implementada a feature para craft a partir de um refino, como havia sido pedido por algumas pessoas"),
-                            new Mudanca(TipoMudanca.CORRECAO, "A nova ferramenta de craft com refino ainda não foi testada nem validada, então recomendo tomarem cuidado por enquanto. Quando tudo estiver correto, vou gravar um vídeo mostrando. Ainda será melhorada para que fique tudo perfeito"),
-                            new Mudanca(TipoMudanca.REMOCAO, "Além disso, estou trabalhando na feature de flip de mercado, mas ainda sem sucesso. Estou com alguns problemas na requisição dos dados do flip pela API do Albion Data, mas futuramente tudo será resolvido"),
-                            new Mudanca(TipoMudanca.MELHORIA, "Se tiver qualquer problema, entre em contato com o suporte: rennasagcontato@gmail.com")
+                            new Mudanca(TipoMudanca.NOVIDADE, "Craft, Refino e Craft com Refino agora carregam bem mais rápido"),
+                            new Mudanca(TipoMudanca.CORRECAO, "Corrigidos vários itens com o diário de craft."),
+                            new Mudanca(TipoMudanca.CORRECAO, "Revisado o cálculo de lucro do Craft."),
+                            new Mudanca(TipoMudanca.CORRECAO, "Corrigidas linhas vazias que às vezes sobravam no final das tabelas de preços."),
+                            new Mudanca(TipoMudanca.MELHORIA, "Sair de uma tela ou clicar em Atualizar Valores agora cancela buscas antigas em andamento, evitando resultado atrasado aparecendo por cima do novo."),
+                            new Mudanca(TipoMudanca.NOVIDADE, "Home renovada: ícones nos botões e aviso de validade da licença mais visível quando estiver perto de vencer."),
+                            new Mudanca(TipoMudanca.MELHORIA, "Qualquer problema, chama no suporte: rennasagcontato@gmail.com")
                     )
             )
-
-
     );
 }

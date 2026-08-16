@@ -150,7 +150,7 @@ public class TelaFlip {
         raiz.setTop(criarCabecalho());
         raiz.setCenter(criarTabela());
 
-        palco.setTitle("Flip de Mercado — Albion Online");
+        palco.setTitle("Flip de Mercado");
         palco.getScene().setRoot(raiz);
         palco.setMinWidth(1280);
         palco.setMinHeight(720);
@@ -158,9 +158,7 @@ public class TelaFlip {
         iniciarBusca();
     }
 
-    // -------------------------------------------------------------------------
-    // Cabecalho
-    // -------------------------------------------------------------------------
+
     private HBox criarCabecalho() {
         Label icone = new Label("⇄");
         icone.setStyle("-fx-text-fill: #5a8dee; -fx-font-size: 22px;");
@@ -641,30 +639,42 @@ public class TelaFlip {
     // -------------------------------------------------------------------------
     // Requisicao HTTP de um sublote com retentativa em 429
     // -------------------------------------------------------------------------
+    // busca um lote com retry — antes qualquer timeout de conexao descartava o lote
+    // inteiro (ate 100 itens) sem tentar de novo, o que sob carga concorrente derrubava
+    // a esmagadora maioria dos lotes e deixava so uns poucos resultados por sorte
+    private static final int MAX_TENTATIVAS_LOTE = 3;
+
     private List<JsonObject> buscarSublote(List<String> sublote) {
         String url = API_BASE + "/" + String.join(",", sublote)
                 + ".json?locations=" + CIDADES_API
                 + "&qualities=1,2,3,4,5";
-        try {
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .timeout(Duration.ofSeconds(30))
-                    .GET().build();
 
-            HttpResponse<String> resp = cliente.send(req, HttpResponse.BodyHandlers.ofString());
+        for (int tentativa = 0; tentativa < MAX_TENTATIVAS_LOTE; tentativa++) {
+            try {
+                if (tentativa > 0) Thread.sleep(tentativa * 1500L);
 
-            if (resp.statusCode() == 429) {
-                Thread.sleep(1500);
-                resp = cliente.send(req, HttpResponse.BodyHandlers.ofString());
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(30))
+                        .GET().build();
+
+                HttpResponse<String> resp = cliente.send(req, HttpResponse.BodyHandlers.ofString());
+
+                if (resp.statusCode() == 429) continue; // tenta de novo
+
+                if (resp.statusCode() == 200) {
+                    JsonArray arr = JsonParser.parseString(resp.body()).getAsJsonArray();
+                    List<JsonObject> lista = new ArrayList<>(arr.size());
+                    for (JsonElement el : arr) lista.add(el.getAsJsonObject());
+                    return lista;
+                }
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return Collections.emptyList();
+            } catch (Exception ignored) {
+                // timeout de conexao ou erro de rede — tenta de novo
             }
-
-            if (resp.statusCode() == 200) {
-                JsonArray arr = JsonParser.parseString(resp.body()).getAsJsonArray();
-                List<JsonObject> lista = new ArrayList<>(arr.size());
-                for (JsonElement el : arr) lista.add(el.getAsJsonObject());
-                return lista;
-            }
-        } catch (Exception ignored) {}
+        }
         return Collections.emptyList();
     }
 

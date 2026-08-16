@@ -30,6 +30,13 @@
     -fx-background-color: #2a4a7f;
 }
 
+/* Esconde linhas "fantasma" vazias que o TableView desenha quando a altura
+   fixada por codigo sobra em relacao a quantidade real de linhas com dado */
+.table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
 /* Células */
 .table-cell {
     -fx-text-fill: #ddd;

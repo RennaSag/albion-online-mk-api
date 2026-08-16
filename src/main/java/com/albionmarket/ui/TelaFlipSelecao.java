@@ -67,13 +67,13 @@ public class TelaFlipSelecao {
         Region espacador = new Region();
         HBox.setHgrow(espacador, Priority.ALWAYS);
 
-        Label btnHome = new Label("← Início");
-        btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee;");
-        btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 0.7;"));
-        btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 1;"));
-        btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
+        //Label btnHome = new Label("← Início");
+        //btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee;");
+        //btnHome.setOnMouseEntered(e -> btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 0.7;"));
+        //btnHome.setOnMouseExited(e -> btnHome.setStyle("-fx-font-size: 13px; -fx-cursor: hand; -fx-text-fill: #5a8dee; -fx-opacity: 1;"));
+        //btnHome.setOnMouseClicked(e -> new TelaHome(palco).mostrar());
 
-        HBox cab = new HBox(esquerda, espacador, btnHome);
+        HBox cab = new HBox(esquerda, espacador/*, btnHome*/);
         cab.setAlignment(Pos.CENTER);
         cab.setPadding(new Insets(16, 24, 16, 24));
         cab.setStyle("-fx-background-color: #1e1e1e; -fx-border-color: #2e2e2e; -fx-border-width: 0 0 1 0;");

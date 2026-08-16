@@ -66,7 +66,7 @@ public class TelaHome {
             new TelaOperacoesAtivas(palco).mostrar();
         });
 
-        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnCraftRefino, btnFlip, btnOperacoes);
+        VBox botoes = new VBox(20, btnPesquisar, btnCraftar, btnRefinar, btnCraftRefino, btnOperacoes);
         botoes.setAlignment(Pos.CENTER);
 
         Region espaco = new Region();

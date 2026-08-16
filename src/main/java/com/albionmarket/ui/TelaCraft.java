@@ -457,6 +457,10 @@ public class TelaCraft {
         tituloPrecos.setStyle("-fx-text-fill: #ccc; -fx-font-size: 14px; -fx-font-weight: bold;");
 
         tabelaPrecos = new TableView<>();
+        // forca a altura real de cada linha a bater com o que a formula de
+        // altura do table usa (28 + linhas*40) — sem isso a altura calculada
+        // sobra espaco vazio no final, que o TableView preenche com linhas fantasma
+        tabelaPrecos.setFixedCellSize(40);
         tabelaPrecos.setStyle("-fx-background-color: #1e1e1e;");
         tabelaPrecos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tabelaPrecos.setPlaceholder(new Label("Buscando preços..."));
@@ -477,6 +481,7 @@ public class TelaCraft {
         tituloReceita.setPadding(new Insets(12, 0, 6, 0));
 
         tabelaReceita = new TableView<>();
+        tabelaReceita.setFixedCellSize(40);
         tabelaReceita.setStyle("-fx-background-color: #1e1e1e;");
         tabelaReceita.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tabelaReceita.setPlaceholder(new Label("Carregando receita..."));
@@ -561,6 +566,7 @@ public class TelaCraft {
         tituloMateriais.setPadding(new Insets(12, 0, 6, 0));
 
         tabelaMateriais = new TableView<>();
+        tabelaMateriais.setFixedCellSize(40);
         tabelaMateriais.setStyle("-fx-background-color: #1e1e1e;");
         tabelaMateriais.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tabelaMateriais.setPlaceholder(new Label("Carregando..."));
@@ -946,7 +952,9 @@ public class TelaCraft {
 
         List<LinhaPreco> linhas = new ArrayList<>();
         for (PriceEntry pe : melhor.values()) {
-            if (pe.getSellMin() == 0 && pe.getBuyMax() == 0) continue;
+            // essa tabela so mostra preco de VENDA — se so existe pedido de compra
+            // (sem venda direta), a linha ficaria com "—" no preco, entao pula
+            if (pe.getSellMin() <= 0) continue;
             String corCidade = com.albionmarket.service.BancoDeDadosItens.CIDADES.stream()
                     .filter(c -> c.getApiId().equals(pe.getCidade()))
                     .map(CidadeInfo::getCor).findFirst().orElse("#888");

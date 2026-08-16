@@ -2,7 +2,7 @@
 
 Projeto pessoal em desenvolvimento.
 
-Albion Market é uma aplicação desktop desenvolvida em Java com JavaFX, inspirada em Albion Online — um MMORGP com economia complexa baseada inteiramente na atividade dos jogadores, funcionando de forma semelhante a um mercado financeiro real.
+Albion Market é uma aplicação desktop desenvolvida em Java com JavaFX, inspirada em Albion Online — um MMORPG com economia complexa baseada inteiramente na atividade dos jogadores, funcionando de forma semelhante a um mercado financeiro real.
 
 ---
 
@@ -45,23 +45,48 @@ Atualmente, não existe uma ferramenta com esse nível de abordagem, tanto na co
 ### Calculadora de craft
 
 - Busca receitas diretamente da API oficial do jogo
-- Exibe materiais necessários com:
-  - Quantidade
-  - Preço de compra
-  - Cidade de origem
-- Trata corretamente artefatos, cuja quantidade necessária é igual à quantidade final craftada (não retornam no processo)
+- Exibe materiais necessários com quantidade, preço de compra e cidade de origem
+- Resultados carregam de forma progressiva: preço do item, receita e cada material vão aparecendo assim que são encontrados, sem esperar a busca inteira terminar
+- Trata corretamente artefatos, cuja quantidade necessária é igual à quantidade final craftada (não retornam pela taxa de retorno)
 - Calcula automaticamente:
-  - Quantidade final considerando taxa de retorno
+  - Quantidade final considerando a taxa de retorno (progressão geométrica de reinvestimento)
   - Custo total dos materiais
   - Custo da barraca de craft (baseado em nutrição e game value)
-  - Receita total
-  - Lucro ou prejuízo estimado
+  - Receita total e taxa de mercado (10% sem premium / 5% com premium)
+  - Lucro ou prejuízo estimado, incluindo o bônus de diários de fama
 - Permite inserção manual de preços para simulações
 - Atualiza todos os cálculos em tempo real conforme os parâmetros são alterados
-- Identifica:
-  - Melhor cidade para venda
-  - Melhor cidade para compra dos materiais
-- Permite salvar operações em arquivo JSON com timestamp
+- Identifica melhor cidade para venda e melhor cidade para compra dos materiais
+- Permite salvar operações, que ficam disponíveis na tela de Operações Ativas
+
+---
+
+### Calculadora de refino
+
+- Mesma lógica de custo/lucro do craft, aplicada aos recursos refinados (tecido, couro, tábua, barra, blocos de pedra)
+- Considera o catalisador do tier anterior na conta, já com o desconto da taxa de retorno do refino
+
+---
+
+### Craft com refino
+
+- Para itens que usam recursos refinados diretamente do refino, calcula as duas etapas encadeadas: quanto de recurso bruto comprar pra refinar, e quanto do refinado é necessário pro craft final
+- Mesma lógica de progressão geométrica aplicada nas duas etapas em sequência
+
+---
+
+### Flip de mercado
+
+- Varre o catálogo em busca de oportunidades de comprar em uma cidade e vender em outra com lucro
+- Permite ordenar os resultados por qualquer coluna (ex: maior lucro %)
+- Operações salvas aparecem em Operações Ativas junto com as de craft e refino
+
+---
+
+### Operações ativas
+
+- Lista todas as operações salvas (craft, refino, craft com refino e flip) com preços, quantidades, custo e lucro
+- Permite finalizar/remover uma operação da lista
 
 ---
 
@@ -73,7 +98,9 @@ Atualmente, não existe uma ferramenta com esse nível de abordagem, tanto na co
 - Persistência de filtros ao navegar entre telas
 - Barra de rolagem adaptada para monitores menores
 - Persistência entre sessões via Java Preferences API
-- Carregamento de ícones diretamente do servidor de render do Albion
+- Cache local de ícones: cada item baixado uma vez fica salvo no computador e carrega instantâneo nas próximas vezes, sem depender do servidor de imagens da Albion
+- Tela de novidades (changelog) exibida automaticamente após atualizações
+- Sistema de login com licença, validada contra um backend próprio (`licencas-server`)
 
 ---
 
@@ -81,48 +108,50 @@ Atualmente, não existe uma ferramenta com esse nível de abordagem, tanto na co
 
 O projeto segue uma arquitetura em camadas:
 
-- **UI**  
-  Telas construídas com JavaFX  
-  (`TelaHome`, `TelaCraftSelecao`, `TelaCraft`, `TelaPesquisaPrecos`, `TelaLogin`)
+- **UI**
+  Telas construídas com JavaFX
+  (`TelaHome`, `TelaLogin`, `TelaCraftSelecao`, `TelaCraft`, `TelaRefinoSelecao`, `TelaRefino`, `TelaCraftRefinoSelecao`, `TelaCraftRefino`, `TelaFlipSelecao`, `TelaFlip`, `TelaPesquisaPrecos`, `TelaOperacoesAtivas`, `TelaChangelog`, `TelaUpdate`)
 
-- **Service**  
-  Lógica de negócio e integração com APIs  
-  (`ApiService`, `CraftService`, `BancoDeDadosCraft`, `ItemValues`, `BuscaService`)
+- **Service**
+  Lógica de negócio e integração com APIs
+  (`ApiService`, `CraftService`, `CalculadoraService`, `BancoDeDadosItens`, `BancoDeDadosChangelog`, `ItemValues`, `BuscaService`, `IconeCacheService`, `OperacaoService`)
 
-- **Model**  
-  Estruturas de dados  
-  (`ItemDefinition`, `PriceEntry`, `ReceitaCraft`, `CidadeInfo`, `EstadoCraftSelecao`, entre outros)
+- **Model**
+  Estruturas de dados
+  (`ItemDefinition`, `PriceEntry`, `ReceitaCraft`, `CidadeInfo`, `EstadoSelecao`, `VersaoInfo`, entre outros)
 
-- **Util**  
-  Utilitários de apoio  
-  (`FormatadorUtil`)
+- **Util**
+  Utilitários de apoio
+  (`FormatadorUtil`, `AlbionIdUtil`)
 
-O estado de navegação entre telas é controlado por `EstadoCraftSelecao`, responsável por manter item, tier, encantamento e cidades selecionadas.
+O estado de navegação entre telas é controlado por `EstadoSelecao`, responsável por manter item, tier, encantamento e cidades selecionadas ao voltar para a tela de busca.
+
+`licencas-server/` é um serviço Node.js/Express separado, responsável por emitir e validar as chaves de licença via webhook de compra e banco Postgres — não faz parte do build/runtime do app JavaFX, é implantado à parte.
 
 ---
 
 ## APIs utilizadas
 
-- Albion Online Data Project  
-  `west.albion-online-data.com`  
+- Albion Online Data Project
+  `west.albion-online-data.com`
   (preços de mercado em tempo real)
 
-- Albion Online GameInfo  
-  `gameinfo.albiononline.com`  
+- Albion Online GameInfo
+  `gameinfo.albiononline.com`
   (receitas e dados de itens)
 
-- Albion Online Render  
-  `render.albiononline.com`  
-  (ícones e imagens)
+- Albion Online Render
+  `render.albiononline.com`
+  (ícones e imagens, com cache local no computador do usuário)
 
 ---
 
 ## Tecnologias utilizadas
 
-- Java 17
-- JavaFX 21
+- Java 23
+- JavaFX 23
 - Maven
-- HttpClient (requisições HTTP assíncronas)
+- HttpClient (requisições HTTP assíncronas, com controle de concorrência e nova tentativa automática em caso de falha)
 - Gson (parsing de JSON)
 - Java Preferences API (persistência local)
 - Execução em threads separadas para evitar bloqueio da interface
@@ -144,5 +173,5 @@ O projeto está em desenvolvimento ativo.
 Próximas evoluções planejadas:
 
 - Expansão do catálogo de artefatos
-- Refinamento dos cálculos de craft
+- Estabilização e melhorias no Flip de Mercado
 - Novas funcionalidades de análise e comparação de operações
